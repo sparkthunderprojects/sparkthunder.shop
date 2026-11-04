@@ -1,24 +1,106 @@
 @import "tailwindcss";
 
 @theme {
-  --color-accent: #c9a227;
-  --color-ink: #0b0b12;
-  --color-panel: #14141f;
-  --color-muted: #a1a1b5;
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --color-paper: #f1f0f6;
+  --color-paper-2: #e3e1ee;
+  --color-ink: #11142a;
+  --color-bolt: #ffd400;
+  --color-muted: #565a74;
+  /* Overridden inline on franchise pages to that franchise's accent colour */
+  --color-world: #11142a;
+  --font-display: "Bricolage Grotesque Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Bricolage Grotesque Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Newsreader Variable", Georgia, "Times New Roman", serif;
 }
 
-html { color-scheme: dark; scroll-behavior: smooth; }
+html { scroll-behavior: smooth; }
 
 body {
-  background: var(--color-ink);
-  color: #f5f5f7;
+  background: var(--color-paper);
+  color: var(--color-ink);
   font-family: var(--font-sans);
+  overflow-x: clip;
 }
 
-:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 3px; }
+:focus-visible { outline: 3px solid var(--color-ink); outline-offset: 3px; }
+.world :focus-visible, .on-ink :focus-visible { outline-color: var(--color-bolt); }
+
+/* ---------- Type ---------- */
+.display {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-stretch: 75%;
+  letter-spacing: -0.015em;
+  line-height: 0.92;
+}
+.serif { font-family: var(--font-serif); font-optical-sizing: auto; }
+.prose-lore { font-family: var(--font-serif); font-size: 1.1875rem; line-height: 1.7; max-width: 62ch; }
+
+/* ---------- Full-bleed helper (content stays aligned to the page column) ---------- */
+.bleed { margin-inline: calc(50% - 50vw); padding-inline: calc(50vw - 50%); }
+
+/* ---------- A franchise's own world: dark, tinted from its accent colour ---------- */
+.world, .panel {
+  --world-bright: color-mix(in oklab, var(--color-world) 40%, white);
+}
+.world {
+  background: color-mix(in oklab, var(--color-world) 26%, #0a0b16);
+  color: #f4f2f8;
+}
+.on-ink { background: var(--color-ink); color: var(--color-paper); }
+
+/* ---------- Buttons: one corner is cut, like a comic panel ---------- */
+.btn {
+  --cut: 12px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  padding: 0.95rem 1.7rem; font-weight: 700; font-size: 1rem; line-height: 1;
+  background: var(--color-bolt); color: var(--color-ink); cursor: pointer;
+  clip-path: polygon(0 0, calc(100% - var(--cut)) 0, 100% var(--cut), 100% 100%, var(--cut) 100%, 0 calc(100% - var(--cut)));
+  transition: filter 0.15s;
+}
+.btn:hover { filter: brightness(1.08); }
+.btn:focus-visible { clip-path: none; outline-offset: 3px; }
+.btn-ink { background: var(--color-ink); color: var(--color-paper); }
+.btn-sm { --cut: 8px; padding: 0.6rem 1.1rem; font-size: 0.9rem; }
+.btn[disabled] { background: var(--color-paper-2); color: var(--color-muted); cursor: not-allowed; filter: none; }
+
+.link-line { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.link-line:hover { text-decoration-color: var(--color-bolt); }
+
+/* ---------- Hero: franchise panels meet along a lightning seam ---------- */
+.hero { position: relative; display: grid; grid-template-columns: 1fr; margin-inline: calc(50% - 50vw); }
+.panel { position: relative; isolation: isolate; min-height: 26rem; display: flex; }
+.panel-bg { position: absolute; inset: 0; z-index: -1; }
+.panel-body { position: relative; display: flex; flex-direction: column; justify-content: flex-end; gap: 1.1rem; padding: 3rem max(1rem, calc(50vw - 40rem)) 3rem 1.5rem; width: 100%; }
+.seam { position: absolute; pointer-events: none; z-index: 2; }
+.seam polyline { fill: none; stroke: var(--color-bolt); stroke-width: 3; stroke-linejoin: miter; vector-effect: non-scaling-stroke; }
+
+/* mobile: panels stack, seam runs horizontally */
+.panel + .panel { margin-top: -18px; }
+.panel + .panel .panel-bg { clip-path: polygon(0 18px, 12% 0, 24% 14px, 38% 2px, 52% 18px, 66% 0, 80% 14px, 100% 4px, 100% 100%, 0 100%); }
+.panel + .panel .seam { left: 0; top: 0; width: 100%; height: 18px; }
+.panel + .panel .seam-v { display: none; }
+.panel + .panel .panel-body { padding-top: 4.5rem; }
+
+@media (min-width: 768px) {
+  .hero { grid-template-columns: repeat(var(--n, 2), 1fr); min-height: min(74vh, 42rem); }
+  .panel { min-height: 0; }
+  .panel-body { padding: 4rem 3rem 4rem max(1.5rem, calc(50vw - 40rem)); }
+  .panel + .panel { margin-top: 0; margin-left: -18px; }
+  .panel + .panel .panel-bg { clip-path: polygon(18px 0, 0 16%, 14px 32%, 2px 50%, 18px 68%, 0 84%, 12px 100%, 100% 100%, 100% 0); }
+  .panel + .panel .seam-h { display: none; }
+  .panel + .panel .seam-v { display: block; left: 0; top: 0; width: 18px; height: 100%; }
+  .panel + .panel .panel-body { padding: 4rem max(1.5rem, calc(50vw - 40rem)) 4rem 3.5rem; }
+  .hero:not(:has(.panel + .panel + .panel)) .panel:first-child .panel-body { padding-right: 3.5rem; }
+}
+
+/* The one moment of motion: the second panel slides into place, revealing the seam. */
+@keyframes slide-in-x { from { transform: translateX(7%); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes slide-in-y { from { transform: translateY(5%); opacity: 0; } to { transform: none; opacity: 1; } }
+.panel + .panel { animation: slide-in-y 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+@media (min-width: 768px) { .panel + .panel { animation-name: slide-in-x; } }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  *, *::before, *::after { animation: none !important; transition-duration: 0.01ms !important; }
 }

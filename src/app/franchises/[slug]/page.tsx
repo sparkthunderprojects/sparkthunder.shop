@@ -6,6 +6,7 @@ import { JsonLd } from "@/components/JsonLd";
 import { ProductCard } from "@/components/ProductCard";
 import { getCategories, getFranchise, getFranchises, getProducts } from "@/lib/catalog";
 import { breadcrumbLd, buildMetadata, clip, itemListLd } from "@/lib/seo";
+import { worldStyle } from "@/lib/theme";
 
 export const revalidate = 300;
 export const dynamicParams = true;
@@ -34,34 +35,36 @@ export default async function FranchisePage(props: PageProps<"/franchises/[slug]
   const path = `/franchises/${slug}`;
 
   return (
-    <div style={{ ["--color-accent" as string]: franchise.accent }}>
+    <div style={worldStyle(franchise.accent)}>
       <JsonLd data={[
         breadcrumbLd([{ name: "Home", path: "/" }, { name: "Franchises", path: "/franchises" }, { name: franchise.name, path }]),
         itemListLd(`${franchise.name} merchandise`, path, products),
       ]} />
-      <Breadcrumbs items={[{ name: "Home", href: "/" }, { name: "Franchises", href: "/franchises" }, { name: franchise.name }]} />
-      <h1 className="text-4xl font-extrabold sm:text-5xl">{franchise.name} Merchandise</h1>
-      <p className="mt-3 text-xl text-accent">{franchise.tagline}</p>
-      <p className="mt-6 max-w-3xl leading-relaxed text-muted">{franchise.description}</p>
 
-      {used.length > 0 && (
-        <ul className="mt-8 flex flex-wrap gap-3" aria-label={`${franchise.name} categories`}>
-          {used.map((c) => (
-            <li key={c.slug}>
-              <Link href={`/categories/${c.slug}?franchise=${franchise.slug}`} className="rounded-full border border-white/15 px-4 py-2 text-sm hover:border-accent hover:text-accent">{c.name}</Link>
-            </li>
-          ))}
-        </ul>
-      )}
+      <section className="world bleed pb-16 pt-8">
+        <Breadcrumbs tone="world" items={[{ name: "Home", href: "/" }, { name: "Franchises", href: "/franchises" }, { name: franchise.name }]} />
+        <h1 className="display mt-10 text-[clamp(4.5rem,14vw,12rem)]">{franchise.name}<span className="sr-only"> merchandise</span></h1>
+        <p className="serif mt-4 text-2xl italic" style={{ color: "var(--world-bright)" }}>{franchise.tagline}</p>
+        <p className="prose-lore mt-8 text-paper/85">{franchise.description}</p>
+        {used.length > 0 && (
+          <ul className="mt-10 flex flex-wrap gap-x-8 gap-y-3" aria-label={`${franchise.name} categories`}>
+            {used.map((c) => (
+              <li key={c.slug}><Link href={`/categories/${c.slug}?franchise=${franchise.slug}`} className="link-line font-bold">{c.name}</Link></li>
+            ))}
+          </ul>
+        )}
+      </section>
 
-      <h2 className="mt-12 text-2xl font-bold">All {franchise.name} products</h2>
-      {products.length === 0 ? (
-        <p className="mt-4 text-muted">New {franchise.name} merchandise is on its way. Check back soon.</p>
-      ) : (
-        <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {products.map((p, i) => <ProductCard key={p.slug} product={p} priority={i < 4} />)}
-        </div>
-      )}
+      <section className="mt-16" aria-labelledby="all-h">
+        <h2 id="all-h" className="display text-5xl">All {franchise.name} products</h2>
+        {products.length === 0 ? (
+          <p className="serif mt-6 text-xl text-muted">New {franchise.name} merchandise is on its way.</p>
+        ) : (
+          <div className="mt-8 grid grid-cols-2 gap-x-5 gap-y-10 lg:grid-cols-4">
+            {products.map((p, i) => <ProductCard key={p.slug} product={p} priority={i < 4} />)}
+          </div>
+        )}
+      </section>
     </div>
   );
 }

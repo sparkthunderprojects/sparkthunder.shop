@@ -19,10 +19,10 @@ export default async function NewPage() {
   return (
     <>
       <JsonLd data={[breadcrumbLd([{ name: "Home", path: "/" }, { name: "New arrivals", path: "/new" }]), itemListLd("New arrivals", "/new", products)]} />
-      <Breadcrumbs items={[{ name: "Home", href: "/" }, { name: "New arrivals" }]} />
-      <h1 className="text-4xl font-extrabold">New arrivals</h1>
-      <p className="mt-3 max-w-2xl text-muted">The latest official merchandise to land across every Sparkthunder franchise.</p>
-      <div className="mt-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="pt-8"><Breadcrumbs items={[{ name: "Home", href: "/" }, { name: "New arrivals" }]} /></div>
+      <h1 className="display mt-6 text-[clamp(3.5rem,9vw,8rem)]">New arrivals</h1>
+      <p className="prose-lore mt-6 text-muted">The latest official merchandise to land across every Sparkthunder franchise.</p>
+      <div className="mt-10 grid grid-cols-2 gap-x-5 gap-y-10 lg:grid-cols-4">
         {products.map((p, i) => <ProductCard key={p.slug} product={p} franchiseName={nameBySlug[p.franchiseSlug]} priority={i < 4} />)}
       </div>
     </>

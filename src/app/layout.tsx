@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
-import { GeistSans } from "geist/font/sans";
+import "@fontsource-variable/bricolage-grotesque/wdth.css";
+import "@fontsource-variable/newsreader/opsz.css";
 import "./globals.css";
 import { CartProvider } from "@/components/CartProvider";
 import { Footer } from "@/components/Footer";
@@ -8,7 +9,7 @@ import { JsonLd } from "@/components/JsonLd";
 import { organizationLd, websiteLd } from "@/lib/seo";
 import { SITE } from "@/lib/site";
 
-export const viewport: Viewport = { themeColor: "#0b0b12", width: "device-width", initialScale: 1 };
+export const viewport: Viewport = { themeColor: "#f1f0f6", width: "device-width", initialScale: 1 };
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
@@ -24,12 +25,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en-GB" className={`${GeistSans.variable} h-full antialiased`}>
+    <html lang="en-GB" className="h-full antialiased">
       <body className="flex min-h-full flex-col">
         <JsonLd data={[organizationLd(), websiteLd()]} />
         <CartProvider>
           <Header />
-          <main id="main" className="mx-auto w-full max-w-7xl flex-1 px-4 py-10">{children}</main>
+          <main id="main" className="mx-auto w-full max-w-7xl flex-1 px-4 pb-24">{children}</main>
           <Footer />
         </CartProvider>
       </body>

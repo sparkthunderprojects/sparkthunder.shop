@@ -5,7 +5,7 @@ create table if not exists public.franchises (
   name text not null,
   tagline text not null default '',
   description text not null default '',
-  accent text not null default '#c9a227',
+  accent text not null default '#3a5fc8',
   sort_order int not null default 0
 );
 

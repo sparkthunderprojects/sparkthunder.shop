@@ -1,39 +1,45 @@
 import Link from "next/link";
+import { Bolt } from "@/components/Bolt";
 import { getCategories, getFranchises } from "@/lib/catalog";
 import { SITE } from "@/lib/site";
 
 export async function Footer() {
   const [franchises, categories] = await Promise.all([getFranchises(), getCategories()]);
+  const col = "mt-4 space-y-2.5 text-[0.95rem] text-paper/75";
+  const lnk = "hover:text-bolt hover:underline hover:underline-offset-4";
   return (
-    <footer className="mt-24 border-t border-white/10 bg-panel">
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:grid-cols-2 lg:grid-cols-4">
-        <div>
-          <p className="text-lg font-extrabold"><span className="text-accent">SPARK</span>THUNDER</p>
-          <p className="mt-3 text-sm text-muted">{SITE.description}</p>
+    <footer className="on-ink mt-24">
+      <div className="mx-auto max-w-7xl px-4 pb-10 pt-16">
+        <div className="flex items-end gap-3">
+          <Bolt className="h-16 w-12 text-bolt sm:h-24 sm:w-[4.5rem]" />
+          <p className="display text-[clamp(3.5rem,11vw,9rem)]">Sparkthunder</p>
         </div>
-        <div>
-          <h2 className="text-sm font-bold uppercase tracking-widest">Franchises</h2>
-          <ul className="mt-4 space-y-2 text-sm text-muted">
-            {franchises.map((f) => <li key={f.slug}><Link className="hover:text-accent" href={`/franchises/${f.slug}`}>{f.name}</Link></li>)}
-            <li><Link className="hover:text-accent" href="/franchises">All franchises</Link></li>
-          </ul>
+        <div className="mt-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_1fr]">
+          <p className="serif max-w-sm text-lg leading-relaxed text-paper/80">{SITE.description}</p>
+          <div>
+            <h2 className="font-bold">Franchises</h2>
+            <ul className={col}>
+              {franchises.map((f) => <li key={f.slug}><Link className={lnk} href={`/franchises/${f.slug}`}>{f.name}</Link></li>)}
+              <li><Link className={lnk} href="/franchises">All franchises</Link></li>
+            </ul>
+          </div>
+          <div>
+            <h2 className="font-bold">Shop</h2>
+            <ul className={col}>
+              {categories.map((c) => <li key={c.slug}><Link className={lnk} href={`/categories/${c.slug}`}>{c.name}</Link></li>)}
+              <li><Link className={lnk} href="/new">New arrivals</Link></li>
+            </ul>
+          </div>
+          <div>
+            <h2 className="font-bold">The universes</h2>
+            <ul className={col}>
+              <li><a className={lnk} href="https://knightverge.com">Knightverge.com</a></li>
+              <li><a className={lnk} href="https://grimgala.com">GrimGala.com</a></li>
+            </ul>
+          </div>
         </div>
-        <div>
-          <h2 className="text-sm font-bold uppercase tracking-widest">Shop</h2>
-          <ul className="mt-4 space-y-2 text-sm text-muted">
-            {categories.map((c) => <li key={c.slug}><Link className="hover:text-accent" href={`/categories/${c.slug}`}>{c.name}</Link></li>)}
-            <li><Link className="hover:text-accent" href="/new">New arrivals</Link></li>
-          </ul>
-        </div>
-        <div>
-          <h2 className="text-sm font-bold uppercase tracking-widest">Sparkthunder</h2>
-          <ul className="mt-4 space-y-2 text-sm text-muted">
-            <li><a className="hover:text-accent" href="https://knightverge.com">Knightverge.com</a></li>
-            <li><a className="hover:text-accent" href="https://grimgala.com">GrimGala.com</a></li>
-          </ul>
-        </div>
+        <p className="mt-14 border-t border-paper/15 pt-6 text-sm text-paper/60">© {new Date().getFullYear()} {SITE.legalName}. Official merchandise.</p>
       </div>
-      <p className="border-t border-white/10 py-6 text-center text-xs text-muted">© {new Date().getFullYear()} {SITE.legalName}. All rights reserved. Official merchandise.</p>
     </footer>
   );
 }

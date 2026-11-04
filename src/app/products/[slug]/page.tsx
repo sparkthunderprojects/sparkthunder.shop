@@ -9,6 +9,7 @@ import { ProductImage } from "@/components/ProductImage";
 import { getAllProducts, getCategory, getFranchise, getFranchises, getProduct, getRelatedProducts } from "@/lib/catalog";
 import { breadcrumbLd, buildMetadata, clip, productImageUrl, productLd } from "@/lib/seo";
 import { formatPrice } from "@/lib/site";
+import { worldStyle } from "@/lib/theme";
 
 export const revalidate = 300;
 export const dynamicParams = true;
@@ -45,7 +46,7 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
   const path = `/products/${product.slug}`;
 
   return (
-    <div style={{ ["--color-accent" as string]: franchise?.accent }}>
+    <div style={worldStyle(franchise?.accent)}>
       <JsonLd data={[
         productLd(product, franchise, category),
         breadcrumbLd([
@@ -55,39 +56,43 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
           { name: product.name, path },
         ]),
       ]} />
-      <Breadcrumbs items={[
-        { name: "Home", href: "/" },
-        ...(franchise ? [{ name: franchise.name, href: `/franchises/${franchise.slug}` }] : []),
-        ...(category ? [{ name: category.name, href: `/categories/${category.slug}` }] : []),
-        { name: product.name },
-      ]} />
+      <div className="pt-8">
+        <Breadcrumbs items={[
+          { name: "Home", href: "/" },
+          ...(franchise ? [{ name: franchise.name, href: `/franchises/${franchise.slug}` }] : []),
+          ...(category ? [{ name: category.name, href: `/categories/${category.slug}` }] : []),
+          { name: product.name },
+        ]} />
+      </div>
 
-      <div className="grid gap-10 lg:grid-cols-2">
-        <div className="space-y-4">
-          <div className="overflow-hidden rounded-2xl border border-white/10">
-            <ProductImage product={product} priority sizes="(min-width:1024px) 50vw, 100vw" />
-          </div>
+      <div className="mt-8 grid gap-12 lg:grid-cols-[1.1fr_1fr]">
+        <div className="self-start border-2 border-ink bg-paper-2">
+          <ProductImage product={product} priority sizes="(min-width:1024px) 55vw, 100vw" />
         </div>
 
-        <div>
-          {franchise && <Link href={`/franchises/${franchise.slug}`} className="text-sm uppercase tracking-widest text-accent hover:underline">{franchise.name}</Link>}
-          <h1 className="mt-2 text-3xl font-extrabold sm:text-4xl">{product.name}</h1>
-          <p className="mt-4 flex items-baseline gap-3 text-2xl">
-            <span className="font-bold text-accent">{formatPrice(product.pricePence)}</span>
-            {product.comparePricePence && <s className="text-base text-muted">{formatPrice(product.comparePricePence)}</s>}
+        <div className="lg:pt-2">
+          {franchise && (
+            <Link href={`/franchises/${franchise.slug}`} className="inline-flex items-center gap-2 font-bold hover:underline hover:underline-offset-4">
+              <span className="inline-block h-3 w-3" style={{ background: "var(--color-world)" }} aria-hidden />
+              {franchise.name}
+            </Link>
+          )}
+          <h1 className="display mt-3 text-[clamp(3rem,6vw,5.25rem)]">{product.name}</h1>
+          <p className="mt-6 flex items-baseline gap-3">
+            <span className="display text-5xl">{formatPrice(product.pricePence)}</span>
+            {product.comparePricePence && <s className="text-lg text-muted">{formatPrice(product.comparePricePence)}</s>}
           </p>
-          <p className="mt-1 text-sm text-muted">{product.inStock ? "In stock" : "Currently out of stock"} · SKU {product.sku}</p>
-          <p className="mt-6 leading-relaxed text-muted">{product.description}</p>
+          <p className="mt-1 text-sm text-muted">{product.inStock ? "In stock" : "Currently sold out"} · SKU {product.sku}</p>
 
-          <div className="mt-8">
-            <AddToCart inStock={product.inStock} item={{ slug: product.slug, name: product.name, pricePence: product.pricePence, image: product.images[0] ?? `/art/${product.slug}` }} />
-          </div>
+          <div className="mt-8"><AddToCart inStock={product.inStock} item={{ slug: product.slug, name: product.name, pricePence: product.pricePence, image: product.images[0] ?? `/art/${product.slug}` }} /></div>
+
+          <p className="prose-lore mt-10">{product.description}</p>
 
           {product.details.length > 0 && (
             <section className="mt-10" aria-labelledby="details-h">
-              <h2 id="details-h" className="text-lg font-bold">Product details</h2>
-              <ul className="mt-3 list-disc space-y-1 pl-5 text-muted">
-                {product.details.map((d) => <li key={d}>{d}</li>)}
+              <h2 id="details-h" className="display text-3xl">Product details</h2>
+              <ul className="mt-4 border-b border-ink/25">
+                {product.details.map((d) => <li key={d} className="border-t border-ink/25 py-2.5">{d}</li>)}
               </ul>
             </section>
           )}
@@ -95,9 +100,9 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
       </div>
 
       {related.length > 0 && (
-        <section className="mt-20" aria-labelledby="related-h">
-          <h2 id="related-h" className="text-2xl font-bold">You might also like</h2>
-          <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <section className="mt-24" aria-labelledby="related-h">
+          <h2 id="related-h" className="display text-5xl">More from the universe</h2>
+          <div className="mt-8 grid grid-cols-2 gap-x-5 gap-y-10 lg:grid-cols-4">
             {related.map((p) => <ProductCard key={p.slug} product={p} franchiseName={nameBySlug[p.franchiseSlug]} />)}
           </div>
         </section>

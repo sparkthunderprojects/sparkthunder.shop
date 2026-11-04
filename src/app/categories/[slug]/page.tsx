@@ -38,23 +38,23 @@ export default async function CategoryPage(props: PageProps<"/categories/[slug]"
         breadcrumbLd([{ name: "Home", path: "/" }, { name: category.name, path }]),
         itemListLd(category.name, path, products),
       ]} />
-      <Breadcrumbs items={[{ name: "Home", href: "/" }, { name: category.name }]} />
-      <h1 className="text-4xl font-extrabold">{category.name}</h1>
-      <p className="mt-5 max-w-3xl leading-relaxed text-muted">{category.description}</p>
+      <div className="pt-8"><Breadcrumbs items={[{ name: "Home", href: "/" }, { name: category.name }]} /></div>
+      <h1 className="display mt-6 text-[clamp(3.5rem,9vw,8rem)]">{category.name}</h1>
+      <p className="prose-lore mt-6 text-muted">{category.description}</p>
 
-      <ul className="mt-8 flex flex-wrap gap-3" aria-label="Filter by franchise">
-        <li><Link href={path} className={`rounded-full border px-4 py-2 text-sm ${!franchiseFilter ? "border-accent text-accent" : "border-white/15 hover:border-accent"}`}>All</Link></li>
+      <ul className="mt-10 flex flex-wrap gap-x-7 gap-y-2 border-y-2 border-ink py-4" aria-label="Filter by franchise">
+        <li><Link href={path} aria-current={!franchiseFilter ? "page" : undefined} className={`font-bold ${!franchiseFilter ? "link-line" : "text-muted hover:text-ink"}`}>All franchises</Link></li>
         {franchises.map((f) => (
           <li key={f.slug}>
-            <Link href={`${path}?franchise=${f.slug}`} rel="nofollow" className={`rounded-full border px-4 py-2 text-sm ${franchiseFilter === f.slug ? "border-accent text-accent" : "border-white/15 hover:border-accent"}`}>{f.name}</Link>
+            <Link href={`${path}?franchise=${f.slug}`} rel="nofollow" aria-current={franchiseFilter === f.slug ? "page" : undefined} className={`font-bold ${franchiseFilter === f.slug ? "link-line" : "text-muted hover:text-ink"}`}>{f.name}</Link>
           </li>
         ))}
       </ul>
 
       {products.length === 0 ? (
-        <p className="mt-10 text-muted">No products match yet. New merchandise is added regularly.</p>
+        <p className="serif mt-10 text-xl text-muted">Nothing here yet. New merchandise is added regularly.</p>
       ) : (
-        <div className="mt-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div className="mt-10 grid grid-cols-2 gap-x-5 gap-y-10 lg:grid-cols-4">
           {products.map((p, i) => <ProductCard key={p.slug} product={p} franchiseName={nameBySlug[p.franchiseSlug]} priority={i < 4} />)}
         </div>
       )}
