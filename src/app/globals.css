@@ -113,3 +113,7 @@ body {
   .card-extra { opacity: 0; transition: opacity 0.15s; }
   .group:hover .card-extra, .group:focus-within .card-extra { opacity: 1; }
 }
+
+/* Off-canvas filter panel slides in from the left */
+@keyframes panel-in-left { from { transform: translateX(-100%); } to { transform: none; } }
+.filter-panel { animation: panel-in-left 0.22s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
