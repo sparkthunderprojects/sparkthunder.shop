@@ -1,3 +1,4 @@
+import { GRID } from "@/lib/ui";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -60,7 +61,7 @@ export default async function FranchisePage(props: PageProps<"/franchises/[slug]
         {products.length === 0 ? (
           <p className="serif mt-6 text-xl text-muted">New {franchise.name} merchandise is on its way.</p>
         ) : (
-          <div className="mt-8 grid grid-cols-2 gap-x-5 gap-y-10 lg:grid-cols-4">
+          <div className={`mt-8 ${GRID}`}>
             {products.map((p, i) => <ProductCard key={p.slug} product={p} priority={i < 4} />)}
           </div>
         )}

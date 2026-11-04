@@ -14,6 +14,7 @@
 }
 
 html { scroll-behavior: smooth; }
+:root { --gutter: clamp(1rem, 3.2vw, 3.5rem); }
 
 body {
   background: var(--color-paper);
@@ -71,7 +72,7 @@ body {
 .hero { position: relative; display: grid; grid-template-columns: 1fr; margin-inline: calc(50% - 50vw); }
 .panel { position: relative; isolation: isolate; min-height: 26rem; display: flex; }
 .panel-bg { position: absolute; inset: 0; z-index: -1; }
-.panel-body { position: relative; display: flex; flex-direction: column; justify-content: flex-end; gap: 1.1rem; padding: 3rem max(1rem, calc(50vw - 40rem)) 3rem 1.5rem; width: 100%; }
+.panel-body { position: relative; display: flex; flex-direction: column; justify-content: flex-end; gap: 1.1rem; padding: 3rem var(--gutter); width: 100%; }
 .seam { position: absolute; pointer-events: none; z-index: 2; }
 .seam polyline { fill: none; stroke: var(--color-bolt); stroke-width: 3; stroke-linejoin: miter; vector-effect: non-scaling-stroke; }
 
@@ -85,12 +86,12 @@ body {
 @media (min-width: 768px) {
   .hero { grid-template-columns: repeat(var(--n, 2), 1fr); min-height: min(74vh, 42rem); }
   .panel { min-height: 0; }
-  .panel-body { padding: 4rem 3rem 4rem max(1.5rem, calc(50vw - 40rem)); }
+  .panel-body { padding: 4rem 3rem 4rem var(--gutter); }
   .panel + .panel { margin-top: 0; margin-left: -18px; }
   .panel + .panel .panel-bg { clip-path: polygon(18px 0, 0 16%, 14px 32%, 2px 50%, 18px 68%, 0 84%, 12px 100%, 100% 100%, 100% 0); }
   .panel + .panel .seam-h { display: none; }
   .panel + .panel .seam-v { display: block; left: 0; top: 0; width: 18px; height: 100%; }
-  .panel + .panel .panel-body { padding: 4rem max(1.5rem, calc(50vw - 40rem)) 4rem 3.5rem; }
+  .panel + .panel .panel-body { padding: 4rem var(--gutter) 4rem 3.5rem; }
   .hero:not(:has(.panel + .panel + .panel)) .panel:first-child .panel-body { padding-right: 3.5rem; }
 }
 

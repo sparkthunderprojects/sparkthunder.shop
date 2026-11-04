@@ -1,3 +1,4 @@
+import { GRID } from "@/lib/ui";
 import type { Metadata } from "next";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { JsonLd } from "@/components/JsonLd";
@@ -22,7 +23,7 @@ export default async function NewPage() {
       <div className="pt-8"><Breadcrumbs items={[{ name: "Home", href: "/" }, { name: "New arrivals" }]} /></div>
       <h1 className="display mt-6 text-[clamp(3.5rem,9vw,8rem)]">New arrivals</h1>
       <p className="prose-lore mt-6 text-muted">The latest official merchandise to land across every Sparkthunder franchise.</p>
-      <div className="mt-10 grid grid-cols-2 gap-x-5 gap-y-10 lg:grid-cols-4">
+      <div className={`mt-10 ${GRID}`}>
         {products.map((p, i) => <ProductCard key={p.slug} product={p} franchiseName={nameBySlug[p.franchiseSlug]} priority={i < 4} />)}
       </div>
     </>

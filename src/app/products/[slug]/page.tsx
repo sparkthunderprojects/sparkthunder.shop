@@ -1,3 +1,4 @@
+import { GRID, nb } from "@/lib/ui";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -77,7 +78,7 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
               {franchise.name}
             </Link>
           )}
-          <h1 className="display mt-3 text-[clamp(3rem,6vw,5.25rem)]">{product.name}</h1>
+          <h1 className="display mt-3 text-[clamp(3rem,6vw,5.25rem)]">{nb(product.name)}</h1>
           <p className="mt-6 flex items-baseline gap-3">
             <span className="display text-5xl">{formatPrice(product.pricePence)}</span>
             {product.comparePricePence && <s className="text-lg text-muted">{formatPrice(product.comparePricePence)}</s>}
@@ -102,7 +103,7 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
       {related.length > 0 && (
         <section className="mt-24" aria-labelledby="related-h">
           <h2 id="related-h" className="display text-5xl">More from the universe</h2>
-          <div className="mt-8 grid grid-cols-2 gap-x-5 gap-y-10 lg:grid-cols-4">
+          <div className={`mt-8 ${GRID}`}>
             {related.map((p) => <ProductCard key={p.slug} product={p} franchiseName={nameBySlug[p.franchiseSlug]} />)}
           </div>
         </section>

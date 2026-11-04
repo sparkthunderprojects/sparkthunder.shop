@@ -49,3 +49,12 @@ drop policy if exists "public read products" on public.products;
 create policy "public read franchises" on public.franchises for select using (true);
 create policy "public read categories" on public.categories for select using (true);
 create policy "public read products" on public.products for select using (published = true);
+
+-- Newsletter sign-ups: anyone can add an email, nobody can read the list with the anon key.
+create table if not exists public.subscribers (
+  email text primary key check (email = lower(email) and length(email) <= 254),
+  created_at timestamptz not null default now()
+);
+alter table public.subscribers enable row level security;
+drop policy if exists "anyone can subscribe" on public.subscribers;
+create policy "anyone can subscribe" on public.subscribers for insert with check (true);

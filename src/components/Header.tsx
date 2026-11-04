@@ -1,38 +1,129 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Bolt } from "@/components/Bolt";
 import { CartLink } from "@/components/CartLink";
-import { getCategories, getFranchises } from "@/lib/catalog";
-import { SITE } from "@/lib/site";
+import { MobileMenu } from "@/components/MobileMenu";
+import { WishlistLink } from "@/components/WishlistLink";
+import { getAllProducts, getCategories, getFranchises } from "@/lib/catalog";
+import { SITE, formatPrice } from "@/lib/site";
+import type { Product } from "@/lib/types";
+
+const topLink = "flex h-full items-center border-b-4 border-transparent px-1 font-bold group-hover:border-bolt group-focus-within:border-bolt";
+const panel = "mega absolute inset-x-0 top-full hidden border-b-2 border-ink bg-paper shadow-[0_18px_0_-12px_rgba(17,20,42,0.12)] group-hover:block group-focus-within:block";
+const subLink = "block py-1.5 hover:underline hover:underline-offset-4";
+
+function MiniProduct({ p }: { p: Product }) {
+  return (
+    <Link href={`/products/${p.slug}`} className="block">
+      <div className="border-2 border-ink bg-paper-2">
+        <Image src={p.images[0] ?? `/art/${p.slug}`} alt="" width={240} height={240} unoptimized={!p.images[0]} className="aspect-square w-full object-cover" />
+      </div>
+      <p className="mt-2 text-sm font-bold leading-snug hover:underline hover:underline-offset-4">{p.name}</p>
+      <p className="text-sm text-muted">{formatPrice(p.pricePence)}</p>
+    </Link>
+  );
+}
 
 export async function Header() {
-  const [franchises, categories] = await Promise.all([getFranchises(), getCategories()]);
+  const [franchises, categories, products] = await Promise.all([getFranchises(), getCategories(), getAllProducts()]);
+  const suggestions = [...franchises.map((f) => f.name), ...categories.map((c) => c.name)];
+  const newest = [...products].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 3);
+
   return (
-    <header className="sticky top-0 z-40 border-b border-ink/15 bg-paper/95 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b-2 border-ink bg-paper">
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:bg-bolt focus:px-3 focus:py-2">Skip to content</a>
-      <div className="mx-auto flex max-w-7xl items-center gap-8 px-4 py-3.5">
+      <div className="flex h-[4.25rem] items-center gap-3 px-(--gutter) sm:gap-5">
+        <MobileMenu franchises={franchises.map(({ slug, name }) => ({ slug, name }))} categories={categories.map(({ slug, name }) => ({ slug, name }))} />
         <Link href="/" className="flex shrink-0 items-center gap-2 whitespace-nowrap" aria-label={`${SITE.name} home`}>
           <Bolt className="h-7 w-5 text-ink" />
-          <span className="display text-[1.7rem] leading-none">Sparkthunder<span className="font-light"> Shop</span></span>
+          <span className="display text-[1.5rem] leading-none sm:text-[1.7rem]">Sparkthunder<span className="hidden font-light sm:inline"> Shop</span></span>
         </Link>
-        <nav aria-label="Primary" className="hidden flex-1 items-center gap-6 whitespace-nowrap text-[0.95rem] lg:flex">
-          {franchises.map((f) => <Link key={f.slug} href={`/franchises/${f.slug}`} className="font-bold hover:underline hover:decoration-2 hover:underline-offset-4">{f.name}</Link>)}
-          <span className="hidden h-4 w-px bg-ink/25 xl:block" aria-hidden />
-          {categories.map((c) => <Link key={c.slug} href={`/categories/${c.slug}`} className="hidden text-muted hover:text-ink hover:underline hover:decoration-2 hover:underline-offset-4 xl:inline">{c.name}</Link>)}
-          <Link href="/new" className="font-bold underline decoration-bolt decoration-[3px] underline-offset-4">New</Link>
+
+        <nav aria-label="Primary" className="ml-4 hidden h-full flex-1 items-stretch gap-7 whitespace-nowrap text-[0.95rem] lg:flex">
+          {franchises.map((f) => {
+            const mine = products.filter((p) => p.franchiseSlug === f.slug);
+            const picks = [...mine].sort((a, b) => Number(b.isFeatured) - Number(a.isFeatured)).slice(0, 3);
+            const cats = categories.filter((c) => mine.some((p) => p.categorySlug === c.slug));
+            return (
+              <div key={f.slug} className="group static">
+                <Link href={`/franchises/${f.slug}`} className={topLink}>{f.name}</Link>
+                <div className={panel} style={{ ["--color-world" as string]: f.accent }}>
+                  <div className="grid grid-cols-[minmax(16rem,1fr)_minmax(12rem,0.7fr)_repeat(3,minmax(0,1fr))] gap-8 px-(--gutter) py-8">
+                    <div className="world -my-8 -ml-(--gutter) flex flex-col justify-end gap-3 py-8 pl-(--gutter) pr-8 whitespace-normal">
+                      <p className="display text-6xl">{f.name}</p>
+                      <p className="serif italic" style={{ color: "var(--world-bright)" }}>{f.tagline}</p>
+                      <Link href={`/franchises/${f.slug}`} className="btn btn-sm mt-2 w-fit">Shop all {f.name}</Link>
+                    </div>
+                    <div>
+                      <p className="font-bold">Shop by type</p>
+                      <ul className="mt-2">
+                        {cats.map((c) => <li key={c.slug}><Link rel="nofollow" href={`/categories/${c.slug}?franchise=${f.slug}`} className={subLink}>{c.name}</Link></li>)}
+                      </ul>
+                    </div>
+                    {picks.map((p) => <MiniProduct key={p.slug} p={p} />)}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+
+          <div className="group static">
+            <Link href="/shop" className={topLink}>Shop</Link>
+            <div className={panel}>
+              <div className="grid grid-cols-[1fr_1fr_repeat(3,minmax(0,1fr))] gap-8 px-(--gutter) py-8">
+                <div>
+                  <p className="font-bold">Shop by type</p>
+                  <ul className="mt-2">
+                    {categories.map((c) => <li key={c.slug}><Link href={`/categories/${c.slug}`} className={subLink}>{c.name}</Link></li>)}
+                    <li><Link href="/shop" className={`${subLink} font-bold`}>All merchandise</Link></li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-bold">Shop by franchise</p>
+                  <ul className="mt-2">
+                    {franchises.map((f) => <li key={f.slug}><Link href={`/franchises/${f.slug}`} className={subLink}>{f.name}</Link></li>)}
+                    <li><Link href="/franchises" className={`${subLink} font-bold`}>All franchises</Link></li>
+                  </ul>
+                </div>
+                {newest.map((p) => <MiniProduct key={p.slug} p={p} />)}
+              </div>
+            </div>
+          </div>
+
+          <div className="group static">
+            <Link href="/gifts" className={topLink}>Gifts</Link>
+            <div className={panel}>
+              <div className="grid grid-cols-[1fr_1fr_2fr] gap-8 px-(--gutter) py-8">
+                <div>
+                  <p className="font-bold">Gifts by price</p>
+                  <ul className="mt-2">
+                    <li><Link href="/gifts#under-15" className={subLink}>Under £15</Link></li>
+                    <li><Link href="/gifts#15-to-25" className={subLink}>£15 to £25</Link></li>
+                    <li><Link href="/gifts#25-to-50" className={subLink}>£25 to £50</Link></li>
+                    <li><Link href="/gifts" className={`${subLink} font-bold`}>All gifts</Link></li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-bold">Gifts by franchise</p>
+                  <ul className="mt-2 whitespace-normal">
+                    {franchises.map((f) => <li key={f.slug}><Link href={`/franchises/${f.slug}`} className={subLink}>For {f.name} fans</Link></li>)}
+                  </ul>
+                </div>
+                <p className="serif max-w-md self-center whitespace-normal text-lg leading-relaxed text-muted">Official merchandise makes an easy gift for readers, players and collectors alike. Start with a price, or pick the universe they love.</p>
+              </div>
+            </div>
+          </div>
+
+          <Link href="/new" className="flex h-full items-center border-b-4 border-bolt px-1 font-bold">New</Link>
         </nav>
+
         <form action="/search" role="search" className="ml-auto hidden md:block">
           <label htmlFor="q" className="sr-only">Search the shop</label>
-          <input id="q" name="q" type="search" placeholder="Search the shop" className="w-44 border-b-2 border-ink/30 bg-transparent px-1 py-1.5 text-sm placeholder:text-muted focus:border-ink focus:outline-none" />
+          <input id="q" name="q" type="search" list="search-suggestions" placeholder="Search the shop" className="w-44 border-b-2 border-ink/30 bg-transparent px-1 py-1.5 text-sm placeholder:text-muted focus:border-ink focus:outline-none xl:w-60" />
+          <datalist id="search-suggestions">{suggestions.map((s) => <option key={s} value={s} />)}</datalist>
         </form>
-        <div className="ml-auto md:ml-0"><CartLink /></div>
+        <div className="ml-auto flex items-center gap-2 md:ml-0"><WishlistLink /><CartLink /></div>
       </div>
-      {/* Mobile nav: plain, crawlable links */}
-      <nav aria-label="Mobile" className="flex gap-5 overflow-x-auto border-t border-ink/10 px-4 py-2.5 text-sm lg:hidden">
-        {franchises.map((f) => <Link key={f.slug} href={`/franchises/${f.slug}`} className="whitespace-nowrap font-bold">{f.name}</Link>)}
-        {categories.map((c) => <Link key={c.slug} href={`/categories/${c.slug}`} className="whitespace-nowrap text-muted">{c.name}</Link>)}
-        <Link href="/new" className="whitespace-nowrap font-bold">New</Link>
-        <Link href="/search" className="whitespace-nowrap text-muted">Search</Link>
-      </nav>
     </header>
   );
 }

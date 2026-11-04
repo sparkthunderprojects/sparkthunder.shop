@@ -8,8 +8,8 @@ export async function Footer() {
   const col = "mt-4 space-y-2.5 text-[0.95rem] text-paper/75";
   const lnk = "hover:text-bolt hover:underline hover:underline-offset-4";
   return (
-    <footer className="on-ink mt-24">
-      <div className="mx-auto max-w-7xl px-4 pb-10 pt-16">
+    <footer className="on-ink">
+      <div className="px-(--gutter) pb-10 pt-16">
         <div className="flex items-end gap-3">
           <Bolt className="h-16 w-12 text-bolt sm:h-24 sm:w-[4.5rem]" />
           <p className="display text-[clamp(3.5rem,11vw,9rem)]">Sparkthunder</p>
@@ -28,6 +28,8 @@ export async function Footer() {
             <ul className={col}>
               {categories.map((c) => <li key={c.slug}><Link className={lnk} href={`/categories/${c.slug}`}>{c.name}</Link></li>)}
               <li><Link className={lnk} href="/new">New arrivals</Link></li>
+              <li><Link className={lnk} href="/gifts">Gifts</Link></li>
+              <li><Link className={lnk} href="/shop">All merchandise</Link></li>
             </ul>
           </div>
           <div>

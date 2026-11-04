@@ -2,7 +2,11 @@ import type { Metadata, Viewport } from "next";
 import "@fontsource-variable/bricolage-grotesque/wdth.css";
 import "@fontsource-variable/newsreader/opsz.css";
 import "./globals.css";
+import { AnnouncementBar } from "@/components/AnnouncementBar";
+import { CartDrawer } from "@/components/CartDrawer";
 import { CartProvider } from "@/components/CartProvider";
+import { Newsletter } from "@/components/Newsletter";
+import { WishlistProvider } from "@/components/WishlistProvider";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { JsonLd } from "@/components/JsonLd";
@@ -29,9 +33,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="flex min-h-full flex-col">
         <JsonLd data={[organizationLd(), websiteLd()]} />
         <CartProvider>
-          <Header />
-          <main id="main" className="mx-auto w-full max-w-7xl flex-1 px-4 pb-24">{children}</main>
-          <Footer />
+          <WishlistProvider>
+            <AnnouncementBar />
+            <Header />
+            <main id="main" className="w-full flex-1 px-(--gutter) pb-24">{children}</main>
+            <Newsletter />
+            <Footer />
+            <CartDrawer />
+          </WishlistProvider>
         </CartProvider>
       </body>
     </html>

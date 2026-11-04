@@ -19,3 +19,10 @@ export function absoluteUrl(path = "/"): string {
 export function formatPrice(pence: number, currency: string = SITE.currency): string {
   return new Intl.NumberFormat("en-GB", { style: "currency", currency }).format(pence / 100);
 }
+
+/** Rotating announcement-bar messages. Keep these factual: only advertise offers that really exist. */
+export const ANNOUNCEMENTS: { text: string; href?: string }[] = [
+  { text: "Official merchandise from every Sparkthunder universe", href: "/shop" },
+  { text: "New arrivals just landed", href: "/new" },
+  { text: "Join the list for first access to new drops", href: "#newsletter" },
+];
