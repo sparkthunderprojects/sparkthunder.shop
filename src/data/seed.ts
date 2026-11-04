@@ -1,0 +1,277 @@
+import type { Catalog } from "@/lib/types";
+
+/**
+ * Seed / fallback catalogue.
+ *
+ * Used (a) as the source for `supabase/seed.sql` and (b) as the live data source
+ * whenever Supabase env vars are not set, so the site always builds and renders.
+ *
+ * ALL product names, prices and copy below are PLACEHOLDERS - replace them in
+ * Supabase (or here) with real merchandise before launch.
+ */
+export const seedCatalog: Catalog = {
+  franchises: [
+    {
+      slug: "knightverge",
+      name: "Knightverge",
+      tagline: "A shared universe of heroes, vampire slayers, assassins and legacy.",
+      accent: "#c9a227",
+      sortOrder: 1,
+      description:
+        "Knightverge is the flagship universe of Sparkthunder: a sprawling world of comics, characters, locations and a full tabletop role-playing game. Its story, characters and story arcs are complete, which means every piece of Knightverge merchandise connects to a finished, richly detailed universe rather than a work in progress. Fans can follow the heroes, villains and factions across the main continuity as well as the Subverses, such as the Slayerverse and the Assassinverse, each of which has its own tone, lineage and cast. The Knightverge shop collection brings that world into your home and your game night. Wear a character-inspired tee to the convention, roll a set of themed dice at the table, hang a poster of your favourite power set above your desk, or start a collection of display pieces that celebrate the legacy of the universe. Because Knightverge is also a tabletop game, a lot of our range is made with players and game masters in mind: dice, rulebook companions, character sheets and accessories built to survive long campaigns. Every item is designed by the creators behind the universe, so what you buy is official, canon-accurate and made to last. Explore the full Knightverge range below, from everyday apparel to premium collectibles.",
+    },
+    {
+      slug: "grim-gala",
+      name: "Grim Gala",
+      tagline: "Dark elegance, macabre style and gothic celebration.",
+      accent: "#8b1e3f",
+      sortOrder: 2,
+      description:
+        "Grim Gala is Sparkthunder's label for dark elegance: a world where the masquerade never ends and every invitation comes with a shadow attached. Where Knightverge leans into heroics and legacy, Grim Gala leans into atmosphere, style and the pleasure of a good gothic party. The Grim Gala shop collection is designed for people who like their merchandise with a little drama. Expect deep colours, sharp typography, ornate details and pieces that look as good on a shelf as they do on a night out. Our apparel is cut to be worn for real, our drinkware is made for toasts and long evenings, and our prints and collectibles are made to turn a plain wall or bookcase into something worth looking at twice. Every Grim Gala product is official and designed in-house by the Sparkthunder team, so the artwork, the typography and the details match the world they come from. Whether you are buying a gift for a fan of the label, dressing for your own gala, or simply adding a bit of gothic character to your everyday things, you will find something here. Browse the full Grim Gala range below and find the pieces that suit your own kind of celebration.",
+    },
+  ],
+  categories: [
+    {
+      slug: "apparel",
+      name: "Apparel",
+      sortOrder: 1,
+      description:
+        "Official Sparkthunder apparel for every franchise: soft-handle tees, hoodies and caps printed with original artwork from the universes you love. Each design is created by the same team that writes and draws the stories, so the logos, crests and character art are accurate to canon. Pieces are cut for everyday wear rather than costume, which makes them easy to pair with what you already own, whether you are heading to a convention, a game night or just the shops. Sizing notes are listed on every product page.",
+    },
+    {
+      slug: "drinkware",
+      name: "Drinkware",
+      sortOrder: 2,
+      description:
+        "Mugs, tumblers and glassware that carry the look of your favourite franchise from the first coffee of the morning to the last toast of the evening. Our drinkware range is chosen for everyday durability as well as design: dishwasher-friendly finishes, comfortable handles and sturdy bases. Pick up a single mug for your desk, or build a matching set for game night or your next gathering. Care instructions are listed on each product page.",
+    },
+    {
+      slug: "collectibles",
+      name: "Collectibles",
+      sortOrder: 3,
+      description:
+        "Display pieces and keepsakes for fans who like to build a shelf. Collectibles include enamel pins, art figures and limited items designed to celebrate the characters, factions and symbols of each Sparkthunder franchise. Where an item is made in a limited run, the product page says so clearly. Everything is designed in-house, so each piece is official, canon-accurate and made to be displayed rather than hidden away in a drawer.",
+    },
+    {
+      slug: "prints-posters",
+      name: "Prints & Posters",
+      sortOrder: 4,
+      description:
+        "Wall art from the Sparkthunder universe: high-quality prints and posters featuring original artwork, character portraits and symbols from our franchises. Prints are produced on heavyweight paper with rich colour so that dark scenes stay detailed and bright accents stay vivid. Available in several sizes, they suit a bedroom, a games room or an office wall, and they make an easy, personal gift for fans of the comics and the tabletop game.",
+    },
+    {
+      slug: "tabletop",
+      name: "Tabletop & Gaming",
+      sortOrder: 5,
+      description:
+        "Gear for players and game masters: polyhedral dice sets, character sheet pads, rulebook companions and table accessories made for the Knightverge tabletop RPG and other Sparkthunder games. Everything here is designed to survive long campaigns and frequent travel, from carry cases that keep dice organised to sheets that erase cleanly. Whether you are running your first session or your fiftieth, these are the items that make the table feel like part of the world.",
+    },
+  ],
+  products: [
+    {
+      slug: "knightverge-crest-tee",
+      sku: "SPK-KV-TEE-001",
+      name: "Knightverge Crest T-Shirt",
+      franchiseSlug: "knightverge",
+      categorySlug: "apparel",
+      pricePence: 2499,
+      shortDescription: "Soft cotton tee printed with the Knightverge crest.",
+      description:
+        "A comfortable, everyday tee featuring the Knightverge crest in a clean single-colour print. Made from soft combed cotton with a classic fit, it is built to be worn and washed repeatedly without the print cracking or fading. Designed by the Sparkthunder team, it is the easiest way to show you are part of the universe, whether at a convention, at the game table or out and about.",
+      details: ["100% combed cotton", "Classic unisex fit", "Machine wash at 30°C, inside out", "Official Sparkthunder merchandise"],
+      images: [],
+      inStock: true,
+      isNew: true,
+      isFeatured: true,
+      createdAt: "2026-10-01",
+    },
+    {
+      slug: "knightverge-legacy-hoodie",
+      sku: "SPK-KV-HOO-001",
+      name: "Knightverge Legacy Hoodie",
+      franchiseSlug: "knightverge",
+      categorySlug: "apparel",
+      pricePence: 4999,
+      comparePricePence: 5999,
+      shortDescription: "Heavyweight pullover hoodie with embroidered crest.",
+      description:
+        "A heavyweight pullover hoodie with an embroidered Knightverge crest on the chest and a subtle legacy emblem on the sleeve. The brushed-back fleece lining keeps you warm through long sessions and cold walks home, and the double-layer hood holds its shape wash after wash. A premium piece for fans who want something they will actually reach for every week.",
+      details: ["80% cotton, 20% recycled polyester fleece", "Embroidered chest crest", "Kangaroo pocket", "Machine wash at 30°C"],
+      images: [],
+      inStock: true,
+      isNew: false,
+      isFeatured: true,
+      createdAt: "2026-09-20",
+    },
+    {
+      slug: "slayerverse-sigil-cap",
+      sku: "SPK-KV-CAP-001",
+      name: "Slayerverse Sigil Cap",
+      franchiseSlug: "knightverge",
+      categorySlug: "apparel",
+      pricePence: 1999,
+      shortDescription: "Six-panel cap with embroidered Slayerverse sigil.",
+      description:
+        "An unstructured six-panel cap carrying the embroidered Slayerverse sigil, a nod to the vampire-slaying lineage at the heart of that Subverse. The adjustable strap fits most head sizes and the washed cotton twill is soft from the first wear.",
+      details: ["Washed cotton twill", "Adjustable strap", "Embroidered sigil", "One size"],
+      images: [],
+      inStock: true,
+      isNew: false,
+      isFeatured: false,
+      createdAt: "2026-09-10",
+    },
+    {
+      slug: "knightverge-heroes-mug",
+      sku: "SPK-KV-MUG-001",
+      name: "Knightverge Heroes Mug",
+      franchiseSlug: "knightverge",
+      categorySlug: "drinkware",
+      pricePence: 1299,
+      shortDescription: "11oz ceramic mug with wrap-around Knightverge artwork.",
+      description:
+        "An 11oz ceramic mug printed with wrap-around Knightverge artwork. The glossy finish keeps colours deep and the comfortable handle makes it a pleasure to use every morning. Dishwasher and microwave safe, so it works as hard as you do.",
+      details: ["11oz / 330ml ceramic", "Dishwasher and microwave safe", "Wrap-around print"],
+      images: [],
+      inStock: true,
+      isNew: false,
+      isFeatured: false,
+      createdAt: "2026-08-15",
+    },
+    {
+      slug: "grim-gala-masquerade-tee",
+      sku: "SPK-GG-TEE-001",
+      name: "Grim Gala Masquerade T-Shirt",
+      franchiseSlug: "grim-gala",
+      categorySlug: "apparel",
+      pricePence: 2699,
+      shortDescription: "Black tee with the Grim Gala masquerade mask in crimson foil.",
+      description:
+        "A black cotton tee featuring the Grim Gala masquerade mask rendered in crimson foil. The foil catches the light as you move, giving the print a subtle shimmer that suits an evening out as well as a casual day. Cut in a relaxed fit with a soft hand-feel.",
+      details: ["100% cotton", "Relaxed fit", "Foil print: turn inside out and wash cold", "Official Sparkthunder merchandise"],
+      images: [],
+      inStock: true,
+      isNew: true,
+      isFeatured: true,
+      createdAt: "2026-10-12",
+    },
+    {
+      slug: "grim-gala-goblet",
+      sku: "SPK-GG-GLS-001",
+      name: "Grim Gala Etched Goblet",
+      franchiseSlug: "grim-gala",
+      categorySlug: "drinkware",
+      pricePence: 1899,
+      shortDescription: "Heavy glass goblet etched with the Grim Gala emblem.",
+      description:
+        "A heavy-based glass goblet with the Grim Gala emblem etched on the bowl. Made for toasts, dark red wine and long evenings, it has the weight and presence of a piece you would put on the table for a special occasion. Hand wash recommended to preserve the etching.",
+      details: ["Glass, approx. 400ml", "Etched emblem", "Hand wash recommended"],
+      images: [],
+      inStock: true,
+      isNew: false,
+      isFeatured: true,
+      createdAt: "2026-09-25",
+    },
+    {
+      slug: "grim-gala-enamel-pin",
+      sku: "SPK-GG-PIN-001",
+      name: "Grim Gala Masquerade Enamel Pin",
+      franchiseSlug: "grim-gala",
+      categorySlug: "collectibles",
+      pricePence: 899,
+      shortDescription: "Hard enamel pin of the Grim Gala masquerade mask.",
+      description:
+        "A hard enamel pin of the Grim Gala masquerade mask with gold-tone metal edges and a double rubber backing so it stays put on a jacket, bag or lanyard. A small, affordable way to start a collection.",
+      details: ["Hard enamel, gold-tone plating", "Approx. 30mm", "Double rubber clutch"],
+      images: [],
+      inStock: true,
+      isNew: false,
+      isFeatured: false,
+      createdAt: "2026-08-30",
+    },
+    {
+      slug: "knightverge-hero-figure",
+      sku: "SPK-KV-FIG-001",
+      name: "Knightverge Hero Art Figure",
+      franchiseSlug: "knightverge",
+      categorySlug: "collectibles",
+      pricePence: 3999,
+      shortDescription: "Display figure in a collector window box.",
+      description:
+        "A 15cm display figure of a Knightverge hero, sculpted to match the comics and delivered in a collector window box. Fully painted with a stable base, it is made to be displayed rather than played with, and it looks right at home next to the books on a shelf.",
+      details: ["Approx. 15cm tall", "PVC, hand-painted", "Collector window box", "Not suitable for children under 14"],
+      images: [],
+      inStock: false,
+      isNew: false,
+      isFeatured: false,
+      createdAt: "2026-07-18",
+    },
+    {
+      slug: "knightverge-power-set-poster",
+      sku: "SPK-KV-PRT-001",
+      name: "Knightverge Power Sets Poster",
+      franchiseSlug: "knightverge",
+      categorySlug: "prints-posters",
+      pricePence: 1599,
+      shortDescription: "A2 poster mapping the Knightverge power set families.",
+      description:
+        "An A2 poster that maps the families of powers found across Knightverge in a single, striking graphic. Printed on heavyweight matte paper with deep inks, it works as both wall art and a quick visual reference for players and fans. Delivered rolled in a protective tube.",
+      details: ["A2 (420 x 594mm)", "200gsm matte paper", "Shipped rolled in a tube"],
+      images: [],
+      inStock: true,
+      isNew: true,
+      isFeatured: true,
+      createdAt: "2026-10-20",
+    },
+    {
+      slug: "grim-gala-invitation-print",
+      sku: "SPK-GG-PRT-001",
+      name: "Grim Gala Invitation Art Print",
+      franchiseSlug: "grim-gala",
+      categorySlug: "prints-posters",
+      pricePence: 1999,
+      shortDescription: "A3 art print styled as a Grim Gala invitation.",
+      description:
+        "An A3 art print styled as a Grim Gala invitation, with ornate borders, gold-toned lettering and a wax-seal detail. Printed on thick textured paper, it frames beautifully and makes a distinctive gift for anyone with a taste for gothic style.",
+      details: ["A3 (297 x 420mm)", "250gsm textured paper", "Frame not included"],
+      images: [],
+      inStock: true,
+      isNew: false,
+      isFeatured: false,
+      createdAt: "2026-09-02",
+    },
+    {
+      slug: "knightverge-polyhedral-dice-set",
+      sku: "SPK-KV-DCE-001",
+      name: "Knightverge Polyhedral Dice Set",
+      franchiseSlug: "knightverge",
+      categorySlug: "tabletop",
+      pricePence: 1999,
+      shortDescription: "Seven-piece resin dice set with gold-inked numerals.",
+      description:
+        "A seven-piece polyhedral dice set in deep resin with gold-inked numerals that stay legible under table lighting. Includes d4, d6, d8, d10, percentile d10, d12 and d20, and arrives in a padded drawstring pouch. The sharp edges and balanced weighting make them a pleasure to roll at any Knightverge session.",
+      details: ["7 dice: d4, d6, d8, d10, d%, d12, d20", "Resin with inked numerals", "Drawstring pouch included"],
+      images: [],
+      inStock: true,
+      isNew: false,
+      isFeatured: true,
+      createdAt: "2026-09-05",
+    },
+    {
+      slug: "knightverge-character-sheet-pad",
+      sku: "SPK-KV-PAD-001",
+      name: "Knightverge Character Sheet Pad",
+      franchiseSlug: "knightverge",
+      categorySlug: "tabletop",
+      pricePence: 1199,
+      shortDescription: "50-sheet pad of official Knightverge character sheets.",
+      description:
+        "A 50-sheet pad of official character sheets for the Knightverge tabletop RPG, laid out for quick reference at the table. Double-sided and printed on thick paper that takes pencil cleanly, it gives every player in your group a tidy, consistent sheet for the whole campaign.",
+      details: ["50 double-sided sheets", "A4", "Thick paper, pencil friendly"],
+      images: [],
+      inStock: true,
+      isNew: false,
+      isFeatured: false,
+      createdAt: "2026-08-22",
+    },
+  ],
+};
