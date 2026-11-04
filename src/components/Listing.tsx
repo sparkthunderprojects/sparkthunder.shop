@@ -26,6 +26,11 @@ const VIEW_CLASS: Record<View, string> = {
   default: "grid-cols-2 gap-x-5 gap-y-10 md:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6",
   dense: "grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8",
 };
+const FLUSH_CLASS: Record<View, string> = {
+  large: "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-4",
+  default: "grid-cols-2 md:grid-cols-3 xl:grid-cols-5",
+  dense: "grid-cols-2 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8",
+};
 const VIEW_KEY = "sparkthunder-grid-v1";
 
 const select = "border-2 border-ink bg-paper px-3 py-2 text-sm font-bold";
@@ -43,11 +48,13 @@ function ViewIcon({ cols }: { cols: number }) {
  * Sorting, filtering and grid-size controls. The server renders every product in default order (so the page is
  * complete HTML for crawlers); these controls then reshape it instantly in the browser with no extra URLs to index.
  */
-export function Listing({ products, franchiseNames, categoryNames = {}, priorityCount = 4 }: {
+export function Listing({ products, franchiseNames, categoryNames = {}, priorityCount = 4, flush = false }: {
   products: Product[];
   franchiseNames: Record<string, string>;
   categoryNames?: Record<string, string>;
   priorityCount?: number;
+  /** Edge-to-edge catalogue grid with hairline dividers (used for search results). */
+  flush?: boolean;
 }) {
   const [sort, setSort] = useState<Sort>("featured");
   const [franchise, setFranchise] = useState("all");
@@ -173,8 +180,8 @@ export function Listing({ products, franchiseNames, categoryNames = {}, priority
       {shown.length === 0 ? (
         <p className="serif mt-8 text-xl text-muted">Nothing matches those filters. <button onClick={reset} className="font-bold text-ink underline underline-offset-4">Clear them</button> to see everything.</p>
       ) : (
-        <div className={`mt-6 grid transition-opacity duration-150 ${busy ? "opacity-40" : "opacity-100"} ${VIEW_CLASS[view]}`}>
-          {shown.map((p, i) => <ProductCard key={p.slug} product={p} franchiseName={franchiseNames[p.franchiseSlug]} priority={i < priorityCount} />)}
+        <div className={`mt-6 grid transition-opacity duration-150 ${busy ? "opacity-40" : "opacity-100"} ${flush ? `-mx-(--gutter) border-l border-t border-ink/15 ${FLUSH_CLASS[view]}` : VIEW_CLASS[view]}`}>
+          {shown.map((p, i) => <ProductCard key={p.slug} product={p} variant={flush ? "flush" : "default"} franchiseName={franchiseNames[p.franchiseSlug]} priority={i < priorityCount} />)}
         </div>
       )}
 

@@ -117,3 +117,10 @@ body {
 /* Off-canvas filter panel slides in from the left */
 @keyframes panel-in-left { from { transform: translateX(-100%); } to { transform: none; } }
 .filter-panel { animation: panel-in-left 0.22s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+
+/* Flush catalogue cells: Quick View sits on the image, revealed on hover for mouse users */
+.quick-overlay { opacity: 1; }
+@media (hover: hover) {
+  .quick-overlay { opacity: 0; transition: opacity 0.15s; }
+  .group:hover .quick-overlay, .group:focus-within .quick-overlay { opacity: 1; }
+}
