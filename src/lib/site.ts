@@ -19,6 +19,19 @@ export const SITE = {
 const freeShipping = Number(process.env.NEXT_PUBLIC_FREE_SHIPPING_PENCE);
 export const FREE_SHIPPING_PENCE: number | null = Number.isFinite(freeShipping) && freeShipping > 0 ? freeShipping : null;
 
+/** Public contact address shown on the legal pages. Set NEXT_PUBLIC_CONTACT_EMAIL once a real inbox exists. */
+export const CONTACT_EMAIL: string | null = process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim() || null;
+
+/** Payment methods shown in the footer. Keep in step with what Stripe is configured to accept. */
+export const PAYMENT_METHODS = ["Visa", "Mastercard", "American Express", "Apple Pay", "Google Pay"] as const;
+
+export const LEGAL_PAGES = [
+  { href: "/terms", label: "Terms of use" },
+  { href: "/privacy", label: "Privacy policy" },
+  { href: "/cookies", label: "Cookie policy" },
+  { href: "/accessibility", label: "Accessibility statement" },
+] as const;
+
 export function absoluteUrl(path = "/"): string {
   return `${SITE.url}${path.startsWith("/") ? path : `/${path}`}`;
 }

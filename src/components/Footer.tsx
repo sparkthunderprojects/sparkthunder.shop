@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Bolt } from "@/components/Bolt";
+import { PaymentBadges } from "@/components/PaymentBadges";
 import { getCategories, getFranchises } from "@/lib/catalog";
-import { SITE } from "@/lib/site";
+import { LEGAL_PAGES, SITE } from "@/lib/site";
 
 export async function Footer() {
   const [franchises, categories] = await Promise.all([getFranchises(), getCategories()]);
@@ -40,7 +41,15 @@ export async function Footer() {
             </ul>
           </div>
         </div>
-        <p className="mt-14 border-t border-paper/15 pt-6 text-sm text-paper/60">© {new Date().getFullYear()} {SITE.legalName}. Official merchandise.</p>
+        <div className="mt-14 flex flex-col gap-5 border-t border-paper/15 pt-6 text-sm text-paper/60 md:flex-row md:items-center md:justify-between">
+          <p>© {new Date().getFullYear()} {SITE.legalName}. Official merchandise.</p>
+          <nav aria-label="Legal">
+            <ul className="flex flex-wrap gap-x-7 gap-y-2 font-bold uppercase tracking-wide text-paper/75">
+              {LEGAL_PAGES.map((l) => <li key={l.href}><Link className={lnk} href={l.href}>{l.label}</Link></li>)}
+            </ul>
+          </nav>
+        </div>
+        <PaymentBadges />
       </div>
     </footer>
   );

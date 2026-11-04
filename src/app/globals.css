@@ -124,3 +124,9 @@ body {
   .quick-overlay { opacity: 0; transition: opacity 0.15s; }
   .group:hover .quick-overlay, .group:focus-within .quick-overlay { opacity: 1; }
 }
+
+/* Policy pages */
+.legal h2 { font-family: var(--font-display); font-weight: 800; font-stretch: 75%; font-size: 2rem; line-height: 1; margin: 2.5rem 0 0.75rem; }
+.legal p, .legal ul { margin-top: 0.75rem; }
+.legal ul { list-style: disc; padding-left: 1.4rem; }
+.legal li { margin-top: 0.35rem; }
