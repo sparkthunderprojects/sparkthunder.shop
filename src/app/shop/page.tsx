@@ -5,6 +5,7 @@ import { JsonLd } from "@/components/JsonLd";
 import { Listing } from "@/components/Listing";
 import { getAllProducts, getCategories, getFranchises } from "@/lib/catalog";
 import { breadcrumbLd, buildMetadata, itemListLd } from "@/lib/seo";
+import { worldStyle } from "@/lib/theme";
 
 export const revalidate = 300;
 
@@ -17,18 +18,49 @@ export const metadata: Metadata = buildMetadata({
 export default async function ShopPage() {
   const [products, categories, franchises] = await Promise.all([getAllProducts(), getCategories(), getFranchises()]);
   const nameBySlug = Object.fromEntries(franchises.map((f) => [f.slug, f.name]));
+  const countIn = (pick: (p: (typeof products)[number]) => boolean) => products.filter(pick).length;
+
   return (
     <>
       <JsonLd data={[breadcrumbLd([{ name: "Home", path: "/" }, { name: "All merchandise", path: "/shop" }]), itemListLd("All merchandise", "/shop", products)]} />
+
       <div className="pt-8"><Breadcrumbs items={[{ name: "Home", href: "/" }, { name: "All merchandise" }]} /></div>
-      <h1 className="display mt-6 text-[clamp(3.5rem,9vw,8rem)]">All merchandise</h1>
-      <p className="prose-lore mt-6 text-muted">Every official product from every Sparkthunder franchise. Narrow it down by type or by universe.</p>
-      <ul className="mt-10 flex flex-wrap gap-x-7 gap-y-2 border-y-2 border-ink py-4" aria-label="Browse by type or franchise">
-        {categories.map((c) => <li key={c.slug}><Link href={`/categories/${c.slug}`} className="font-bold hover:underline hover:underline-offset-4">{c.name}</Link></li>)}
-        <li aria-hidden className="text-muted">|</li>
-        {franchises.map((f) => <li key={f.slug}><Link href={`/franchises/${f.slug}`} className="font-bold text-muted hover:text-ink hover:underline hover:underline-offset-4">{f.name}</Link></li>)}
+      <div className="mt-5 flex flex-wrap items-end justify-between gap-x-10 gap-y-3">
+        <h1 className="display text-[clamp(2.75rem,6vw,5rem)]">All merchandise</h1>
+        <p className="serif max-w-md text-lg leading-relaxed text-muted">Every official product from every Sparkthunder franchise, in one place.</p>
+      </div>
+
+      {/* One block per universe, in its own colour, joined by the lightning seam */}
+      <ul className="-mx-(--gutter) mt-8 grid md:grid-cols-[repeat(var(--n),1fr)]" style={{ ["--n" as string]: franchises.length }} aria-label="Shop by franchise">
+        {franchises.map((f) => (
+          <li key={f.slug} className="md:border-l-[3px] md:border-bolt md:first:border-l-0">
+            <Link href={`/franchises/${f.slug}`} style={worldStyle(f.accent)} className="world group flex h-full items-end justify-between gap-6 px-(--gutter) py-7 md:py-9">
+              <span>
+                <span className="display block text-[clamp(2.5rem,5vw,4.25rem)] group-hover:underline group-hover:decoration-bolt group-hover:decoration-4 group-hover:underline-offset-8">{f.name}</span>
+                <span className="serif mt-2 block italic" style={{ color: "var(--world-bright)" }}>{f.tagline}</span>
+              </span>
+              <span className="shrink-0 pb-1 text-right text-sm text-paper/75">{countIn((p) => p.franchiseSlug === f.slug)} products</span>
+            </Link>
+          </li>
+        ))}
       </ul>
-      <div className="mt-10"><Listing products={products} franchiseNames={nameBySlug} categoryNames={Object.fromEntries(categories.map((c) => [c.slug, c.name]))} priorityCount={6} /></div>
+
+      <nav aria-label="Shop by type" className="mt-6">
+        <ul className="flex gap-x-7 gap-y-2 overflow-x-auto whitespace-nowrap pb-1">
+          <li><span aria-current="page" className="link-line font-bold">All <span className="font-normal text-muted">{products.length}</span></span></li>
+          {categories.map((c) => (
+            <li key={c.slug}>
+              <Link href={`/categories/${c.slug}`} className="font-bold text-muted hover:text-ink hover:underline hover:underline-offset-4">
+                {c.name} <span className="font-normal">{countIn((p) => p.categorySlug === c.slug)}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      <div className="mt-6">
+        <Listing products={products} franchiseNames={nameBySlug} categoryNames={Object.fromEntries(categories.map((c) => [c.slug, c.name]))} priorityCount={5} flush />
+      </div>
     </>
   );
 }

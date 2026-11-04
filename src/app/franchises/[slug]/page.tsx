@@ -60,7 +60,7 @@ export default async function FranchisePage(props: PageProps<"/franchises/[slug]
         {products.length === 0 ? (
           <p className="serif mt-6 text-xl text-muted">New {franchise.name} merchandise is on its way.</p>
         ) : (
-          <div className="mt-8"><Listing products={products} franchiseNames={{ [franchise.slug]: franchise.name }} categoryNames={Object.fromEntries(categories.map((c) => [c.slug, c.name]))} /></div>
+          <div className="mt-8"><Listing products={products} franchiseNames={{ [franchise.slug]: franchise.name }} categoryNames={Object.fromEntries(categories.map((c) => [c.slug, c.name]))} flush /></div>
         )}
       </section>
     </div>

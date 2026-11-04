@@ -54,7 +54,7 @@ export default async function CategoryPage(props: PageProps<"/categories/[slug]"
       {products.length === 0 ? (
         <p className="serif mt-10 text-xl text-muted">Nothing here yet. New merchandise is added regularly.</p>
       ) : (
-        <div className="mt-10"><Listing products={products} franchiseNames={nameBySlug} /></div>
+        <div className="mt-10"><Listing products={products} franchiseNames={nameBySlug} flush /></div>
       )}
     </>
   );

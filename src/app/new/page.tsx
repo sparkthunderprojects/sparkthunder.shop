@@ -22,7 +22,7 @@ export default async function NewPage() {
       <div className="pt-8"><Breadcrumbs items={[{ name: "Home", href: "/" }, { name: "New arrivals" }]} /></div>
       <h1 className="display mt-6 text-[clamp(3.5rem,9vw,8rem)]">New arrivals</h1>
       <p className="prose-lore mt-6 text-muted">The latest official merchandise to land across every Sparkthunder franchise.</p>
-      <div className="mt-10"><Listing products={products} franchiseNames={nameBySlug} /></div>
+      <div className="mt-10"><Listing products={products} franchiseNames={nameBySlug} flush /></div>
     </>
   );
 }
