@@ -1,6 +1,5 @@
-import { GRID } from "@/lib/ui";
 import type { Metadata } from "next";
-import { ProductCard } from "@/components/ProductCard";
+import { Listing } from "@/components/Listing";
 import Link from "next/link";
 import { getCategories, getFranchises, getProducts } from "@/lib/catalog";
 
@@ -31,9 +30,7 @@ export default async function SearchPage(props: PageProps<"/search">) {
         </section>
       )}
       {q && products.length === 0 && <p className="serif mt-8 text-xl text-muted">No products found. Try a franchise name or a product type like “mug” or “dice”.</p>}
-      <div className={`mt-10 ${GRID}`}>
-        {products.map((p) => <ProductCard key={p.slug} product={p} franchiseName={nameBySlug[p.franchiseSlug]} />)}
-      </div>
+      {products.length > 0 && <div className="mt-10"><Listing products={products} franchiseNames={nameBySlug} categoryNames={Object.fromEntries(categories.map((c) => [c.slug, c.name]))} /></div>}
     </>
   );
 }

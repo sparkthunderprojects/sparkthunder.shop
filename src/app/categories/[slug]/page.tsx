@@ -1,10 +1,9 @@
-import { GRID } from "@/lib/ui";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { JsonLd } from "@/components/JsonLd";
-import { ProductCard } from "@/components/ProductCard";
+import { Listing } from "@/components/Listing";
 import { getCategories, getCategory, getFranchises, getProducts } from "@/lib/catalog";
 import { breadcrumbLd, buildMetadata, clip, itemListLd } from "@/lib/seo";
 
@@ -55,9 +54,7 @@ export default async function CategoryPage(props: PageProps<"/categories/[slug]"
       {products.length === 0 ? (
         <p className="serif mt-10 text-xl text-muted">Nothing here yet. New merchandise is added regularly.</p>
       ) : (
-        <div className={`mt-10 ${GRID}`}>
-          {products.map((p, i) => <ProductCard key={p.slug} product={p} franchiseName={nameBySlug[p.franchiseSlug]} priority={i < 4} />)}
-        </div>
+        <div className="mt-10"><Listing products={products} franchiseNames={nameBySlug} /></div>
       )}
     </>
   );

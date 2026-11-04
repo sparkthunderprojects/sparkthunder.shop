@@ -1,12 +1,14 @@
 import Link from "next/link";
-import { HeartButton } from "@/components/HeartButton";
+import { CardActions } from "@/components/CardActions";
 import { ProductImage } from "@/components/ProductImage";
 import { QuickAdd } from "@/components/QuickAdd";
+import { discountPercent, productImagePath, toQuick } from "@/lib/card";
 import { formatPrice } from "@/lib/site";
 import type { Product } from "@/lib/types";
 
 export function ProductCard({ product, franchiseName, priority = false }: { product: Product; franchiseName?: string; priority?: boolean }) {
-  const badge = !product.inStock ? "Sold out" : product.comparePricePence ? "Sale" : product.isNew ? "New" : null;
+  const pct = discountPercent(product);
+  const badge = !product.inStock ? "Sold out" : pct ? `-${pct}%` : product.isNew ? "New" : null;
   return (
     <article className="group relative">
       <Link href={`/products/${product.slug}`} className="block">
@@ -23,10 +25,10 @@ export function ProductCard({ product, franchiseName, priority = false }: { prod
           </span>
         </p>
       </Link>
-      <HeartButton slug={product.slug} name={product.name} className="absolute right-2 top-2" />
+      <CardActions quick={toQuick(product, franchiseName)} />
       {product.inStock && (
         <div className="pointer-events-none absolute inset-x-0 top-0 aspect-square overflow-hidden">
-          <QuickAdd item={{ slug: product.slug, name: product.name, pricePence: product.pricePence, image: product.images[0] ?? `/art/${product.slug}` }} />
+          <QuickAdd item={{ slug: product.slug, name: product.name, pricePence: product.pricePence, image: productImagePath(product) }} />
         </div>
       )}
     </article>

@@ -2,10 +2,9 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { JsonLd } from "@/components/JsonLd";
-import { ProductCard } from "@/components/ProductCard";
+import { Listing } from "@/components/Listing";
 import { getAllProducts, getCategories, getFranchises } from "@/lib/catalog";
 import { breadcrumbLd, buildMetadata, itemListLd } from "@/lib/seo";
-import { GRID } from "@/lib/ui";
 
 export const revalidate = 300;
 
@@ -29,9 +28,7 @@ export default async function ShopPage() {
         <li aria-hidden className="text-muted">|</li>
         {franchises.map((f) => <li key={f.slug}><Link href={`/franchises/${f.slug}`} className="font-bold text-muted hover:text-ink hover:underline hover:underline-offset-4">{f.name}</Link></li>)}
       </ul>
-      <div className={`mt-10 ${GRID}`}>
-        {products.map((p, i) => <ProductCard key={p.slug} product={p} franchiseName={nameBySlug[p.franchiseSlug]} priority={i < 6} />)}
-      </div>
+      <div className="mt-10"><Listing products={products} franchiseNames={nameBySlug} categoryNames={Object.fromEntries(categories.map((c) => [c.slug, c.name]))} priorityCount={6} /></div>
     </>
   );
 }

@@ -105,3 +105,11 @@ body {
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation: none !important; transition-duration: 0.01ms !important; }
 }
+
+/* ---------- Product card extras: quick view + compare reveal on hover/focus ---------- */
+.card-extra { display: none; }
+@media (min-width: 768px) { .card-extra { display: flex; } }
+@media (min-width: 768px) and (hover: hover) {
+  .card-extra { opacity: 0; transition: opacity 0.15s; }
+  .group:hover .card-extra, .group:focus-within .card-extra { opacity: 1; }
+}

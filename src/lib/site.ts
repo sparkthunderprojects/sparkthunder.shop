@@ -12,6 +12,13 @@ export const SITE = {
   sameAs: [] as string[],
 } as const;
 
+/**
+ * Optional free-shipping threshold in pence, set via NEXT_PUBLIC_FREE_SHIPPING_PENCE (e.g. 5000 for GBP 50).
+ * Leave unset until the shop really offers it: the progress bar only appears when this has a value.
+ */
+const freeShipping = Number(process.env.NEXT_PUBLIC_FREE_SHIPPING_PENCE);
+export const FREE_SHIPPING_PENCE: number | null = Number.isFinite(freeShipping) && freeShipping > 0 ? freeShipping : null;
+
 export function absoluteUrl(path = "/"): string {
   return `${SITE.url}${path.startsWith("/") ? path : `/${path}`}`;
 }

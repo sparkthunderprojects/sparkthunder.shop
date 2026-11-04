@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Bolt } from "@/components/Bolt";
 import { CartLink } from "@/components/CartLink";
 import { MobileMenu } from "@/components/MobileMenu";
+import { SearchBox } from "@/components/SearchBox";
 import { WishlistLink } from "@/components/WishlistLink";
 import { getAllProducts, getCategories, getFranchises } from "@/lib/catalog";
 import { SITE, formatPrice } from "@/lib/site";
@@ -26,7 +27,10 @@ function MiniProduct({ p }: { p: Product }) {
 
 export async function Header() {
   const [franchises, categories, products] = await Promise.all([getFranchises(), getCategories(), getAllProducts()]);
-  const suggestions = [...franchises.map((f) => f.name), ...categories.map((c) => c.name)];
+  const popular = [
+    ...franchises.map((f) => ({ label: f.name, href: `/franchises/${f.slug}` })),
+    ...categories.map((c) => ({ label: c.name, href: `/categories/${c.slug}` })),
+  ];
   const newest = [...products].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 3);
 
   return (
@@ -117,11 +121,7 @@ export async function Header() {
           <Link href="/new" className="flex h-full items-center border-b-4 border-bolt px-1 font-bold">New</Link>
         </nav>
 
-        <form action="/search" role="search" className="ml-auto hidden md:block">
-          <label htmlFor="q" className="sr-only">Search the shop</label>
-          <input id="q" name="q" type="search" list="search-suggestions" placeholder="Search the shop" className="w-44 border-b-2 border-ink/30 bg-transparent px-1 py-1.5 text-sm placeholder:text-muted focus:border-ink focus:outline-none xl:w-60" />
-          <datalist id="search-suggestions">{suggestions.map((s) => <option key={s} value={s} />)}</datalist>
-        </form>
+        <div className="ml-auto hidden md:block"><SearchBox popular={popular} /></div>
         <div className="ml-auto flex items-center gap-2 md:ml-0"><WishlistLink /><CartLink /></div>
       </div>
     </header>

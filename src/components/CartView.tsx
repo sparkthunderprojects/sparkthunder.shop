@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCart } from "@/components/CartProvider";
+import { FreeShippingBar } from "@/components/FreeShippingBar";
 import { formatPrice } from "@/lib/site";
 
 export function CartView() {
@@ -37,6 +38,7 @@ export function CartView() {
       </ul>
       <aside className="h-fit border-2 border-ink bg-paper-2 p-6">
         <h2 className="display text-3xl">Order summary</h2>
+        <div className="-mx-6 mt-4 border-y-2 border-ink [&>div]:border-b-0"><FreeShippingBar /></div>
         <p className="mt-5 flex justify-between text-lg"><span>Subtotal</span><span className="font-bold">{formatPrice(subtotalPence)}</span></p>
         <p className="mt-1 text-sm text-muted">Shipping and taxes are calculated at checkout.</p>
         <button disabled className="btn mt-6 w-full" title="Payments are not connected yet">Checkout is not available yet</button>

@@ -4,10 +4,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { useCart } from "@/components/CartProvider";
+import { FreeShippingBar } from "@/components/FreeShippingBar";
+import type { QuickProduct } from "@/lib/card";
 import { formatPrice } from "@/lib/site";
 
-export function CartDrawer() {
-  const { isOpen, closeCart, items, subtotalPence, setQty, remove } = useCart();
+export function CartDrawer({ suggestions = [] }: { suggestions?: QuickProduct[] }) {
+  const { isOpen, closeCart, items, subtotalPence, setQty, remove, add } = useCart();
+  const more = suggestions.filter((s) => s.inStock && !items.some((i) => i.slug === s.slug)).slice(0, 3);
   const closeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -37,7 +40,9 @@ export function CartDrawer() {
           </div>
         ) : (
           <>
-            <ul className="flex-1 divide-y divide-ink/20 overflow-y-auto px-5">
+            <FreeShippingBar />
+            <div className="flex-1 overflow-y-auto">
+            <ul className="divide-y divide-ink/20 px-5">
               {items.map((i) => (
                 <li key={i.slug} className="flex gap-4 py-4">
                   <Image src={i.image} alt={i.name} width={80} height={80} unoptimized className="h-20 w-20 border-2 border-ink object-cover" />
@@ -57,6 +62,24 @@ export function CartDrawer() {
                 </li>
               ))}
             </ul>
+            {more.length > 0 && (
+              <section className="border-t-2 border-ink px-5 py-5" aria-labelledby="more-h">
+                <h3 id="more-h" className="display text-2xl">You may also like</h3>
+                <ul className="mt-3 space-y-3">
+                  {more.map((s) => (
+                    <li key={s.slug} className="flex items-center gap-3">
+                      <Image src={s.image} alt="" width={56} height={56} unoptimized className="h-14 w-14 shrink-0 border-2 border-ink object-cover" />
+                      <div className="min-w-0 flex-1">
+                        <Link href={`/products/${s.slug}`} onClick={closeCart} className="block truncate font-bold hover:underline hover:underline-offset-4">{s.name}</Link>
+                        <p className="text-sm text-muted">{formatPrice(s.pricePence)}</p>
+                      </div>
+                      <button onClick={() => add({ slug: s.slug, name: s.name, pricePence: s.pricePence, image: s.image }, 1)} className="btn btn-sm">Add</button>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+            </div>
             <div className="border-t-2 border-ink p-5">
               <p className="flex justify-between text-lg"><span>Subtotal</span><span className="font-bold">{formatPrice(subtotalPence)}</span></p>
               <p className="mt-1 text-sm text-muted">Shipping and taxes are calculated at checkout.</p>
