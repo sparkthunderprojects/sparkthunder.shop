@@ -1,5 +1,6 @@
 import { FranchiseLogo } from "@/components/FranchiseLogo";
 import Image from "next/image";
+import { HeroSlider } from "@/components/HeroSlider";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { ProductCard } from "@/components/ProductCard";
@@ -38,9 +39,15 @@ export default async function HomePage() {
 
   return (
     <div className="theme-dark -mx-(--gutter) -mb-24 px-(--gutter) pb-24">
-      {/* Hero */}
-      <section aria-label="Featured" className="-mx-(--gutter) px-(--gutter)" style={{ background: heroBg }}>
-        <div className="grid min-h-[min(80vh,44rem)] items-center gap-12 py-14 md:grid-cols-[0.85fr_1.15fr]">
+      {/* Hero slider */}
+      <HeroSlider slides={[
+        {
+          id: "universe",
+          label: "Official merchandise from every Sparkthunder universe",
+          background: heroBg,
+          children: (
+            <>
+        <div className="grid min-h-[min(80vh,44rem)] items-center gap-12 pb-20 pt-14 md:grid-cols-[0.85fr_1.15fr]">
           <div>
             <h1 className="display text-[clamp(2.5rem,5.2vw,4.5rem)]">Official merchandise from every Sparkthunder universe</h1>
             <p className="mt-6 max-w-lg text-lg leading-relaxed text-ink/75">{SITE.description}</p>
@@ -59,7 +66,26 @@ export default async function HomePage() {
             ))}
           </ul>
         </div>
-      </section>
+            </>
+          ),
+        },
+        {
+          id: "jenna-hex",
+          label: "Shop the Merch Now",
+          background: "radial-gradient(60% 80% at 70% 50%, #0f2a12 0%, #050a05 55%, #000 100%)",
+          children: (
+            <div className="grid min-h-[min(80vh,44rem)] items-center gap-6 pb-20 pt-10 md:grid-cols-[0.85fr_1.15fr] md:gap-12 md:py-14">
+              <div className="order-2 md:order-1">
+                <h2 className="display text-[clamp(2.75rem,6vw,5.5rem)]">Shop the Merch Now!</h2>
+                <div className="mt-8"><Link href="/franchises/occult-inc" className="btn">Shop Occult Inc</Link></div>
+              </div>
+              <div className="order-1 md:order-2">
+                <Image src="/franchise/jenna-hex.png" alt="Jenna Hex, an Occult Inc character, in white and glowing green lettering with a pentagram" width={1100} height={803} sizes="(min-width:768px) 55vw, 100vw" className="mx-auto h-auto w-full max-w-3xl" />
+              </div>
+            </div>
+          ),
+        },
+      ]} />
 
       <p className="-mx-(--gutter) grid gap-1 border-b border-ink/15 px-(--gutter) py-4 text-sm text-muted sm:grid-cols-3">
         <span>Official Sparkthunder merchandise</span>
