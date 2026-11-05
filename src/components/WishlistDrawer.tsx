@@ -10,7 +10,7 @@ import { useWishlist } from "@/components/WishlistProvider";
 
 /** Favourites, as a frosted panel that slides out from the right. */
 export function WishlistDrawer() {
-  const { panel, closePanel } = useShopUi();
+  const { panel, closePanel, openQuick } = useShopUi();
   const open = panel === "wishlist";
   const { slugs, toggle } = useWishlist();
   const { add, openCart } = useCart();
@@ -30,7 +30,7 @@ export function WishlistDrawer() {
             {shown.map((p) => (
               <PanelProductRow key={p.slug} product={p} onNavigate={closePanel}>
                 {p.inStock ? (
-                  <button className="btn btn-sm" onClick={() => { add({ slug: p.slug, name: p.name, pricePence: p.pricePence, image: p.image }, 1); closePanel(); openCart(); }}>Add to basket</button>
+                  <button className="btn btn-sm" onClick={() => { closePanel(); if (p.variants.length) openQuick(p); else { add({ slug: p.slug, name: p.name, pricePence: p.pricePence, image: p.image }, 1); openCart(); } }}>{p.variants.length ? "Choose options" : "Add to basket"}</button>
                 ) : (
                   <span className="text-sm font-bold text-muted">Sold out</span>
                 )}

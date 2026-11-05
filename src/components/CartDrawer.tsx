@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useAddToBasket } from "@/components/useAddToBasket";
 import { useCart } from "@/components/CartProvider";
 import { FreeShippingBar } from "@/components/FreeShippingBar";
 import { SlideOver } from "@/components/SlideOver";
@@ -9,7 +10,8 @@ import type { QuickProduct } from "@/lib/card";
 import { formatPrice } from "@/lib/site";
 
 export function CartDrawer({ suggestions = [] }: { suggestions?: QuickProduct[] }) {
-  const { isOpen, closeCart, items, subtotalPence, setQty, remove, add } = useCart();
+  const { isOpen, closeCart, items, subtotalPence, setQty, remove } = useCart();
+  const addOrChoose = useAddToBasket();
   const more = suggestions.filter((s) => s.inStock && !items.some((i) => i.slug === s.slug)).slice(0, 3);
   return (
     <SlideOver open={isOpen} onClose={closeCart} title="Your basket">
@@ -54,7 +56,7 @@ export function CartDrawer({ suggestions = [] }: { suggestions?: QuickProduct[] 
                         <Link href={`/products/${s.slug}`} onClick={closeCart} className="block truncate font-bold hover:underline hover:underline-offset-4">{s.name}</Link>
                         <p className="text-sm text-muted">{formatPrice(s.pricePence)}</p>
                       </div>
-                      <button onClick={() => add({ slug: s.slug, name: s.name, pricePence: s.pricePence, image: s.image }, 1)} className="btn btn-sm">Add</button>
+                      <button onClick={() => { if (s.variants.length) closeCart(); addOrChoose(s); }} className="btn btn-sm">{s.variants.length ? "Options" : "Add"}</button>
                     </li>
                   ))}
                 </ul>

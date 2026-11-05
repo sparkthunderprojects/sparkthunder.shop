@@ -10,6 +10,10 @@ export type QuickProduct = {
   shortDescription: string;
   franchiseName?: string;
   inStock: boolean;
+  images: string[];
+  details: string[];
+  trackStock: boolean;
+  variants: { name: string; stockQty: number; pricePence?: number }[];
 };
 
 export const productImagePath = (p: Pick<Product, "slug" | "images">) => p.images[0] ?? `/art/${p.slug}`;
@@ -27,6 +31,10 @@ export function toQuick(p: Product, franchiseName?: string): QuickProduct {
     shortDescription: p.shortDescription,
     franchiseName,
     inStock: p.inStock,
+    images: (p.images.length ? p.images : [`/art/${p.slug}`]).slice(0, 5),
+    details: p.details.slice(0, 5),
+    trackStock: Boolean(p.trackStock),
+    variants: (p.variants ?? []).map((v) => ({ name: v.name, stockQty: v.stockQty, pricePence: v.pricePence })),
   };
 }
 

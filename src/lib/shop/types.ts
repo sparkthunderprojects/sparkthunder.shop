@@ -1,7 +1,7 @@
 export type GiftDetails = { recipientName: string; recipientEmail: string; senderName: string; message: string; theme: string };
 
 export type SnapshotLine =
-  | { type: "product"; slug: string; name: string; sku: string; unitPence: number; qty: number; image: string }
+  | { type: "product"; slug: string; variant?: string; name: string; sku: string; unitPence: number; qty: number; image: string }
   | { type: "gift"; name: string; unitPence: number; qty: number; gift: GiftDetails };
 
 export type Snapshot = {

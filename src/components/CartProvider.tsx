@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
-export type CartItem = { slug: string; name: string; pricePence: number; image: string; qty: number; /** Where the line links to when it is not a /products page (e.g. gift cards). */ href?: string; /** Gift card recipient details (gift card lines only). */ gift?: import("@/lib/shop/types").GiftDetails; /** Extra detail shown under the name, e.g. gift card recipient. */ note?: string };
+export type CartItem = { slug: string; name: string; pricePence: number; image: string; qty: number; /** Chosen variant name, e.g. "Black / L". */ variant?: string; /** Where the line links to when it is not a /products page (e.g. gift cards). */ href?: string; /** Gift card recipient details (gift card lines only). */ gift?: import("@/lib/shop/types").GiftDetails; /** Extra detail shown under the name, e.g. gift card recipient. */ note?: string };
 
 type CartCtx = {
   items: CartItem[];

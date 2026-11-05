@@ -2,15 +2,15 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useCart } from "@/components/CartProvider";
 import { useShopUi } from "@/components/ShopUi";
-import { productImagePath } from "@/lib/card";
+import { productImagePath, toQuick } from "@/lib/card";
+import { useAddToBasket } from "@/components/useAddToBasket";
 import { formatPrice } from "@/lib/site";
 import type { Product } from "@/lib/types";
 
 export function CompareView({ products, franchiseNames, categoryNames }: { products: Product[]; franchiseNames: Record<string, string>; categoryNames: Record<string, string> }) {
   const { compare, removeCompare, clearCompare } = useShopUi();
-  const { add } = useCart();
+  const addOrChoose = useAddToBasket();
   const picked = compare.map((c) => products.find((p) => p.slug === c.slug)).filter((p): p is Product => Boolean(p));
 
   if (picked.length === 0) {
@@ -67,7 +67,7 @@ export function CompareView({ products, franchiseNames, categoryNames }: { produ
                 <td key={p.slug} className={td}>
                   <div className="flex flex-col items-start gap-3">
                     {p.inStock
-                      ? <button className="btn btn-sm" onClick={() => add({ slug: p.slug, name: p.name, pricePence: p.pricePence, image: productImagePath(p) }, 1)}>Add to basket</button>
+                      ? <button className="btn btn-sm" onClick={() => addOrChoose(toQuick(p, franchiseNames[p.franchiseSlug]))}>{(p.variants ?? []).length ? "Choose options" : "Add to basket"}</button>
                       : <button className="btn btn-sm" disabled>Sold out</button>}
                     <button onClick={() => removeCompare(p.slug)} className="text-sm underline underline-offset-4 hover:text-muted">Remove</button>
                   </div>

@@ -120,7 +120,7 @@ export function ProductEditor({ initial, isNew, franchises, categories, media }:
       </section>
 
       <section className="adm-card"><h2>Variants</h2>
-        <p className="adm-hint" style={{ marginTop: -8, marginBottom: 12 }}>Sizes, colours or editions. Each has its own SKU and stock. The storefront selector is coming; variants are stored and exposed in structured data now.</p>
+        <p className="adm-hint" style={{ marginTop: -8, marginBottom: 12 }}>Sizes, colours or editions, each with its own SKU, stock and optional price. Name them like <b>Black / L</b> (colour / size) to get separate Colour and Size pickers on the site, or just <b>S</b>, <b>M</b>, <b>L</b> for one Size picker. With stock tracking on, set stock per variant: the product total is worked out for you.</p>
         {variants.map((v, i) => (
           <div key={i} className="adm-grid" style={{ gridTemplateColumns: "2fr 2fr 1fr 1fr auto", marginBottom: 8, alignItems: "end" }}>
             <Field label="Name"><input className="adm-in" value={v.name} placeholder="e.g. Large" onChange={(e) => setVariant(i, { name: e.target.value })} /></Field>

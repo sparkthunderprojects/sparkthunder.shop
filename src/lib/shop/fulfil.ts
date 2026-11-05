@@ -75,9 +75,17 @@ export async function fulfilOrder(db: Db, s: PaidSession): Promise<{ order: Orde
     // 3. Take tracked stock off.
     for (const line of payload.lines) {
       if (line.type !== "product") continue;
-      const { data } = await db.from("products").select("slug,track_stock,stock_qty").eq("slug", line.slug).maybeSingle();
-      const p = data as { track_stock: boolean; stock_qty: number } | null;
-      if (p?.track_stock) {
+      const { data } = await db.from("products").select("slug,track_stock,stock_qty,variants").eq("slug", line.slug).maybeSingle();
+      const p = data as { track_stock: boolean; stock_qty: number; variants: { name: string; stockQty: number }[] | null } | null;
+      if (!p?.track_stock) continue;
+      if (line.variant && p.variants?.length) {
+        // Per-variant stock is authoritative; the product total is the sum so the product sells out when every option has.
+        let before = 0;
+        const variants = p.variants.map((v) => { if (v.name !== line.variant) return v; before = v.stockQty; return { ...v, stockQty: Math.max(0, v.stockQty - line.qty) }; });
+        const total = variants.reduce((n, v) => n + v.stockQty, 0);
+        await db.from("products").update({ variants, stock_qty: total, in_stock: total > 0 }).eq("slug", line.slug);
+        if (before < line.qty) problems.push(`${line.name} oversold: ${line.qty} bought, ${before} were in stock.`);
+      } else {
         const left = Math.max(0, p.stock_qty - line.qty);
         await db.from("products").update({ stock_qty: left, ...(left === 0 ? { in_stock: false } : {}) }).eq("slug", line.slug);
         if (p.stock_qty < line.qty) problems.push(`${line.name} oversold: ${line.qty} bought, ${p.stock_qty} were in stock.`);

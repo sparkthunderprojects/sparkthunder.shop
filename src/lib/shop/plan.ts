@@ -30,11 +30,20 @@ export async function buildPlan(db: Db, cart: CartInput, giftCode: string | null
       } });
       continue;
     }
-    const p = catalogue.get(item.slug);
+    const [baseSlug, variantName] = String(item.slug).split("::");
+    const p = catalogue.get(baseSlug);
     if (!p) return { ok: false, error: "An item in your basket is no longer available. Please remove it and try again." };
     if (!p.inStock) return { ok: false, error: `${p.name} is sold out.` };
-    if (p.trackStock && (p.stockQty ?? 0) < qty) return { ok: false, error: `Only ${p.stockQty ?? 0} of ${p.name} left in stock.` };
-    lines.push({ type: "product", slug: p.slug, name: p.name, sku: p.sku, unitPence: p.pricePence, qty, image: p.images[0] ? (p.images[0].startsWith("http") ? p.images[0] : absoluteUrl(p.images[0])) : "" });
+    const hasVariants = (p.variants ?? []).length > 0;
+    const variant = variantName ? (p.variants ?? []).find((v) => v.name === variantName) : undefined;
+    if (hasVariants && !variant) return { ok: false, error: `Please choose an option for ${p.name}: remove it from your basket and add it again.` };
+    if (variantName && !hasVariants) return { ok: false, error: `${p.name} has changed. Please remove it and add it again.` };
+    const label = variant ? `${p.name} (${variant.name})` : p.name;
+    if (p.trackStock) {
+      const left = variant ? variant.stockQty : p.stockQty ?? 0;
+      if (left < qty) return { ok: false, error: left <= 0 ? `${label} is sold out.` : `Only ${left} of ${label} left in stock.` };
+    }
+    lines.push({ type: "product", slug: p.slug, ...(variant ? { variant: variant.name } : {}), name: label, sku: variant?.sku || p.sku, unitPence: variant?.pricePence ?? p.pricePence, qty, image: p.images[0] ? (p.images[0].startsWith("http") ? p.images[0] : absoluteUrl(p.images[0])) : "" });
   }
   const productSubtotal = lines.filter((l) => l.type === "product").reduce((n, l) => n + l.unitPence * l.qty, 0);
   const subtotalPence = lines.reduce((n, l) => n + l.unitPence * l.qty, 0);

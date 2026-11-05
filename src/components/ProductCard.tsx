@@ -56,7 +56,7 @@ export function ProductCard({ product, franchiseName, priority = false, variant 
       <CardActions quick={quick} />
       {product.inStock && (
         <div className="pointer-events-none absolute inset-x-0 top-0 aspect-square overflow-hidden">
-          <QuickAdd item={{ slug: product.slug, name: product.name, pricePence: product.pricePence, image: productImagePath(product) }} />
+          <QuickAdd quick={quick} />
         </div>
       )}
     </article>

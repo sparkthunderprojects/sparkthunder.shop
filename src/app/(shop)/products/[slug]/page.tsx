@@ -3,7 +3,8 @@ import { GRID, nb } from "@/lib/ui";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { AddToCart } from "@/components/AddToCart";
+import { BuyBox } from "@/components/BuyBox";
+import { toQuick } from "@/lib/card";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { JsonLd } from "@/components/JsonLd";
 import { ProductCard } from "@/components/ProductCard";
@@ -87,7 +88,7 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
           </p>
           <p className="mt-1 text-sm text-muted">{product.inStock ? "In stock" : "Currently sold out"} · SKU {product.sku}</p>
 
-          <div id="buy-box" className="mt-8"><AddToCart inStock={product.inStock} item={cartItem} /></div>
+          <div id="buy-box" className="mt-8"><BuyBox product={toQuick(product, franchise?.name)} /></div>
           <p className="mt-4"><ShareButton title={product.name} path={path} /></p>
 
           <p className="prose-lore mt-10">{product.description}</p>
@@ -104,7 +105,7 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
       </div>
 
       <RecentTracker slug={product.slug} />
-      <StickyBuyBar targetId="buy-box" item={cartItem} inStock={product.inStock} />
+      <StickyBuyBar targetId="buy-box" item={cartItem} inStock={product.inStock} hasOptions={(product.variants ?? []).length > 0} />
 
       {related.length > 0 && (
         <section className="mt-24" aria-labelledby="related-h">

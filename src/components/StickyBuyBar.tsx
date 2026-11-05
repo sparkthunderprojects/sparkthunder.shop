@@ -6,7 +6,7 @@ import { useCart } from "@/components/CartProvider";
 import { formatPrice } from "@/lib/site";
 
 /** Slides in under the header once the main add-to-basket button has scrolled out of view. */
-export function StickyBuyBar({ targetId, item, inStock }: { targetId: string; item: { slug: string; name: string; pricePence: number; image: string }; inStock: boolean }) {
+export function StickyBuyBar({ targetId, item, inStock, hasOptions = false }: { targetId: string; item: { slug: string; name: string; pricePence: number; image: string }; inStock: boolean; hasOptions?: boolean }) {
   const { add } = useCart();
   const [show, setShow] = useState(false);
 
@@ -26,7 +26,7 @@ export function StickyBuyBar({ targetId, item, inStock }: { targetId: string; it
         <p className="min-w-0 flex-1 truncate font-bold">{item.name}</p>
         <p className="display text-2xl">{formatPrice(item.pricePence)}</p>
         {inStock
-          ? <button onClick={() => add(item, 1)} className="btn btn-sm">Add to basket</button>
+          ? <button onClick={() => (hasOptions ? document.getElementById(targetId)?.scrollIntoView({ behavior: "smooth", block: "center" }) : add(item, 1))} className="btn btn-sm">{hasOptions ? "Choose options" : "Add to basket"}</button>
           : <button disabled className="btn btn-sm">Sold out</button>}
       </div>
     </div>

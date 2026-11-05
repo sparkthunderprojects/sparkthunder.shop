@@ -2,50 +2,54 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef } from "react";
-import { AddToCart } from "@/components/AddToCart";
+import { useEffect, useState } from "react";
+import { BuyBox } from "@/components/BuyBox";
+import { SlideOver } from "@/components/SlideOver";
 import { useShopUi } from "@/components/ShopUi";
-import { isPlaceholderArt } from "@/lib/card";
+import { isPlaceholderArt, type QuickProduct } from "@/lib/card";
 import { formatPrice } from "@/lib/site";
 
+/** Large frosted slide-out from the right: photos, price, option pickers and add to basket. */
 export function QuickViewModal() {
   const { quick, closeQuick } = useShopUi();
-  const closeRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    if (!quick) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    closeRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && closeQuick();
-    window.addEventListener("keydown", onKey);
-    return () => { document.body.style.overflow = prev; window.removeEventListener("keydown", onKey); };
-  }, [quick, closeQuick]);
-
-  if (!quick) return null;
-  const href = `/products/${quick.slug}`;
+  const [last, setLast] = useState<QuickProduct | null>(null);
+  const [idx, setIdx] = useState(0);
+  useEffect(() => { if (quick) { setLast(quick); setIdx(0); } }, [quick]);
+  const p = quick ?? last; // keep content on screen while the panel slides away
   return (
-    <div className="fixed inset-0 z-[70] flex items-end justify-center sm:items-center sm:p-6" role="dialog" aria-modal="true" aria-label={`Quick view: ${quick.name}`}>
-      <button aria-label="Close quick view" tabIndex={-1} onClick={closeQuick} className="absolute inset-0 bg-ink/70" />
-      <div className="relative grid max-h-full w-full max-w-4xl overflow-y-auto border border-ink/20 bg-paper sm:grid-cols-2">
-        <Link href={href} onClick={closeQuick} className="block border-b border-ink/15 bg-paper-2 sm:border-b-0 sm:border-r">
-          <Image src={quick.image} alt={`${quick.name} - official Sparkthunder merchandise`} width={800} height={800} unoptimized={isPlaceholderArt(quick.image)} className="aspect-square w-full object-cover" />
-        </Link>
-        <div className="flex flex-col p-6 sm:p-8">
-          <button ref={closeRef} onClick={closeQuick} className="absolute right-3 top-3 border border-ink/20 bg-paper px-3 py-1 text-sm font-bold hover:bg-bolt">Close</button>
-          {quick.franchiseName && <p className="font-bold text-muted">{quick.franchiseName}</p>}
-          <h2 className="display mt-2 pr-16 text-4xl sm:text-5xl">{quick.name}</h2>
-          <p className="mt-4 flex items-baseline gap-3">
-            <span className="display text-4xl">{formatPrice(quick.pricePence)}</span>
-            {quick.comparePricePence && <s className="text-muted">{formatPrice(quick.comparePricePence)}</s>}
-          </p>
-          <p className="serif mt-4 text-lg leading-relaxed">{quick.shortDescription}</p>
-          <div className="mt-6">
-            <AddToCart inStock={quick.inStock} onAdded={closeQuick} item={{ slug: quick.slug, name: quick.name, pricePence: quick.pricePence, image: quick.image }} />
+    <SlideOver open={Boolean(quick)} onClose={closeQuick} title="Quick view" wide>
+      {p ? (
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="grid gap-8 p-5 sm:p-8 lg:grid-cols-[1.05fr_1fr]">
+            <div>
+              <Link href={`/products/${p.slug}`} onClick={closeQuick} className="block overflow-hidden border border-white/15 bg-black/20">
+                <Image src={p.images[idx] ?? p.image} alt={`${p.name} - official Sparkthunder merchandise`} width={900} height={900} unoptimized={isPlaceholderArt(p.images[idx] ?? p.image)} className="aspect-square w-full object-cover" priority />
+              </Link>
+              {p.images.length > 1 ? (
+                <div className="mt-3 grid grid-cols-5 gap-2">
+                  {p.images.map((src, i) => (
+                    <button key={src + i} type="button" aria-label={`Show photo ${i + 1}`} aria-pressed={i === idx} onClick={() => setIdx(i)} className={`overflow-hidden border-2 ${i === idx ? "border-bolt" : "border-white/15 hover:border-white/50"}`}>
+                      <Image src={src} alt="" width={160} height={160} unoptimized={isPlaceholderArt(src)} className="aspect-square w-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+            <div className="flex flex-col">
+              {p.franchiseName ? <p className="font-bold text-muted">{p.franchiseName}</p> : null}
+              <h3 className="display mt-1 text-4xl sm:text-5xl">{p.name}</h3>
+              <p className="mt-4 flex items-baseline gap-3">
+                <span className="display text-4xl">{formatPrice(p.pricePence)}</span>
+                {p.comparePricePence ? <s className="text-muted">{formatPrice(p.comparePricePence)}</s> : null}
+              </p>
+              <p className="mt-4 text-lg leading-relaxed">{p.shortDescription}</p>
+              <div className="mt-6"><BuyBox key={p.slug} product={p} onAdded={closeQuick} /></div>
+              {p.details.length ? <ul className="mt-6 border-b border-white/15 text-sm">{p.details.map((d) => <li key={d} className="border-t border-white/15 py-2">{d}</li>)}</ul> : null}
+              <Link href={`/products/${p.slug}`} onClick={closeQuick} className="link-line mt-6 w-fit font-bold">View full details</Link>
+            </div>
           </div>
-          <Link href={href} onClick={closeQuick} className="link-line mt-6 w-fit font-bold">View full details</Link>
         </div>
-      </div>
-    </div>
+      ) : null}
+    </SlideOver>
   );
 }

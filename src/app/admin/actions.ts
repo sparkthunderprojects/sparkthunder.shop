@@ -65,6 +65,8 @@ export async function saveProductAction(p: Product, originalSlug: string | null)
       variants: (p.variants ?? []).map((v) => ({ ...v, name: v.name.trim(), sku: v.sku.trim() })),
       createdAt: p.createdAt || new Date().toISOString().slice(0, 10),
     };
+    // With per-variant stock the product total is derived, so the product sells out when every option has.
+    if (clean.trackStock && clean.variants?.length) clean.stockQty = clean.variants.reduce((n, v) => n + (Number(v.stockQty) || 0), 0);
     await repo.writeProduct(db, clean, originalSlug);
 
     const changed = [`/products/${clean.slug}`];
