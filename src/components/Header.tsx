@@ -35,13 +35,14 @@ export async function Header() {
   return (
     <header className="theme-dark sticky top-0 z-40 border-b border-ink/15 bg-paper">
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:bg-bolt focus:px-3 focus:py-2">Skip to content</a>
-      <div className="grid h-[4.25rem] grid-cols-[1fr_auto_1fr] items-center gap-3 px-(--gutter)">
+      <div className="grid h-[4.25rem] grid-cols-[1fr_auto_1fr] items-center gap-2 px-(--gutter)">
         <div className="flex items-center gap-3">
           <MobileMenu franchises={franchises.map(({ slug, name }) => ({ slug, name }))} categories={categories.map(({ slug, name }) => ({ slug, name }))} />
           <div className="hidden md:block"><SearchBox popular={popular} /></div>
         </div>
-        <Link href="/" className="flex items-center justify-center gap-2 whitespace-nowrap" aria-label={`${SITE.name} home`}>
-          <Image src="/sparkthunder-logo.png" alt={SITE.name} width={1200} height={186} priority className="h-7 w-auto sm:h-9" />
+        <Link href="/" className="flex items-center justify-center gap-1.5 whitespace-nowrap" aria-label={`${SITE.name} Shop home`}>
+          <Image src="/sparkthunder-logo.png" alt="Sparkthunder" width={1200} height={186} priority className="h-5 w-auto sm:h-9" />
+          <span aria-hidden className="logo-shop flex h-5 items-center bg-bolt px-1.5 text-[0.75rem] text-black sm:h-9 sm:px-2.5 sm:text-[1.35rem]">SHOP</span>
         </Link>
         <div className="flex items-center justify-end gap-2"><WishlistLink /><CartLink /></div>
       </div>

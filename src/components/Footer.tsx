@@ -11,7 +11,10 @@ export async function Footer() {
   return (
     <footer className="theme-dark border-t border-ink/15">
       <div className="px-(--gutter) pb-10 pt-14">
-        <Image src="/sparkthunder-logo.png" alt={SITE.name} width={1200} height={186} className="h-auto w-[min(32rem,100%)]" />
+        <div className="flex w-[min(40rem,100%)] items-stretch">
+          <Image src="/sparkthunder-logo.png" alt="Sparkthunder" width={1200} height={186} className="h-auto w-[78%]" />
+          <span aria-label="Shop" className="logo-shop flex flex-1 items-center justify-center bg-bolt text-[clamp(1rem,3.4vw,1.9rem)] text-black">SHOP</span>
+        </div>
         <div className="mt-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_1fr]">
           <p className="serif max-w-sm text-lg leading-relaxed text-ink/80">{SITE.description}</p>
           <div>
