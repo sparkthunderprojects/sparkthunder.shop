@@ -111,6 +111,7 @@ export async function Header() {
                     <li><Link href="/gifts#under-15" className={subLink}>Under £15</Link></li>
                     <li><Link href="/gifts#15-to-25" className={subLink}>£15 to £25</Link></li>
                     <li><Link href="/gifts#25-to-50" className={subLink}>£25 to £50</Link></li>
+                    <li><Link href="/gift-cards" className={subLink}>Gift cards</Link></li>
                     <li><Link href="/gifts" className={`${subLink} font-bold`}>All gifts</Link></li>
                   </ul>
                 </div>

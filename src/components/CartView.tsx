@@ -22,9 +22,10 @@ export function CartView() {
       <ul className="divide-y-2 divide-ink border-y border-ink/15">
         {items.map((i) => (
           <li key={i.slug} className="flex gap-5 py-5">
-            <Image src={i.image} alt={i.name} width={112} height={112} unoptimized className="h-28 w-28 border border-ink/20 object-cover" />
+            <Image src={i.image} alt={i.name} width={112} height={112} unoptimized className={`h-28 w-28 border border-ink/20 object-cover ${i.href ? "bg-black !object-contain p-2" : ""}`} />
             <div className="flex-1">
-              <Link href={`/products/${i.slug}`} className="font-bold hover:underline hover:underline-offset-4">{i.name}</Link>
+              <Link href={i.href ?? `/products/${i.slug}`} className="font-bold hover:underline hover:underline-offset-4">{i.name}</Link>
+              {i.note ? <p className="text-sm text-muted">{i.note}</p> : null}
               <p className="text-sm text-muted">{formatPrice(i.pricePence)} each</p>
               <div className="mt-3 flex items-center gap-4">
                 <label className="sr-only" htmlFor={`q-${i.slug}`}>Quantity for {i.name}</label>

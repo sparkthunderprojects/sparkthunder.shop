@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
-export type CartItem = { slug: string; name: string; pricePence: number; image: string; qty: number };
+export type CartItem = { slug: string; name: string; pricePence: number; image: string; qty: number; /** Where the line links to when it is not a /products page (e.g. gift cards). */ href?: string; /** Extra detail shown under the name, e.g. gift card recipient. */ note?: string };
 
 type CartCtx = {
   items: CartItem[];

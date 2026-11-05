@@ -25,9 +25,10 @@ export function CartDrawer({ suggestions = [] }: { suggestions?: QuickProduct[] 
             <ul className="divide-y divide-ink/20 px-5">
               {items.map((i) => (
                 <li key={i.slug} className="flex gap-4 py-4">
-                  <Image src={i.image} alt={i.name} width={80} height={80} unoptimized className="h-20 w-20 border border-white/20 object-cover" />
+                  <Image src={i.image} alt={i.name} width={80} height={80} unoptimized className={`h-20 w-20 border border-white/20 object-cover ${i.href ? "bg-black !object-contain p-2" : ""}`} />
                   <div className="flex-1">
-                    <Link href={`/products/${i.slug}`} onClick={closeCart} className="font-bold leading-snug hover:underline hover:underline-offset-4">{i.name}</Link>
+                    <Link href={i.href ?? `/products/${i.slug}`} onClick={closeCart} className="font-bold leading-snug hover:underline hover:underline-offset-4">{i.name}</Link>
+              {i.note ? <p className="text-sm text-muted">{i.note}</p> : null}
                     <p className="text-sm text-muted">{formatPrice(i.pricePence)}</p>
                     <div className="mt-2 flex items-center gap-3">
                       <div className="flex items-center border border-white/20">

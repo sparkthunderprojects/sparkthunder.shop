@@ -34,6 +34,7 @@ export async function Footer() {
               {categories.map((c) => <li key={c.slug}><Link className={lnk} href={`/categories/${c.slug}`}>{c.name}</Link></li>)}
               <li><Link className={lnk} href="/new">New arrivals</Link></li>
               <li><Link className={lnk} href="/gifts">Gifts</Link></li>
+              <li><Link className={lnk} href="/gift-cards">Gift cards</Link></li>
               <li><Link className={lnk} href="/shop">All merchandise</Link></li>
             </ul>
           </div>

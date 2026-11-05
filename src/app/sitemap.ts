@@ -14,6 +14,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: absoluteUrl("/franchises"), lastModified: latest, changeFrequency: "weekly", priority: 0.8 },
     { url: absoluteUrl("/new"), lastModified: latest, changeFrequency: "daily", priority: 0.8 },
     { url: absoluteUrl("/shop"), lastModified: latest, changeFrequency: "daily", priority: 0.8 },
+    { url: absoluteUrl("/gift-cards"), lastModified: latest, changeFrequency: "monthly", priority: 0.7 },
     { url: absoluteUrl("/gifts"), lastModified: latest, changeFrequency: "weekly", priority: 0.7 },
     ...LEGAL_PAGES.map((l) => ({ url: absoluteUrl(l.href), lastModified: LEGAL_UPDATED, changeFrequency: "yearly" as const, priority: 0.2 })),
     ...franchises.filter((f) => !franchiseSeo(f).noindex).map((f) => ({ url: absoluteUrl(`/franchises/${f.slug}`), lastModified: f.updatedAt ?? latest, changeFrequency: "weekly" as const, priority: 0.9 })),
