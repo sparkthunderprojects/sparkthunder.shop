@@ -36,6 +36,7 @@ export function MobileMenu({ franchises, categories }: { franchises: Item[]; cat
           <p className="pb-1 pt-5 text-sm text-muted">More</p>
           <Link href="/new" className={row}>New arrivals</Link>
           <Link href="/gifts" className={row}>Gifts</Link>
+          <Link href="/gift-cards" className={row}>Gift cards</Link>
           <Link href="/shop" className={row}>All merchandise</Link>
           <Link href="/wishlist" className={row}>Favourites</Link>
         </nav>

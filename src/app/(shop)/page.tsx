@@ -201,6 +201,14 @@ export default async function HomePage() {
             </li>
           ))}
         </ul>
+        <Link href="/gift-cards" className="group mt-2 flex flex-col gap-4 bg-[#ffd400] p-8 text-black transition-colors hover:bg-[#ffe14d] sm:flex-row sm:items-center sm:justify-between sm:p-10">
+          <span>
+            <span className="text-xs font-bold uppercase tracking-[0.3em] text-black/70">New</span>
+            <span className="display mt-2 block text-3xl sm:text-4xl">Give them the choice: Sparkthunder gift cards</span>
+            <span className="mt-2 block max-w-xl text-black/75">Delivered by email in minutes, from £5 to £250. Add a message and pick a Knightverge or Occult Inc design.</span>
+          </span>
+          <span className="shrink-0 self-start bg-black px-6 py-3 font-bold text-white sm:self-center">Send a gift card</span>
+        </Link>
       </section>
     </div>
   );

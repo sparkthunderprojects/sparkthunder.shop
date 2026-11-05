@@ -126,6 +126,8 @@ export async function Header() {
             </div>
           </div>
 
+          <Link href="/gift-cards" className="group flex h-full items-center border-b-4 border-transparent px-1 font-bold hover:border-bolt focus-visible:border-bolt">Gift cards</Link>
+
           <Link href="/new" className="flex h-full items-center border-b-4 border-bolt px-1 font-bold">New</Link>
         </nav>
 
