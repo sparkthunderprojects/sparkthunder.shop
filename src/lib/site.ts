@@ -52,3 +52,14 @@ export const ANNOUNCEMENTS: { text: string; href?: string }[] = [
   { text: "New arrivals just landed", href: "/new" },
   { text: "Join the list for first access to new drops", href: "#newsletter" },
 ];
+
+/** Link from the shop out to a universe website, tagged so the universe site can see where visitors came from. */
+export function outbound(url: string, placement: string): string {
+  try {
+    const u = new URL(url);
+    u.searchParams.set("utm_source", "sparkthunder-shop");
+    u.searchParams.set("utm_medium", "referral");
+    u.searchParams.set("utm_campaign", placement);
+    return u.toString();
+  } catch { return url; }
+}

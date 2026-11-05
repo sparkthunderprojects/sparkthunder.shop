@@ -1,7 +1,7 @@
 import type { Category, Franchise, Product, Variant } from "@/lib/types";
 
 export type FranchiseRow = {
-  slug: string; name: string; tagline: string; description: string; accent: string; sort_order: number;
+  slug: string; name: string; tagline: string; description: string; accent: string; sort_order: number; site_url?: string;
   seo_title?: string; seo_description?: string; og_image?: string; noindex?: boolean; focus_keyword?: string; updated_at?: string;
 };
 export type CategoryRow = {
@@ -19,12 +19,12 @@ export type ProductRow = {
 };
 
 export const franchiseFromRow = (r: FranchiseRow): Franchise => ({
-  slug: r.slug, name: r.name, tagline: r.tagline, description: r.description, accent: r.accent, sortOrder: r.sort_order,
+  slug: r.slug, name: r.name, tagline: r.tagline, description: r.description, accent: r.accent, sortOrder: r.sort_order, siteUrl: r.site_url ?? "",
   seoTitle: r.seo_title ?? "", seoDescription: r.seo_description ?? "", ogImage: r.og_image ?? "", noindex: r.noindex ?? false,
   focusKeyword: r.focus_keyword ?? "", updatedAt: r.updated_at,
 });
 export const franchiseToRow = (f: Franchise): FranchiseRow => ({
-  slug: f.slug, name: f.name, tagline: f.tagline, description: f.description, accent: f.accent, sort_order: f.sortOrder,
+  slug: f.slug, name: f.name, tagline: f.tagline, description: f.description, accent: f.accent, sort_order: f.sortOrder, site_url: f.siteUrl ?? "",
   seo_title: f.seoTitle ?? "", seo_description: f.seoDescription ?? "", og_image: f.ogImage ?? "", noindex: f.noindex ?? false, focus_keyword: f.focusKeyword ?? "",
 });
 

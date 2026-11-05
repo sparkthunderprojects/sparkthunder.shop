@@ -246,3 +246,6 @@ create policy "admin all checkout_snapshots" on public.checkout_snapshots for al
 -- Signed-in customers (Sparkthunder ID) can read their own orders by email. Keep "Confirm email" ON in Supabase Auth.
 drop policy if exists "customers read own orders" on public.orders;
 create policy "customers read own orders" on public.orders for select using (lower(email) = lower(coalesce(auth.jwt() ->> 'email', '')));
+
+-- ---------------------------------------------------------------- universe websites
+alter table public.franchises add column if not exists site_url text not null default '';

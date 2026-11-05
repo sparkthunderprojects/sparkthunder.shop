@@ -46,6 +46,7 @@ export function TaxonomyEditor({ kind, initial, isNew, productCount }: { kind: "
           {isFr ? <>
             <Field label="Tagline"><input className="adm-in" value={(v as Franchise).tagline} onChange={(e) => set("tagline", e.target.value)} /></Field>
             <Field label="Accent colour"><div style={{ display: "flex", gap: 8 }}><input type="color" value={(v as Franchise).accent} onChange={(e) => set("accent", e.target.value)} style={{ width: 48, height: 38 }} aria-label="Accent colour" /><input className="adm-in" value={(v as Franchise).accent} onChange={(e) => set("accent", e.target.value)} /></div></Field>
+            <Field label="Universe website" hint="The universe's own site. Used for the link-out on the shop and for the embeddable product widget."><input className="adm-in" placeholder="https://knightverge.com" value={(v as Franchise).siteUrl ?? ""} onChange={(e) => set("siteUrl", e.target.value)} />{err("siteUrl")}</Field>
           </> : null}
           <Field label={isFr ? "Description (franchise page copy)" : "Intro copy"} hint="Unique copy of 200+ words helps this page rank. Separate paragraphs with a blank line."><textarea className="adm-ta" style={{ minHeight: 200 }} value={v.description} onChange={(e) => set("description", e.target.value)} /></Field>
           <Field label="Sort order" hint="Lower numbers appear first."><input className="adm-in" type="number" style={{ maxWidth: 140 }} value={v.sortOrder} onChange={(e) => set("sortOrder", Number(e.target.value) || 0)} /></Field>

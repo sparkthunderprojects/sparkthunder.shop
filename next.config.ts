@@ -14,6 +14,8 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
+      // The embeddable widget is loaded by other websites, so it must be cacheable, framable-safe (it is a script) and CORS-readable.
+      { source: "/embed/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=3600, stale-while-revalidate=86400" }, { key: "Access-Control-Allow-Origin", value: "*" }] },
       {
         source: "/:path*",
         headers: [

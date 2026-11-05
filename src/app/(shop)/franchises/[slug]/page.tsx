@@ -1,3 +1,4 @@
+import { outbound } from "@/lib/site";
 import { franchiseSeo } from "@/lib/seo/effective";
 import { FranchiseLogo } from "@/components/FranchiseLogo";
 import Link from "next/link";
@@ -45,6 +46,7 @@ export default async function FranchisePage(props: PageProps<"/franchises/[slug]
         <h1 className="mt-10"><FranchiseLogo slug={franchise.slug} name={franchise.name} priority className="h-20 sm:h-28 md:h-36" textClassName="display text-[clamp(2.75rem,7vw,5.5rem)]" /><span className="sr-only"> merchandise</span></h1>
         <p className="serif mt-4 text-2xl" style={{ color: "var(--world-bright)" }}>{franchise.tagline}</p>
         <p className="prose-lore mt-8 text-paper/85">{franchise.description}</p>
+        {franchise.siteUrl ? <p className="mt-6"><a href={outbound(franchise.siteUrl, "franchise-page")} target="_blank" rel="noopener" className="link-line font-bold">Explore the {franchise.name} universe at {franchise.siteUrl.replace(/^https?:\/\//, "")} <span aria-hidden>↗</span><span className="sr-only"> (opens in a new tab)</span></a></p> : null}
         {used.length > 0 && (
           <ul className="mt-10 flex flex-wrap gap-x-8 gap-y-3" aria-label={`${franchise.name} categories`}>
             {used.map((c) => (

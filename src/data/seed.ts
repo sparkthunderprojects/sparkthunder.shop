@@ -17,6 +17,7 @@ export const seedCatalog: Catalog = {
       tagline: "A shared universe of heroes, vampire slayers, assassins and legacy.",
       accent: "#3a5fc8",
       sortOrder: 1,
+      siteUrl: "https://knightverge.com",
       description:
         "Knightverge is the flagship universe of Sparkthunder: a sprawling world of comics, characters, locations and a full tabletop role-playing game. Its story, characters and story arcs are complete, which means every piece of Knightverge merchandise connects to a finished, richly detailed universe rather than a work in progress. Fans can follow the heroes, villains and factions across the main continuity as well as the Subverses, such as the Slayerverse and the Assassinverse, each of which has its own tone, lineage and cast. The Knightverge shop collection brings that world into your home and your game night. Wear a character-inspired tee to the convention, roll a set of themed dice at the table, hang a poster of your favourite power set above your desk, or start a collection of display pieces that celebrate the legacy of the universe. Because Knightverge is also a tabletop game, a lot of our range is made with players and game masters in mind: dice, rulebook companions, character sheets and accessories built to survive long campaigns. Every item is designed by the creators behind the universe, so what you buy is official, canon-accurate and made to last. Explore the full Knightverge range below, from everyday apparel to premium collectibles.",
     },

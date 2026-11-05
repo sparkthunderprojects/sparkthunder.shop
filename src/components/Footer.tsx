@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { PaymentBadges } from "@/components/PaymentBadges";
 import { getCategories, getFranchises } from "@/lib/catalog";
-import { LEGAL_PAGES, SITE } from "@/lib/site";
+import { LEGAL_PAGES, SITE, outbound } from "@/lib/site";
 
 export async function Footer() {
   const [franchises, categories] = await Promise.all([getFranchises(), getCategories()]);
@@ -42,7 +42,9 @@ export async function Footer() {
           <div>
             <h2 className="font-bold">The universes</h2>
             <ul className={col}>
-              <li><a className={lnk} href="https://knightverge.com">Knightverge.com</a></li>
+              {franchises.filter((f) => f.siteUrl).map((f) => (
+                <li key={f.slug}><a className={lnk} href={outbound(f.siteUrl!, "footer")} rel="noopener">{f.name} website</a></li>
+              ))}
             </ul>
           </div>
         </div>

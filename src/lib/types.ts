@@ -6,6 +6,8 @@ export type Franchise = {
   description: string;
   accent: string; // hex colour used for placeholder art + UI accents
   sortOrder: number;
+  /** The universe's own website (e.g. https://knightverge.com). Shown as a link-out and used by the embeddable widget. */
+  siteUrl?: string;
 } & SeoFields;
 
 export type Category = {

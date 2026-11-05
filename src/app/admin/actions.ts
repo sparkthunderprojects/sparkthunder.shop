@@ -126,6 +126,8 @@ export async function saveFranchiseAction(f: Franchise, originalSlug: string | n
     f = { ...f, slug: f.slug.trim() || slugify(f.name), name: f.name.trim() };
     const fields = checkTaxonomy(f);
     if (!/^#[0-9a-fA-F]{6}$/.test(f.accent)) fields.accent = "Use a hex colour like #3a5fc8.";
+    f.siteUrl = (f.siteUrl ?? "").trim().replace(/\/+$/, "");
+    if (f.siteUrl && !/^https:\/\/[^\s/]+\.[^\s/]+/.test(f.siteUrl)) fields.siteUrl = "Enter the full site address starting with https://";
     if (Object.keys(fields).length) return { ok: false, error: "Please fix the highlighted fields.", fields };
     await repo.writeFranchise(db, f, originalSlug);
     if (originalSlug && originalSlug !== f.slug) await repo.addRedirect(db, { from_path: `/franchises/${originalSlug}`, to_path: `/franchises/${f.slug}`, note: "Slug changed" });
