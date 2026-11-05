@@ -34,8 +34,6 @@ export default async function HomePage() {
   const fresh = products.filter((p) => p.isNew).slice(0, 5);
   const drop = products.find((p) => p.isNew && p.isFeatured && p.inStock) ?? products[0];
   const dropFranchise = franchises.find((f) => f.slug === drop?.franchiseSlug);
-  const [a, b] = franchises;
-  const heroBg = `linear-gradient(110deg, color-mix(in oklab, ${a?.accent ?? "#222"} 34%, #000) 0%, #000 58%, color-mix(in oklab, ${(b ?? a)?.accent ?? "#222"} 30%, #000) 100%)`;
 
   return (
     <div className="theme-dark -mx-(--gutter) -mb-24 px-(--gutter) pb-24">
@@ -44,7 +42,7 @@ export default async function HomePage() {
         {
           id: "universe",
           label: "Official merchandise from every Sparkthunder universe",
-          background: heroBg,
+          background: "#000",
           children: (
             <>
         <div className="grid min-h-[min(80vh,44rem)] items-center gap-12 pb-20 pt-14 md:grid-cols-[0.85fr_1.15fr]">
