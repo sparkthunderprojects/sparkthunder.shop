@@ -4,10 +4,16 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCart } from "@/components/CartProvider";
 import { FreeShippingBar } from "@/components/FreeShippingBar";
+import { GiftCardApply, useAppliedGiftCard } from "@/components/GiftCardApply";
+import { isGiftCardLine } from "@/lib/giftcards/format";
 import { formatPrice } from "@/lib/site";
 
 export function CartView() {
   const { items, subtotalPence, setQty, remove } = useCart();
+  const { card, setCard } = useAppliedGiftCard();
+  // A gift card cannot pay for another gift card.
+  const payable = items.filter((i) => !isGiftCardLine(i.slug)).reduce((n, i) => n + i.pricePence * i.qty, 0);
+  const applied = card ? Math.min(card.balancePence, payable) : 0;
 
   if (items.length === 0) {
     return (
@@ -41,6 +47,13 @@ export function CartView() {
         <h2 className="display text-3xl">Order summary</h2>
         <div className="-mx-6 mt-4 border-y border-ink/15 [&>div]:border-b-0"><FreeShippingBar /></div>
         <p className="mt-5 flex justify-between text-lg"><span>Subtotal</span><span className="font-bold">{formatPrice(subtotalPence)}</span></p>
+        <GiftCardApply card={card} setCard={setCard} />
+        {applied > 0 ? (
+          <>
+            <p className="mt-3 flex justify-between"><span>Gift card</span><span className="font-bold">-{formatPrice(applied)}</span></p>
+            <p className="mt-1 flex justify-between text-lg"><span>To pay</span><span className="font-bold">{formatPrice(subtotalPence - applied)}</span></p>
+          </>
+        ) : card && payable === 0 ? <p className="mt-2 text-sm text-muted">Gift cards cannot be used to buy other gift cards.</p> : null}
         <p className="mt-1 text-sm text-muted">Shipping and taxes are calculated at checkout.</p>
         <button disabled className="btn mt-6 w-full" title="Payments are not connected yet">Checkout is not available yet</button>
       </aside>

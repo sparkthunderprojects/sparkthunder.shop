@@ -9,6 +9,7 @@ const NAV: { href: string; label: string; exact?: boolean }[] = [
   { href: "/admin/franchises", label: "Franchises" },
   { href: "/admin/categories", label: "Categories" },
   { href: "/admin/media", label: "Media library" },
+  { href: "/admin/gift-cards", label: "Gift cards" },
 ];
 const SEO: typeof NAV = [
   { href: "/admin/seo", label: "SEO audit" },

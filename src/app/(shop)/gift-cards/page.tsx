@@ -31,6 +31,7 @@ export default function GiftCardsPage() {
       <div className="prose-lore mt-6 space-y-4 text-muted">
         <p>Not sure which tee, mug or print they would love? Let them choose. A Sparkthunder gift card is delivered by email in minutes and works across the whole shop, from Knightverge to Occult Inc.</p>
       </div>
+      <p className="mt-4"><Link href="/gift-cards/balance" className="font-bold underline underline-offset-4">Already have a gift card? Check your balance</Link></p>
       <div className="mt-10"><GiftCardDesigner /></div>
 
       <section className="mt-20" aria-labelledby="how-h">

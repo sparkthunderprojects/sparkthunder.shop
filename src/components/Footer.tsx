@@ -35,6 +35,7 @@ export async function Footer() {
               <li><Link className={lnk} href="/new">New arrivals</Link></li>
               <li><Link className={lnk} href="/gifts">Gifts</Link></li>
               <li><Link className={lnk} href="/gift-cards">Gift cards</Link></li>
+              <li><Link className={lnk} href="/gift-cards/balance">Check gift card balance</Link></li>
               <li><Link className={lnk} href="/shop">All merchandise</Link></li>
             </ul>
           </div>

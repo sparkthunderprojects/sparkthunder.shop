@@ -7,7 +7,7 @@ import path from "node:path";
 type Row = Record<string, unknown>;
 type Result = { data: unknown; error: { message: string } | null; count?: number | null };
 
-const PK: Record<string, string> = { products: "slug", franchises: "slug", categories: "slug", media: "id", redirects: "id", settings: "key", subscribers: "email", admin_users: "user_id" };
+const PK: Record<string, string> = { products: "slug", franchises: "slug", categories: "slug", media: "id", redirects: "id", settings: "key", subscribers: "email", admin_users: "user_id", gift_cards: "id", gift_card_ledger: "id" };
 
 type Store = Record<string, Row[]>;
 const g = globalThis as unknown as { __sparkFake?: Store; __sparkSeq?: number };
@@ -19,7 +19,7 @@ function store(): Store {
       franchises: seedCatalog.franchises.map((f) => ({ ...franchiseToRow(f), updated_at: now })),
       categories: seedCatalog.categories.map((c) => ({ ...categoryToRow(c), updated_at: now })),
       products: seedCatalog.products.map((p) => ({ ...productToRow(p), updated_at: `${p.createdAt}T00:00:00.000Z` })),
-      media: [], redirects: [], settings: [], subscribers: [], admin_users: [],
+      media: [], redirects: [], settings: [], subscribers: [], admin_users: [], gift_cards: [], gift_card_ledger: [],
     };
     g.__sparkSeq = 1;
   }
@@ -59,7 +59,7 @@ class Query implements PromiseLike<Result> {
     const now = new Date().toISOString();
     const withDefaults = (r: Row): Row => {
       const out: Row = { ...r };
-      if (pk === "id" && out.id == null) out.id = this.table === "media" ? `m-${g.__sparkSeq!++}-${Date.now().toString(36)}` : g.__sparkSeq!++;
+      if (pk === "id" && out.id == null) out.id = ["media", "gift_cards", "gift_card_ledger"].includes(this.table) ? `${this.table[0]}-${g.__sparkSeq!++}-${Date.now().toString(36)}` : g.__sparkSeq!++;
       if (!out.created_at && this.table !== "settings") out.created_at = now;
       if (["products", "franchises", "categories"].includes(this.table)) out.updated_at = now;
       return out;
@@ -106,6 +106,14 @@ class Query implements PromiseLike<Result> {
 export function createFakeClient() {
   return {
     from: (table: string) => new Query(table),
+    rpc: async (name: string, args: Record<string, unknown>) => {
+      if (name !== "gift_card_lookup") return { data: null, error: { message: `Unknown function ${name}` } };
+      const c = (store().gift_cards ?? []).find((r) => r.code === String(args.p_code).toUpperCase());
+      if (!c) return { data: [], error: null };
+      const exp = c.expires_at as string | null;
+      const status = c.status !== "active" ? "disabled" : exp && new Date(exp) < new Date() ? "expired" : c.balance_pence === 0 ? "used" : "active";
+      return { data: [{ balance_pence: c.balance_pence, currency: c.currency ?? "GBP", status, expires_at: exp }], error: null };
+    },
     auth: {
       getUser: async () => ({ data: { user: { id: "demo", email: "demo@sparkthunder.shop" } }, error: null }),
       signInWithPassword: async () => ({ data: {}, error: null }),

@@ -123,3 +123,63 @@ drop policy if exists "admins update product images" on storage.objects;
 create policy "admins update product images" on storage.objects for update using (bucket_id = 'product-images' and public.is_admin());
 drop policy if exists "admins delete product images" on storage.objects;
 create policy "admins delete product images" on storage.objects for delete using (bucket_id = 'product-images' and public.is_admin());
+
+-- ---------------------------------------------------------------- gift cards
+create table if not exists public.gift_cards (
+  id uuid primary key default gen_random_uuid(),
+  code text not null unique,                       -- 12 chars, shown as SPK-XXXX-XXXX-XXXX
+  initial_pence integer not null check (initial_pence > 0),
+  balance_pence integer not null check (balance_pence >= 0),
+  currency text not null default 'GBP',
+  status text not null default 'active' check (status in ('active','disabled')),
+  recipient_name text not null default '',
+  recipient_email text not null default '',
+  sender_name text not null default '',
+  message text not null default '',
+  theme text not null default 'bolt',
+  source text not null default 'admin' check (source in ('admin','purchase','promo')),
+  order_ref text not null default '',
+  note text not null default '',
+  expires_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.gift_card_ledger (
+  id uuid primary key default gen_random_uuid(),
+  card_id uuid not null references public.gift_cards(id) on delete cascade,
+  delta_pence integer not null,
+  balance_after integer not null check (balance_after >= 0),
+  kind text not null check (kind in ('issue','redeem','refund','adjust','void')),
+  order_ref text not null default '',
+  note text not null default '',
+  created_by text not null default '',
+  created_at timestamptz not null default now()
+);
+create index if not exists gift_card_ledger_card_idx on public.gift_card_ledger (card_id, created_at desc);
+
+drop trigger if exists gift_cards_touch on public.gift_cards;
+create trigger gift_cards_touch before update on public.gift_cards for each row execute function public.touch_updated_at();
+
+-- Gift cards are NOT publicly readable (the code is the secret). Admins manage them directly...
+alter table public.gift_cards enable row level security;
+alter table public.gift_card_ledger enable row level security;
+drop policy if exists "admin all gift_cards" on public.gift_cards;
+create policy "admin all gift_cards" on public.gift_cards for all using (public.is_admin()) with check (public.is_admin());
+drop policy if exists "admin all gift_card_ledger" on public.gift_card_ledger;
+create policy "admin all gift_card_ledger" on public.gift_card_ledger for all using (public.is_admin()) with check (public.is_admin());
+
+-- ...and shoppers can only look one up by exact code, which returns just the balance and status.
+create or replace function public.gift_card_lookup(p_code text)
+returns table (balance_pence integer, currency text, status text, expires_at timestamptz)
+language sql security definer set search_path = public stable as $$
+  select g.balance_pence, g.currency,
+    case when g.status <> 'active' then 'disabled'
+         when g.expires_at is not null and g.expires_at < now() then 'expired'
+         when g.balance_pence = 0 then 'used'
+         else 'active' end,
+    g.expires_at
+  from public.gift_cards g where g.code = upper(p_code) limit 1;
+$$;
+revoke all on function public.gift_card_lookup(text) from public;
+grant execute on function public.gift_card_lookup(text) to anon, authenticated;
