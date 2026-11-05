@@ -9,7 +9,7 @@ export default async function CartPage() {
   const [products, franchises] = await Promise.all([getAllProducts(), getFranchises()]);
   return (
     <>
-      <h1 className="display pt-10 text-[clamp(3rem,8vw,6.5rem)]">Your basket</h1>
+      <h1 className="display pt-10 text-[clamp(2rem,4.2vw,3.25rem)]">Your basket</h1>
       <CartView />
       <RecentlyViewed products={products} franchiseNames={Object.fromEntries(franchises.map((f) => [f.slug, f.name]))} />
     </>

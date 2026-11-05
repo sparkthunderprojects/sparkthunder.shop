@@ -19,16 +19,16 @@ export function CartView() {
   }
   return (
     <div className="mt-10 grid gap-12 lg:grid-cols-[1fr_22rem]">
-      <ul className="divide-y-2 divide-ink border-y-2 border-ink">
+      <ul className="divide-y-2 divide-ink border-y border-ink/15">
         {items.map((i) => (
           <li key={i.slug} className="flex gap-5 py-5">
-            <Image src={i.image} alt={i.name} width={112} height={112} unoptimized className="h-28 w-28 border-2 border-ink object-cover" />
+            <Image src={i.image} alt={i.name} width={112} height={112} unoptimized className="h-28 w-28 border border-ink/20 object-cover" />
             <div className="flex-1">
               <Link href={`/products/${i.slug}`} className="font-bold hover:underline hover:underline-offset-4">{i.name}</Link>
               <p className="text-sm text-muted">{formatPrice(i.pricePence)} each</p>
               <div className="mt-3 flex items-center gap-4">
                 <label className="sr-only" htmlFor={`q-${i.slug}`}>Quantity for {i.name}</label>
-                <input id={`q-${i.slug}`} type="number" min={1} max={20} value={i.qty} onChange={(e) => setQty(i.slug, Number(e.target.value) || 1)} className="w-20 border-2 border-ink bg-paper px-3 py-1.5 font-bold" />
+                <input id={`q-${i.slug}`} type="number" min={1} max={20} value={i.qty} onChange={(e) => setQty(i.slug, Number(e.target.value) || 1)} className="w-20 border border-ink/20 bg-paper px-3 py-1.5 font-bold" />
                 <button onClick={() => remove(i.slug)} className="text-sm underline underline-offset-4 hover:text-muted">Remove</button>
               </div>
             </div>
@@ -36,9 +36,9 @@ export function CartView() {
           </li>
         ))}
       </ul>
-      <aside className="h-fit border-2 border-ink bg-paper-2 p-6">
+      <aside className="h-fit border border-ink/20 bg-paper-2 p-6">
         <h2 className="display text-3xl">Order summary</h2>
-        <div className="-mx-6 mt-4 border-y-2 border-ink [&>div]:border-b-0"><FreeShippingBar /></div>
+        <div className="-mx-6 mt-4 border-y border-ink/15 [&>div]:border-b-0"><FreeShippingBar /></div>
         <p className="mt-5 flex justify-between text-lg"><span>Subtotal</span><span className="font-bold">{formatPrice(subtotalPence)}</span></p>
         <p className="mt-1 text-sm text-muted">Shipping and taxes are calculated at checkout.</p>
         <button disabled className="btn mt-6 w-full" title="Payments are not connected yet">Checkout is not available yet</button>

@@ -15,7 +15,7 @@ export function HeartButton({ slug, name, className = "" }: { slug: string; name
       className={`${ICON_BTN} ${className}`}
     >
       <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
-        <path d="M12 21s-8-5.2-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.8-8 11-8 11z" fill={on ? "#11142a" : "none"} stroke="#11142a" strokeWidth="2" strokeLinejoin="round" />
+        <path d="M12 21s-8-5.2-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.8-8 11-8 11z" fill={on ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
       </svg>
     </button>
   );

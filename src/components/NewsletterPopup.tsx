@@ -60,11 +60,11 @@ export function NewsletterPopup() {
   return (
     <div className="fixed inset-0 z-[75] flex items-center justify-center p-6" role="dialog" aria-modal="true" aria-labelledby="nlp-h">
       <button aria-label="Close" tabIndex={-1} onClick={() => setOpen(false)} className="absolute inset-0 bg-ink/70" />
-      <div className="relative w-full max-w-xl border-2 border-ink bg-bolt p-10 text-ink shadow-[8px_8px_0_0_#11142a]">
-        <button ref={closeRef} onClick={() => setOpen(false)} className="absolute right-4 top-4 border-2 border-ink bg-paper px-3 py-1 text-sm font-bold hover:bg-ink hover:text-paper">Close</button>
+      <div className="theme-light relative w-full max-w-xl bg-bolt p-10 text-black shadow-2xl shadow-black/40">
+        <button ref={closeRef} onClick={() => setOpen(false)} className="absolute right-4 top-4 border border-ink/20 bg-paper px-3 py-1 text-sm font-bold hover:bg-ink hover:text-paper">Close</button>
         <Bolt className="h-9 w-6 text-ink" />
-        <h2 id="nlp-h" className="display mt-4 text-6xl">Don’t miss the next drop</h2>
-        <p className="serif mt-4 text-xl">Join the list for first access to new official merchandise from every Sparkthunder universe.</p>
+        <h2 id="nlp-h" className="display mt-4 text-4xl">Don’t miss the next drop</h2>
+        <p className="mt-4 text-lg">Join the list for first access to new official merchandise from every Sparkthunder universe.</p>
         <div className="mt-6"><SubscribeForm idPrefix="nlp" onDone={() => setTimeout(() => setOpen(false), 2500)} /></div>
         <p className="mt-3 text-sm">New releases only. Unsubscribe any time.</p>
       </div>

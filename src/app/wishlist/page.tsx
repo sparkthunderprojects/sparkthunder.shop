@@ -10,7 +10,7 @@ export default async function WishlistPage() {
   const names = Object.fromEntries(franchises.map((f) => [f.slug, f.name]));
   return (
     <>
-      <h1 className="display pt-10 text-[clamp(3rem,8vw,6.5rem)]">Your favourites</h1>
+      <h1 className="display pt-10 text-[clamp(2rem,4.2vw,3.25rem)]">Your favourites</h1>
       <WishlistView products={products} franchiseNames={names} />
     </>
   );

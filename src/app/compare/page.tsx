@@ -9,7 +9,7 @@ export default async function ComparePage() {
   const [products, franchises, categories] = await Promise.all([getAllProducts(), getFranchises(), getCategories()]);
   return (
     <>
-      <h1 className="display pt-10 text-[clamp(3rem,8vw,6.5rem)]">Compare products</h1>
+      <h1 className="display pt-10 text-[clamp(2rem,4.2vw,3.25rem)]">Compare products</h1>
       <p className="prose-lore mt-4 text-muted">Side by side, up to four official products.</p>
       <CompareView
         products={products}

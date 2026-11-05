@@ -39,10 +39,10 @@ export default async function CategoryPage(props: PageProps<"/categories/[slug]"
         itemListLd(category.name, path, products),
       ]} />
       <div className="pt-8"><Breadcrumbs items={[{ name: "Home", href: "/" }, { name: category.name }]} /></div>
-      <h1 className="display mt-6 text-[clamp(3.5rem,9vw,8rem)]">{category.name}</h1>
+      <h1 className="display mt-6 text-[clamp(2rem,4.2vw,3.25rem)]">{category.name}</h1>
       <p className="prose-lore mt-6 text-muted">{category.description}</p>
 
-      <ul className="mt-10 flex flex-wrap gap-x-7 gap-y-2 border-y-2 border-ink py-4" aria-label="Filter by franchise">
+      <ul className="mt-10 flex flex-wrap gap-x-7 gap-y-2 border-y border-ink/15 py-4" aria-label="Filter by franchise">
         <li><Link href={path} aria-current={!franchiseFilter ? "page" : undefined} className={`font-bold ${!franchiseFilter ? "link-line" : "text-muted hover:text-ink"}`}>All franchises</Link></li>
         {franchises.map((f) => (
           <li key={f.slug}>

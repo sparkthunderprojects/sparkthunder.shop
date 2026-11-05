@@ -43,7 +43,7 @@ export function ProductGallery({ images, name, sizes }: { images: string[]; name
         onPointerMove={onMove}
         onPointerLeave={() => setZoom(null)}
         aria-label={`Open ${name} image full screen`}
-        className="block w-full cursor-zoom-in overflow-hidden border-2 border-ink bg-paper-2"
+        className="block w-full cursor-zoom-in overflow-hidden border border-ink/20 bg-paper-2"
       >
         <Image
           src={images[idx]} alt={alt(idx)} width={1200} height={1200} sizes={sizes} priority={idx === 0}
@@ -57,7 +57,7 @@ export function ProductGallery({ images, name, sizes }: { images: string[]; name
         <ul className="mt-3 grid grid-cols-5 gap-3" aria-label="Product photos">
           {images.map((src, i) => (
             <li key={src}>
-              <button type="button" onClick={() => setIdx(i)} aria-label={`Show photo ${i + 1}`} aria-current={i === idx} className={`block w-full border-2 ${i === idx ? "border-ink" : "border-ink/25 hover:border-ink"}`}>
+              <button type="button" onClick={() => setIdx(i)} aria-label={`Show photo ${i + 1}`} aria-current={i === idx} className={`block w-full border ${i === idx ? "border-ink" : "border-ink/25 hover:border-ink"}`}>
                 <Image src={src} alt="" width={160} height={160} unoptimized={isPlaceholderArt(src)} className="aspect-square w-full object-cover" />
               </button>
             </li>
@@ -67,7 +67,7 @@ export function ProductGallery({ images, name, sizes }: { images: string[]; name
 
       {light && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-ink/95 p-4" role="dialog" aria-modal="true" aria-label={`${name} images`}>
-          <button ref={closeRef} onClick={() => setLight(false)} className="absolute right-4 top-4 z-10 bg-bolt px-4 py-2 font-bold text-ink">Close</button>
+          <button ref={closeRef} onClick={() => setLight(false)} className="absolute right-4 top-4 z-10 bg-bolt px-4 py-2 font-bold text-black">Close</button>
           {many && <button onClick={() => step(-1)} aria-label="Previous photo" className="absolute left-3 top-1/2 z-10 -translate-y-1/2 bg-paper px-3 py-4 text-xl font-bold">‹</button>}
           <Image src={images[idx]} alt={alt(idx)} width={1600} height={1600} unoptimized={isPlaceholderArt(images[idx])} className="max-h-full w-auto max-w-full object-contain" />
           {many && <button onClick={() => step(1)} aria-label="Next photo" className="absolute right-3 top-1/2 z-10 -translate-y-1/2 bg-paper px-3 py-4 text-xl font-bold">›</button>}

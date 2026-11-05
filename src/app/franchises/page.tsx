@@ -20,13 +20,13 @@ export default async function FranchisesPage() {
     <>
       <JsonLd data={breadcrumbLd([{ name: "Home", path: "/" }, { name: "Franchises", path: "/franchises" }])} />
       <div className="pt-8"><Breadcrumbs items={[{ name: "Home", href: "/" }, { name: "Franchises" }]} /></div>
-      <h1 className="display mt-6 text-[clamp(3.5rem,8vw,7rem)]">Shop by franchise</h1>
+      <h1 className="display mt-6 text-[clamp(2rem,4.2vw,3.25rem)]">Shop by franchise</h1>
       <p className="prose-lore mt-6 text-muted">Every Sparkthunder universe has its own range of official merchandise. Pick a franchise to explore apparel, collectibles, drinkware, prints and tabletop gear.</p>
       <div className="mt-12 grid gap-0 md:grid-cols-2">
         {franchises.map((f) => (
           <Link key={f.slug} href={`/franchises/${f.slug}`} style={worldStyle(f.accent)} className="world group block p-8 sm:p-12">
-            <h2 className="display text-6xl group-hover:underline group-hover:decoration-bolt group-hover:decoration-4 group-hover:underline-offset-8 sm:text-7xl">{f.name}</h2>
-            <p className="serif mt-4 max-w-sm text-xl italic" style={{ color: "var(--world-bright)" }}>{f.tagline}</p>
+            <h2 className="display text-3xl group-hover:underline group-hover:decoration-bolt group-hover:decoration-4 group-hover:underline-offset-8 sm:text-7xl">{f.name}</h2>
+            <p className="serif mt-4 max-w-sm text-xl" style={{ color: "var(--world-bright)" }}>{f.tagline}</p>
           </Link>
         ))}
       </div>

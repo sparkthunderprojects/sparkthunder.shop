@@ -26,7 +26,7 @@ export default async function ShopPage() {
 
       <div className="pt-8"><Breadcrumbs items={[{ name: "Home", href: "/" }, { name: "All merchandise" }]} /></div>
       <div className="mt-5 flex flex-wrap items-end justify-between gap-x-10 gap-y-3">
-        <h1 className="display text-[clamp(2.75rem,6vw,5rem)]">All merchandise</h1>
+        <h1 className="display text-[clamp(2rem,4.2vw,3.25rem)]">All merchandise</h1>
         <p className="serif max-w-md text-lg leading-relaxed text-muted">Every official product from every Sparkthunder franchise, in one place.</p>
       </div>
 
@@ -37,7 +37,7 @@ export default async function ShopPage() {
             <Link href={`/franchises/${f.slug}`} style={worldStyle(f.accent)} className="world group flex h-full items-end justify-between gap-6 px-(--gutter) py-7 md:py-9">
               <span>
                 <span className="display block text-[clamp(2.5rem,5vw,4.25rem)] group-hover:underline group-hover:decoration-bolt group-hover:decoration-4 group-hover:underline-offset-8">{f.name}</span>
-                <span className="serif mt-2 block italic" style={{ color: "var(--world-bright)" }}>{f.tagline}</span>
+                <span className="serif mt-2 block" style={{ color: "var(--world-bright)" }}>{f.tagline}</span>
               </span>
               <span className="shrink-0 pb-1 text-right text-sm text-paper/75">{countIn((p) => p.franchiseSlug === f.slug)} products</span>
             </Link>

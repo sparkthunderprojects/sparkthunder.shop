@@ -43,8 +43,8 @@ export default async function FranchisePage(props: PageProps<"/franchises/[slug]
 
       <section className="world bleed pb-16 pt-8">
         <Breadcrumbs tone="world" items={[{ name: "Home", href: "/" }, { name: "Franchises", href: "/franchises" }, { name: franchise.name }]} />
-        <h1 className="display mt-10 text-[clamp(4.5rem,14vw,12rem)]">{franchise.name}<span className="sr-only"> merchandise</span></h1>
-        <p className="serif mt-4 text-2xl italic" style={{ color: "var(--world-bright)" }}>{franchise.tagline}</p>
+        <h1 className="display mt-10 text-[clamp(2.75rem,7vw,5.5rem)]">{franchise.name}<span className="sr-only"> merchandise</span></h1>
+        <p className="serif mt-4 text-2xl" style={{ color: "var(--world-bright)" }}>{franchise.tagline}</p>
         <p className="prose-lore mt-8 text-paper/85">{franchise.description}</p>
         {used.length > 0 && (
           <ul className="mt-10 flex flex-wrap gap-x-8 gap-y-3" aria-label={`${franchise.name} categories`}>
@@ -56,7 +56,7 @@ export default async function FranchisePage(props: PageProps<"/franchises/[slug]
       </section>
 
       <section className="mt-16" aria-labelledby="all-h">
-        <h2 id="all-h" className="display text-5xl">All {franchise.name} products</h2>
+        <h2 id="all-h" className="display text-2xl sm:text-3xl">All {franchise.name} products</h2>
         {products.length === 0 ? (
           <p className="serif mt-6 text-xl text-muted">New {franchise.name} merchandise is on its way.</p>
         ) : (

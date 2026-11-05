@@ -31,7 +31,7 @@ export function RecentlyViewed({ products, franchiseNames, excludeSlug, limit = 
   if (list.length === 0) return null;
   return (
     <section className="mt-24" aria-labelledby="recent-h">
-      <h2 id="recent-h" className="display text-5xl">Recently viewed</h2>
+      <h2 id="recent-h" className="display text-2xl sm:text-3xl">Recently viewed</h2>
       <div className="mt-8 grid grid-cols-2 gap-x-5 gap-y-10 md:grid-cols-3 xl:grid-cols-5">
         {list.map((p) => <ProductCard key={p.slug} product={p} franchiseName={franchiseNames[p.franchiseSlug]} />)}
       </div>

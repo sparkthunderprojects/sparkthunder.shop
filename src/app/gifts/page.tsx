@@ -28,12 +28,12 @@ export default async function GiftsPage() {
     <>
       <JsonLd data={[breadcrumbLd([{ name: "Home", path: "/" }, { name: "Gifts", path: "/gifts" }]), itemListLd("Gifts", "/gifts", inStock)]} />
       <div className="pt-8"><Breadcrumbs items={[{ name: "Home", href: "/" }, { name: "Gifts" }]} /></div>
-      <h1 className="display mt-6 text-[clamp(3.5rem,9vw,8rem)]">Gifts for fans</h1>
+      <h1 className="display mt-6 text-[clamp(2rem,4.2vw,3.25rem)]">Gifts for fans</h1>
       <div className="prose-lore mt-6 space-y-4 text-muted">
         <p>Official Sparkthunder merchandise makes an easy gift, because everything here is made by the people who created the stories. Whether you are shopping for a long-time Knightverge reader, a tabletop player who needs new dice, or someone who loves the gothic style of Grim Gala, the pieces below arrive ready to be enjoyed.</p>
         <p>Start with what you want to spend. Each section lists every item currently in stock at that price, from small stocking fillers to premium collectibles, and every product page lists its materials, size and care details so there are no surprises.</p>
       </div>
-      <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 border-y-2 border-ink py-3 font-bold" aria-label="Jump to a price range">
+      <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 border-y border-ink/15 py-3 font-bold" aria-label="Jump to a price range">
         {BANDS.map((b) => <a key={b.id} href={`#${b.id}`} className="hover:underline hover:underline-offset-4">{b.label}</a>)}
       </div>
       {BANDS.map((b) => {
@@ -41,7 +41,7 @@ export default async function GiftsPage() {
         if (list.length === 0) return null;
         return (
           <section key={b.id} id={b.id} aria-labelledby={`${b.id}-h`} className="mt-16 scroll-mt-28">
-            <h2 id={`${b.id}-h`} className="display text-5xl sm:text-6xl">{b.label}</h2>
+            <h2 id={`${b.id}-h`} className="display text-2xl sm:text-3xl">{b.label}</h2>
             <p className="serif mt-2 max-w-xl text-lg text-muted">{b.blurb}</p>
             <div className={`mt-6 ${GRID}`}>
               {list.map((p) => <ProductCard key={p.slug} product={p} franchiseName={nameBySlug[p.franchiseSlug]} />)}

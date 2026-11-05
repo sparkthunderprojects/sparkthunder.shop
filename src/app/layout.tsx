@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import "@fontsource-variable/bricolage-grotesque/wdth.css";
-import "@fontsource-variable/newsreader/opsz.css";
+import "@fontsource-variable/inter";
 import "./globals.css";
 import { AnnouncementBar } from "@/components/AnnouncementBar";
 import { BackToTop } from "@/components/BackToTop";
@@ -21,7 +20,7 @@ import { toQuick } from "@/lib/card";
 import { organizationLd, websiteLd } from "@/lib/seo";
 import { SITE } from "@/lib/site";
 
-export const viewport: Viewport = { themeColor: "#f1f0f6", width: "device-width", initialScale: 1 };
+export const viewport: Viewport = { themeColor: "#000000", width: "device-width", initialScale: 1 };
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),

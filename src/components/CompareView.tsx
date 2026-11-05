@@ -46,7 +46,7 @@ export function CompareView({ products, franchiseNames, categoryNames }: { produ
               <td className="w-32 sm:w-40" />
               {picked.map((p) => (
                 <th key={p.slug} scope="col" className="min-w-44 px-3 pb-4 text-left align-top font-normal">
-                  <Link href={`/products/${p.slug}`} className="block border-2 border-ink bg-paper-2">
+                  <Link href={`/products/${p.slug}`} className="block border border-ink/20 bg-paper-2">
                     <Image src={productImagePath(p)} alt={p.name} width={400} height={400} unoptimized className="aspect-square w-full object-cover" />
                   </Link>
                   <Link href={`/products/${p.slug}`} className="mt-3 block font-bold hover:underline hover:underline-offset-4">{p.name}</Link>

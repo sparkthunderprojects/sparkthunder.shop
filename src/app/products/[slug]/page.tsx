@@ -83,9 +83,9 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
               {franchise.name}
             </Link>
           )}
-          <h1 className="display mt-3 text-[clamp(3rem,6vw,5.25rem)]">{nb(product.name)}</h1>
+          <h1 className="display mt-3 text-[clamp(2rem,3.4vw,2.75rem)]">{nb(product.name)}</h1>
           <p className="mt-6 flex items-baseline gap-3">
-            <span className="display text-5xl">{formatPrice(product.pricePence)}</span>
+            <span className="display text-3xl">{formatPrice(product.pricePence)}</span>
             {product.comparePricePence && <s className="text-lg text-muted">{formatPrice(product.comparePricePence)}</s>}
           </p>
           <p className="mt-1 text-sm text-muted">{product.inStock ? "In stock" : "Currently sold out"} · SKU {product.sku}</p>
@@ -111,7 +111,7 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
 
       {related.length > 0 && (
         <section className="mt-24" aria-labelledby="related-h">
-          <h2 id="related-h" className="display text-5xl">More from the universe</h2>
+          <h2 id="related-h" className="display text-2xl sm:text-3xl">More from the universe</h2>
           <div className={`mt-8 ${GRID}`}>
             {related.map((p) => <ProductCard key={p.slug} product={p} franchiseName={nameBySlug[p.franchiseSlug]} />)}
           </div>

@@ -1,16 +1,16 @@
 @import "tailwindcss";
 
 @theme {
-  --color-paper: #f1f0f6;
-  --color-paper-2: #e3e1ee;
-  --color-ink: #11142a;
+  --color-paper: #ffffff;
+  --color-paper-2: #ebebeb;
+  --color-ink: #0b0b0c;
   --color-bolt: #ffd400;
-  --color-muted: #565a74;
+  --color-muted: #6a6a70;
   /* Overridden inline on franchise pages to that franchise's accent colour */
   --color-world: #11142a;
-  --font-display: "Bricolage Grotesque Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-sans: "Bricolage Grotesque Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "Newsreader Variable", Georgia, "Times New Roman", serif;
+  --font-display: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
 }
 
 html { scroll-behavior: smooth; }
@@ -24,18 +24,17 @@ body {
 }
 
 :focus-visible { outline: 3px solid var(--color-ink); outline-offset: 3px; }
-.world :focus-visible, .on-ink :focus-visible { outline-color: var(--color-bolt); }
+.world :focus-visible, .on-ink :focus-visible, .theme-dark :focus-visible { outline-color: var(--color-bolt); }
 
 /* ---------- Type ---------- */
 .display {
   font-family: var(--font-display);
   font-weight: 800;
-  font-stretch: 75%;
-  letter-spacing: -0.015em;
-  line-height: 0.92;
+  letter-spacing: -0.035em;
+  line-height: 1.02;
 }
-.serif { font-family: var(--font-serif); font-optical-sizing: auto; }
-.prose-lore { font-family: var(--font-serif); font-size: 1.1875rem; line-height: 1.7; max-width: 62ch; }
+.serif { font-family: var(--font-sans); font-style: normal; }
+.prose-lore { font-family: var(--font-sans); font-size: 1.0625rem; line-height: 1.65; max-width: 64ch; }
 
 /* ---------- Full-bleed helper (content stays aligned to the page column) ---------- */
 .bleed { margin-inline: calc(50% - 50vw); padding-inline: calc(50vw - 50%); }
@@ -48,22 +47,23 @@ body {
   background: color-mix(in oklab, var(--color-world) 26%, #0a0b16);
   color: #f4f2f8;
 }
-.on-ink { background: var(--color-ink); color: var(--color-paper); }
+.on-ink { background: #0b0b0c; color: #f5f5f5; }
+/* Scoped palettes: dark surfaces (home, header, footer) and a forced-light island */
+.theme-dark { --color-paper: #000; --color-paper-2: #1a1a1c; --color-ink: #f5f5f5; --color-muted: #a1a1a8; background: #000; color: #f5f5f5; }
+.theme-light { --color-paper: #fff; --color-paper-2: #ebebeb; --color-ink: #0b0b0c; --color-muted: #6a6a70; color: #0b0b0c; }
 
-/* ---------- Buttons: one corner is cut, like a comic panel ---------- */
+/* ---------- Buttons: flat, rectangular ---------- */
 .btn {
-  --cut: 12px;
   display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
-  padding: 0.95rem 1.7rem; font-weight: 700; font-size: 1rem; line-height: 1;
-  background: var(--color-bolt); color: var(--color-ink); cursor: pointer;
-  clip-path: polygon(0 0, calc(100% - var(--cut)) 0, 100% var(--cut), 100% 100%, var(--cut) 100%, 0 calc(100% - var(--cut)));
-  transition: filter 0.15s;
+  padding: 0.85rem 1.6rem; font-weight: 600; font-size: 0.9375rem; line-height: 1;
+  background: var(--color-bolt); color: #000; cursor: pointer; border-radius: 2px;
+  transition: background-color 0.15s;
 }
-.btn:hover { filter: brightness(1.08); }
-.btn:focus-visible { clip-path: none; outline-offset: 3px; }
+.btn:hover { background: #ffe14d; }
 .btn-ink { background: var(--color-ink); color: var(--color-paper); }
-.btn-sm { --cut: 8px; padding: 0.6rem 1.1rem; font-size: 0.9rem; }
-.btn[disabled] { background: var(--color-paper-2); color: var(--color-muted); cursor: not-allowed; filter: none; }
+.btn-ink:hover { background: color-mix(in oklab, var(--color-ink) 85%, var(--color-paper)); }
+.btn-sm { padding: 0.6rem 1.1rem; font-size: 0.875rem; }
+.btn[disabled] { background: var(--color-paper-2); color: var(--color-muted); cursor: not-allowed; }
 
 .link-line { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
 .link-line:hover { text-decoration-color: var(--color-bolt); }
@@ -126,7 +126,7 @@ body {
 }
 
 /* Policy pages */
-.legal h2 { font-family: var(--font-display); font-weight: 800; font-stretch: 75%; font-size: 2rem; line-height: 1; margin: 2.5rem 0 0.75rem; }
+.legal h2 { font-family: var(--font-display); font-weight: 700; font-size: 1.5rem; line-height: 1.2; margin: 2.5rem 0 0.75rem; }
 .legal p, .legal ul { margin-top: 0.75rem; }
 .legal ul { list-style: disc; padding-left: 1.4rem; }
 .legal li { margin-top: 0.35rem; }

@@ -24,7 +24,7 @@ export default function CookiesPage() {
       <p>These items are essential to features you use, so they do not need a consent banner. They stay on your device.</p>
       <div className="mt-4 overflow-x-auto">
         <table className="w-full border-collapse text-left font-sans text-base">
-          <thead><tr className="border-b-2 border-ink"><th className="py-2 pr-4">Name</th><th className="py-2 pr-4">Purpose</th><th className="py-2">Kept</th></tr></thead>
+          <thead><tr className="border-b border-ink/15"><th className="py-2 pr-4">Name</th><th className="py-2 pr-4">Purpose</th><th className="py-2">Kept</th></tr></thead>
           <tbody>
             {items.map(([n, p, k]) => (
               <tr key={n} className="border-b border-ink/20 align-top"><td className="py-2.5 pr-4 font-bold">{n}</td><td className="py-2.5 pr-4">{p}</td><td className="py-2.5">{k}</td></tr>

@@ -13,10 +13,10 @@ export default async function SearchPage(props: PageProps<"/search">) {
   const nameBySlug = Object.fromEntries(franchises.map((f) => [f.slug, f.name]));
   return (
     <>
-      <h1 className="display pt-10 text-[clamp(3rem,8vw,6.5rem)]">{q ? `Results for “${q}”` : "Search the shop"}</h1>
+      <h1 className="display pt-10 text-[clamp(2rem,4.2vw,3.25rem)]">{q ? `Results for “${q}”` : "Search the shop"}</h1>
       <form action="/search" role="search" className="mt-8 flex max-w-xl gap-3">
         <label htmlFor="sq" className="sr-only">Search</label>
-        <input id="sq" name="q" defaultValue={q} type="search" placeholder="Try “dice” or “Grim Gala”" className="flex-1 border-2 border-ink bg-paper px-4 py-3" />
+        <input id="sq" name="q" defaultValue={q} type="search" placeholder="Try “dice” or “Grim Gala”" className="flex-1 border border-ink/20 bg-paper px-4 py-3" />
         <button className="btn">Search</button>
       </form>
       {!q && (

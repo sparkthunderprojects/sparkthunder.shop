@@ -17,7 +17,7 @@ export function MobileBottomBar() {
   const badge = (n: number) => n > 0 && <span className="absolute right-[calc(50%-1.5rem)] top-1 bg-ink px-1.5 text-[0.65rem] font-extrabold leading-4 text-bolt">{n}</span>;
 
   return (
-    <nav aria-label="Quick navigation" className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t-2 border-ink bg-paper md:hidden">
+    <nav aria-label="Quick navigation" className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-ink/15 bg-paper md:hidden">
       <Link href="/" className={cls("/")}>
         <svg {...icon}><path d="M3 11 12 3l9 8v10h-6v-6H9v6H3z" /></svg>Home
       </Link>

@@ -3,7 +3,7 @@ import Link from "next/link";
 export default function NotFound() {
   return (
     <div className="pt-24">
-      <h1 className="display text-[clamp(4rem,12vw,10rem)]">Page not found</h1>
+      <h1 className="display text-[clamp(2.75rem,7vw,5.5rem)]">Page not found</h1>
       <p className="prose-lore mt-6 text-muted">That page has moved or never existed. Pick a franchise to keep browsing.</p>
       <Link href="/franchises" className="btn mt-8">Browse franchises</Link>
     </div>

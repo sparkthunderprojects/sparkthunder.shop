@@ -10,13 +10,13 @@ import { SITE, formatPrice } from "@/lib/site";
 import type { Product } from "@/lib/types";
 
 const topLink = "flex h-full items-center border-b-4 border-transparent px-1 font-bold group-hover:border-bolt group-focus-within:border-bolt";
-const panel = "mega absolute inset-x-0 top-full hidden border-b-2 border-ink bg-paper shadow-[0_18px_0_-12px_rgba(17,20,42,0.12)] group-hover:block group-focus-within:block";
+const panel = "mega absolute inset-x-0 top-full hidden border-b border-ink/15 bg-paper group-hover:block group-focus-within:block";
 const subLink = "block py-1.5 hover:underline hover:underline-offset-4";
 
 function MiniProduct({ p }: { p: Product }) {
   return (
     <Link href={`/products/${p.slug}`} className="block">
-      <div className="border-2 border-ink bg-paper-2">
+      <div className="border border-ink/20 bg-paper-2">
         <Image src={p.images[0] ?? `/art/${p.slug}`} alt="" width={240} height={240} unoptimized={!p.images[0]} className="aspect-square w-full object-cover" />
       </div>
       <p className="mt-2 text-sm font-bold leading-snug hover:underline hover:underline-offset-4">{p.name}</p>
@@ -34,7 +34,7 @@ export async function Header() {
   const newest = [...products].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 3);
 
   return (
-    <header className="sticky top-0 z-40 border-b-2 border-ink bg-paper">
+    <header className="theme-dark sticky top-0 z-40 border-b border-ink/15 bg-paper">
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:bg-bolt focus:px-3 focus:py-2">Skip to content</a>
       <div className="flex h-[4.25rem] items-center gap-3 px-(--gutter) sm:gap-5">
         <MobileMenu franchises={franchises.map(({ slug, name }) => ({ slug, name }))} categories={categories.map(({ slug, name }) => ({ slug, name }))} />
@@ -54,8 +54,8 @@ export async function Header() {
                 <div className={panel} style={{ ["--color-world" as string]: f.accent }}>
                   <div className="grid grid-cols-[minmax(16rem,1fr)_minmax(12rem,0.7fr)_repeat(3,minmax(0,1fr))] gap-8 px-(--gutter) py-8">
                     <div className="world -my-8 -ml-(--gutter) flex flex-col justify-end gap-3 py-8 pl-(--gutter) pr-8 whitespace-normal">
-                      <p className="display text-6xl">{f.name}</p>
-                      <p className="serif italic" style={{ color: "var(--world-bright)" }}>{f.tagline}</p>
+                      <p className="display text-3xl">{f.name}</p>
+                      <p className="serif" style={{ color: "var(--world-bright)" }}>{f.tagline}</p>
                       <Link href={`/franchises/${f.slug}`} className="btn btn-sm mt-2 w-fit">Shop all {f.name}</Link>
                     </div>
                     <div>

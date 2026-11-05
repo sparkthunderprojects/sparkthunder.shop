@@ -17,7 +17,7 @@ export function LegalPage({ title, path, intro, children }: { title: string; pat
     <>
       <JsonLd data={breadcrumbLd([{ name: "Home", path: "/" }, { name: title, path }])} />
       <div className="pt-8"><Breadcrumbs items={[{ name: "Home", href: "/" }, { name: title }]} /></div>
-      <h1 className="display mt-6 text-[clamp(3rem,8vw,6.5rem)]">{title}</h1>
+      <h1 className="display mt-6 text-[clamp(2rem,4.2vw,3.25rem)]">{title}</h1>
       <p className="mt-3 text-sm text-muted">Last updated {LEGAL_UPDATED_LABEL}</p>
       <p className="prose-lore mt-6">{intro}</p>
       <div className="prose-lore legal mt-10">{children}</div>

@@ -20,9 +20,9 @@ export function StickyBuyBar({ targetId, item, inStock }: { targetId: string; it
 
   if (!show) return null;
   return (
-    <div className="fixed inset-x-0 top-[4.25rem] z-30 border-b-2 border-ink bg-paper" role="region" aria-label="Quick purchase">
+    <div className="fixed inset-x-0 top-[4.25rem] z-30 border-b border-ink/15 bg-paper" role="region" aria-label="Quick purchase">
       <div className="flex items-center gap-4 px-(--gutter) py-2.5">
-        <Image src={item.image} alt="" width={48} height={48} unoptimized className="hidden h-12 w-12 border-2 border-ink object-cover sm:block" />
+        <Image src={item.image} alt="" width={48} height={48} unoptimized className="hidden h-12 w-12 border border-ink/20 object-cover sm:block" />
         <p className="min-w-0 flex-1 truncate font-bold">{item.name}</p>
         <p className="display text-2xl">{formatPrice(item.pricePence)}</p>
         {inStock

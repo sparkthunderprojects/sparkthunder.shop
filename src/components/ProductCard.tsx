@@ -13,7 +13,7 @@ export function ProductCard({ product, franchiseName, priority = false, variant 
   const pct = discountPercent(product);
   const badge = !product.inStock ? "Sold out" : pct ? `-${pct}%` : product.isNew ? "New" : null;
   const sizes = "(min-width:1536px) 16vw, (min-width:1280px) 20vw, (min-width:768px) 33vw, 50vw";
-  const badgeEl = badge && <span className={`absolute left-0 top-0 z-[1] px-3 py-1 text-sm font-bold ${badge === "New" ? "bg-bolt text-ink" : "bg-ink text-paper"}`}>{badge}</span>;
+  const badgeEl = badge && <span className={`absolute left-0 top-0 z-[1] px-3 py-1 text-sm font-bold ${badge === "New" ? "bg-bolt text-black" : "bg-ink text-paper"}`}>{badge}</span>;
   const quick = toQuick(product, franchiseName);
 
   if (variant === "flush") {
@@ -40,7 +40,7 @@ export function ProductCard({ product, franchiseName, priority = false, variant 
   return (
     <article className="group relative">
       <Link href={`/products/${product.slug}`} className="block">
-        <div className="relative border-2 border-ink bg-paper-2">
+        <div className="relative border border-ink/20 bg-paper-2">
           <ProductImage product={product} priority={priority} sizes={sizes} />
           {badgeEl}
         </div>

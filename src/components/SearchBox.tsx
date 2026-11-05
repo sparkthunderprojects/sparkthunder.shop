@@ -73,12 +73,12 @@ export function SearchBox({ popular }: { popular: { label: string; href: string 
           onChange={(e) => { setQ(e.target.value); setOpen(true); }}
           onFocus={() => setOpen(true)}
           onKeyDown={onKeyDown}
-          className="w-44 border-b-2 border-ink/30 bg-transparent px-1 py-1.5 text-sm placeholder:text-muted focus:border-ink focus:outline-none xl:w-60"
+          className="w-44 border-b border-ink/30 bg-transparent px-1 py-1.5 text-sm placeholder:text-muted focus:border-ink focus:outline-none xl:w-60"
         />
       </form>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-[min(26rem,90vw)] border-2 border-ink bg-paper shadow-[6px_6px_0_0_#11142a]">
+        <div className="absolute right-0 top-full z-50 mt-2 w-[min(26rem,90vw)] border border-ink/20 bg-paper shadow-2xl shadow-black/40">
           <ul id={`${id}-list`} role="listbox" aria-label="Search suggestions">
             {!typed && (
               <>
@@ -100,7 +100,7 @@ export function SearchBox({ popular }: { popular: { label: string; href: string 
             {typed && hits.map((h) => { idx++; const i = idx; return (
               <li key={h.slug} id={optId(i)} role="option" aria-selected={active === i}>
                 <Link href={`/products/${h.slug}`} tabIndex={-1} onClick={() => setOpen(false)} className={rowCls(i)}>
-                  <Image src={h.image} alt="" width={44} height={44} unoptimized className="h-11 w-11 shrink-0 border-2 border-ink object-cover" />
+                  <Image src={h.image} alt="" width={44} height={44} unoptimized className="h-11 w-11 shrink-0 border border-ink/20 object-cover" />
                   <span className="min-w-0 flex-1"><span className="block truncate font-bold">{h.name}</span><span className="block text-sm text-muted">{h.franchise}</span></span>
                   <span className="font-bold">{formatPrice(h.pricePence)}</span>
                 </Link>
@@ -109,7 +109,7 @@ export function SearchBox({ popular }: { popular: { label: string; href: string 
           </ul>
           {typed && hits.length === 0 && links.length === 0 && <p className="px-4 py-3 text-sm text-muted">No quick matches. Press Enter to search everything.</p>}
           {typed && (
-            <Link href={`/search?q=${encodeURIComponent(term)}`} tabIndex={-1} onClick={() => setOpen(false)} className="block border-t-2 border-ink px-4 py-3 text-sm font-bold hover:bg-paper-2">
+            <Link href={`/search?q=${encodeURIComponent(term)}`} tabIndex={-1} onClick={() => setOpen(false)} className="block border-t border-ink/15 px-4 py-3 text-sm font-bold hover:bg-paper-2">
               See all results for “{term}”
             </Link>
           )}

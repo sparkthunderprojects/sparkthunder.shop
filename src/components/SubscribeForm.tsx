@@ -31,7 +31,7 @@ export function SubscribeForm({ idPrefix, doneClass = "serif text-2xl font-semib
     <>
       <form onSubmit={onSubmit} className="flex max-w-xl flex-col gap-3 sm:flex-row" noValidate>
         <label htmlFor={`${idPrefix}-email`} className="sr-only">Email address</label>
-        <input id={`${idPrefix}-email`} name="email" type="email" required autoComplete="email" placeholder="Your email address" className="flex-1 border-2 border-ink bg-paper px-4 py-3.5" />
+        <input id={`${idPrefix}-email`} name="email" type="email" required autoComplete="email" placeholder="Your email address" className="flex-1 border border-ink/20 bg-paper px-4 py-3.5" />
         <button disabled={state === "sending"} className="btn btn-ink">{state === "sending" ? "Joining…" : "Join the list"}</button>
       </form>
       {state === "error" && <p role="alert" className="mt-3 font-bold">{message}</p>}

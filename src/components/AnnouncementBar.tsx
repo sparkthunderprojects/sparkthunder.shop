@@ -22,8 +22,8 @@ export function AnnouncementBar() {
   if (hidden) return null;
   const msg = ANNOUNCEMENTS[i];
   return (
-    <div className="relative bg-bolt text-ink" role="region" aria-label="Announcements">
-      <p className="px-12 py-2 text-center text-sm font-bold">
+    <div className="relative bg-bolt text-black" role="region" aria-label="Announcements">
+      <p className="px-12 py-2 text-center text-sm font-semibold">
         {msg.href ? <Link href={msg.href} className="hover:underline hover:underline-offset-4">{msg.text}</Link> : msg.text}
       </p>
       <button
