@@ -15,7 +15,7 @@ export async function generateMetadata(props: PageProps<"/categories/[slug]">): 
   // Filtered views are a faceted-navigation duplicate: canonical to the base page, keep out of the index.
   return buildMetadata({
     title: `${c.name} - Official Sparkthunder Merchandise`,
-    description: clip(`Shop official ${c.name.toLowerCase()} from Knightverge, Grim Gala and the Sparkthunder universe. ${c.description}`),
+    description: clip(`Shop official ${c.name.toLowerCase()} from Knightverge, Occult Inc and the Sparkthunder universe. ${c.description}`),
     path: `/categories/${c.slug}`,
     noindex: Boolean(franchise),
   });

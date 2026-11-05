@@ -4,7 +4,7 @@ export const SITE = {
   url: (process.env.NEXT_PUBLIC_SITE_URL ?? "https://sparkthunder.shop").replace(/\/$/, ""),
   tagline: "Official merchandise from the Sparkthunder universe of franchises",
   description:
-    "The official Sparkthunder store. Shop apparel, collectibles, drinkware, posters and tabletop gear from Knightverge, Grim Gala and every franchise in the Sparkthunder universe.",
+    "The official Sparkthunder store. Shop apparel, collectibles, drinkware, posters and tabletop gear from Knightverge, Occult Inc and every franchise in the Sparkthunder universe.",
   locale: "en_GB",
   currency: "GBP",
   twitter: "@sparkthunder",
@@ -24,6 +24,12 @@ export const CONTACT_EMAIL: string | null = process.env.NEXT_PUBLIC_CONTACT_EMAI
 
 /** Payment methods shown in the footer. Keep in step with what Stripe is configured to accept. */
 export const PAYMENT_METHODS = ["Visa", "Mastercard", "American Express", "Apple Pay", "Google Pay"] as const;
+
+/** Franchise logo artwork (white/transparent-friendly, made for dark backgrounds), keyed by franchise slug. */
+export const FRANCHISE_LOGOS: Record<string, { src: string; width: number; height: number }> = {
+  knightverge: { src: "/franchise/knightverge.png", width: 1200, height: 268 },
+  "occult-inc": { src: "/franchise/occult-inc.png", width: 1200, height: 439 },
+};
 
 export const LEGAL_PAGES = [
   { href: "/terms", label: "Terms of use" },

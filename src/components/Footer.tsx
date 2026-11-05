@@ -41,7 +41,6 @@ export async function Footer() {
             <h2 className="font-bold">The universes</h2>
             <ul className={col}>
               <li><a className={lnk} href="https://knightverge.com">Knightverge.com</a></li>
-              <li><a className={lnk} href="https://grimgala.com">GrimGala.com</a></li>
             </ul>
           </div>
         </div>

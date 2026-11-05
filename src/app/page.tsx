@@ -1,3 +1,4 @@
+import { FranchiseLogo } from "@/components/FranchiseLogo";
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -11,8 +12,8 @@ import { worldStyle } from "@/lib/theme";
 export const revalidate = 300;
 
 export const metadata: Metadata = buildMetadata({
-  title: `${SITE.name} | Official Knightverge, Grim Gala & Sparkthunder Merchandise`,
-  description: "Shop official Sparkthunder merchandise: apparel, collectibles, drinkware, posters and tabletop gear from Knightverge, Grim Gala and more.",
+  title: `${SITE.name} | Official Knightverge, Occult Inc & Sparkthunder Merchandise`,
+  description: "Shop official Sparkthunder merchandise: apparel, collectibles, drinkware, posters and tabletop gear from Knightverge, Occult Inc and more.",
   path: "/",
 });
 
@@ -68,7 +69,7 @@ export default async function HomePage() {
           {franchises.map((f) => (
             <li key={f.slug}>
               <Link href={`/franchises/${f.slug}`} style={worldStyle(f.accent)} className="world group relative flex aspect-[16/7] flex-col justify-end p-6 transition-[filter] hover:brightness-125 md:p-8">
-                <span className="display text-4xl md:text-5xl">{f.name}</span>
+                <FranchiseLogo slug={f.slug} name={f.name} className="h-14 md:h-20" textClassName="display text-4xl md:text-5xl" />
                 <span className="mt-2 max-w-sm text-sm text-white/70">{f.tagline}</span>
                 <span className="mt-4 text-sm font-semibold">{products.filter((p) => p.franchiseSlug === f.slug).length} products</span>
               </Link>

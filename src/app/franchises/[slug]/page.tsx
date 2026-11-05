@@ -1,3 +1,4 @@
+import { FranchiseLogo } from "@/components/FranchiseLogo";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -43,7 +44,7 @@ export default async function FranchisePage(props: PageProps<"/franchises/[slug]
 
       <section className="world bleed pb-16 pt-8">
         <Breadcrumbs tone="world" items={[{ name: "Home", href: "/" }, { name: "Franchises", href: "/franchises" }, { name: franchise.name }]} />
-        <h1 className="display mt-10 text-[clamp(2.75rem,7vw,5.5rem)]">{franchise.name}<span className="sr-only"> merchandise</span></h1>
+        <h1 className="mt-10"><FranchiseLogo slug={franchise.slug} name={franchise.name} priority className="h-20 sm:h-28 md:h-36" textClassName="display text-[clamp(2.75rem,7vw,5.5rem)]" /><span className="sr-only"> merchandise</span></h1>
         <p className="serif mt-4 text-2xl" style={{ color: "var(--world-bright)" }}>{franchise.tagline}</p>
         <p className="prose-lore mt-8 text-paper/85">{franchise.description}</p>
         {used.length > 0 && (

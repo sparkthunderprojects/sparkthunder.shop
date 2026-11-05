@@ -1,3 +1,4 @@
+import { FranchiseLogo } from "@/components/FranchiseLogo";
 import Image from "next/image";
 import Link from "next/link";
 import { CartLink } from "@/components/CartLink";
@@ -63,7 +64,7 @@ export async function Header() {
                 <div className={panel} style={{ ["--color-world" as string]: f.accent }}>
                   <div className="grid grid-cols-[minmax(16rem,1fr)_minmax(12rem,0.7fr)_repeat(3,minmax(0,1fr))] gap-8 px-(--gutter) py-8">
                     <div className="world -my-8 -ml-(--gutter) flex flex-col justify-end gap-3 py-8 pl-(--gutter) pr-8 whitespace-normal">
-                      <p className="display text-3xl">{f.name}</p>
+                      <FranchiseLogo slug={f.slug} name={f.name} className="h-12" textClassName="display text-3xl" />
                       <p className="serif" style={{ color: "var(--world-bright)" }}>{f.tagline}</p>
                       <Link href={`/franchises/${f.slug}`} className="btn btn-sm mt-2 w-fit">Shop all {f.name}</Link>
                     </div>

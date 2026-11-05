@@ -1,6 +1,6 @@
 # sparkthunder.shop
 
-Official merchandise store for every Sparkthunder franchise (Knightverge, Grim Gala, …), modelled on shopDisney.
+Official merchandise store for every Sparkthunder franchise (Knightverge, Occult Inc, …), modelled on shopDisney.
 
 **Stack:** Next.js 16 (App Router, server-rendered + ISR) · Tailwind CSS 4 · Supabase · self-hosted Geist font.
 
@@ -33,6 +33,6 @@ npm run dev
 
 - **All products, prices and copy in `src/data/seed.ts` are placeholders.** Replace via Supabase.
 - Upload real product photos and put their public URLs in `products.images` (placeholder art is used until then).
-- Franchise/category copy should be 200+ unique words per page; Grim Gala copy is generic and needs real lore.
+- Franchise/category copy should be 200+ unique words per page; Occult Inc copy is generic and needs real lore.
 - Checkout/payments are **not connected** (basket works; checkout button is disabled). Choose a provider (e.g. Stripe).
 - Add `SITE.sameAs` social profiles in `src/lib/site.ts`, shipping/returns pages, and Search Console verification.

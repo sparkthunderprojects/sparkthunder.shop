@@ -10,7 +10,7 @@ export const revalidate = 300;
 
 export const metadata: Metadata = buildMetadata({
   title: "Gifts for Fans - Official Merchandise by Price",
-  description: "Find the right gift from the Sparkthunder universe. Official Knightverge and Grim Gala merchandise for readers, players and collectors, sorted by price.",
+  description: "Find the right gift from the Sparkthunder universe. Official Knightverge and Occult Inc merchandise for readers, players and collectors, sorted by price.",
   path: "/gifts",
 });
 
@@ -30,7 +30,7 @@ export default async function GiftsPage() {
       <div className="pt-8"><Breadcrumbs items={[{ name: "Home", href: "/" }, { name: "Gifts" }]} /></div>
       <h1 className="display mt-6 text-[clamp(2rem,4.2vw,3.25rem)]">Gifts for fans</h1>
       <div className="prose-lore mt-6 space-y-4 text-muted">
-        <p>Official Sparkthunder merchandise makes an easy gift, because everything here is made by the people who created the stories. Whether you are shopping for a long-time Knightverge reader, a tabletop player who needs new dice, or someone who loves the gothic style of Grim Gala, the pieces below arrive ready to be enjoyed.</p>
+        <p>Official Sparkthunder merchandise makes an easy gift, because everything here is made by the people who created the stories. Whether you are shopping for a long-time Knightverge reader, a tabletop player who needs new dice, or someone who loves the gothic style of Occult Inc, the pieces below arrive ready to be enjoyed.</p>
         <p>Start with what you want to spend. Each section lists every item currently in stock at that price, from small stocking fillers to premium collectibles, and every product page lists its materials, size and care details so there are no surprises.</p>
       </div>
       <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 border-y border-ink/15 py-3 font-bold" aria-label="Jump to a price range">

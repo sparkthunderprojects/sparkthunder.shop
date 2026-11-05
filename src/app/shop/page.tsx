@@ -1,3 +1,4 @@
+import { FranchiseLogo } from "@/components/FranchiseLogo";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
@@ -11,7 +12,7 @@ export const revalidate = 300;
 
 export const metadata: Metadata = buildMetadata({
   title: "All Official Merchandise",
-  description: "Browse every official Sparkthunder product in one place: apparel, collectibles, drinkware, prints and tabletop gear from Knightverge, Grim Gala and more.",
+  description: "Browse every official Sparkthunder product in one place: apparel, collectibles, drinkware, prints and tabletop gear from Knightverge, Occult Inc and more.",
   path: "/shop",
 });
 
@@ -36,7 +37,7 @@ export default async function ShopPage() {
           <li key={f.slug} className="md:border-l-[3px] md:border-bolt md:first:border-l-0">
             <Link href={`/franchises/${f.slug}`} style={worldStyle(f.accent)} className="world group flex h-full items-end justify-between gap-6 px-(--gutter) py-7 md:py-9">
               <span>
-                <span className="display block text-[clamp(2.5rem,5vw,4.25rem)] group-hover:underline group-hover:decoration-bolt group-hover:decoration-4 group-hover:underline-offset-8">{f.name}</span>
+                <FranchiseLogo slug={f.slug} name={f.name} className="h-12 md:h-16" textClassName="display block text-[clamp(2.5rem,5vw,4.25rem)]" />
                 <span className="serif mt-2 block" style={{ color: "var(--world-bright)" }}>{f.tagline}</span>
               </span>
               <span className="shrink-0 pb-1 text-right text-sm text-paper/75">{countIn((p) => p.franchiseSlug === f.slug)} products</span>

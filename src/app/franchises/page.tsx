@@ -1,3 +1,4 @@
+import { FranchiseLogo } from "@/components/FranchiseLogo";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
@@ -10,7 +11,7 @@ export const revalidate = 300;
 
 export const metadata: Metadata = buildMetadata({
   title: "All Franchises",
-  description: "Browse official merchandise by franchise: Knightverge, Grim Gala and every universe in the Sparkthunder family.",
+  description: "Browse official merchandise by franchise: Knightverge, Occult Inc and every universe in the Sparkthunder family.",
   path: "/franchises",
 });
 
@@ -25,7 +26,7 @@ export default async function FranchisesPage() {
       <div className="mt-12 grid gap-0 md:grid-cols-2">
         {franchises.map((f) => (
           <Link key={f.slug} href={`/franchises/${f.slug}`} style={worldStyle(f.accent)} className="world group block p-8 sm:p-12">
-            <h2 className="display text-3xl group-hover:underline group-hover:decoration-bolt group-hover:decoration-4 group-hover:underline-offset-8 sm:text-7xl">{f.name}</h2>
+            <h2><FranchiseLogo slug={f.slug} name={f.name} className="h-16 sm:h-24" textClassName="display text-3xl sm:text-7xl" /></h2>
             <p className="serif mt-4 max-w-sm text-xl" style={{ color: "var(--world-bright)" }}>{f.tagline}</p>
           </Link>
         ))}

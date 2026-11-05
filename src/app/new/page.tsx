@@ -9,7 +9,7 @@ export const revalidate = 300;
 
 export const metadata: Metadata = buildMetadata({
   title: "New Arrivals - Latest Official Merchandise",
-  description: "The newest official Sparkthunder merchandise: fresh apparel, collectibles, prints and tabletop gear from Knightverge, Grim Gala and more.",
+  description: "The newest official Sparkthunder merchandise: fresh apparel, collectibles, prints and tabletop gear from Knightverge, Occult Inc and more.",
   path: "/new",
 });
 
