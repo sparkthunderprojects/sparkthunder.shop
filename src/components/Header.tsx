@@ -36,14 +36,20 @@ export async function Header() {
   return (
     <header className="theme-dark sticky top-0 z-40 border-b border-ink/15 bg-paper">
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:bg-bolt focus:px-3 focus:py-2">Skip to content</a>
-      <div className="flex h-[4.25rem] items-center gap-3 px-(--gutter) sm:gap-5">
-        <MobileMenu franchises={franchises.map(({ slug, name }) => ({ slug, name }))} categories={categories.map(({ slug, name }) => ({ slug, name }))} />
-        <Link href="/" className="flex shrink-0 items-center gap-2 whitespace-nowrap" aria-label={`${SITE.name} home`}>
+      <div className="grid h-[4.25rem] grid-cols-[1fr_auto_1fr] items-center gap-3 px-(--gutter)">
+        <div className="flex items-center gap-3">
+          <MobileMenu franchises={franchises.map(({ slug, name }) => ({ slug, name }))} categories={categories.map(({ slug, name }) => ({ slug, name }))} />
+          <div className="hidden md:block"><SearchBox popular={popular} /></div>
+        </div>
+        <Link href="/" className="flex items-center justify-center gap-2 whitespace-nowrap" aria-label={`${SITE.name} home`}>
           <Bolt className="h-7 w-5 text-ink" />
-          <span className="display text-[1.5rem] leading-none sm:text-[1.7rem]">Sparkthunder<span className="hidden font-light sm:inline"> Shop</span></span>
+          <span className="display text-[1.5rem] leading-none sm:text-[1.8rem]">Sparkthunder<span className="hidden font-light sm:inline"> Shop</span></span>
         </Link>
+        <div className="flex items-center justify-end gap-2"><WishlistLink /><CartLink /></div>
+      </div>
 
-        <nav aria-label="Primary" className="ml-4 hidden h-full flex-1 items-stretch gap-7 whitespace-nowrap text-[0.95rem] lg:flex">
+      <div className="hidden border-t border-ink/15 lg:block">
+        <nav aria-label="Primary" className="flex h-12 items-stretch justify-center gap-9 whitespace-nowrap px-(--gutter) text-[0.95rem]">
           {franchises.map((f) => {
             const mine = products.filter((p) => p.franchiseSlug === f.slug);
             const picks = [...mine].sort((a, b) => Number(b.isFeatured) - Number(a.isFeatured)).slice(0, 3);
@@ -121,8 +127,6 @@ export async function Header() {
           <Link href="/new" className="flex h-full items-center border-b-4 border-bolt px-1 font-bold">New</Link>
         </nav>
 
-        <div className="ml-auto hidden md:block"><SearchBox popular={popular} /></div>
-        <div className="ml-auto flex items-center gap-2 md:ml-0"><WishlistLink /><CartLink /></div>
       </div>
     </header>
   );

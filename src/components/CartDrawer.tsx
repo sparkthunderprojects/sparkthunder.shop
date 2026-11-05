@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useCart } from "@/components/CartProvider";
 import { FreeShippingBar } from "@/components/FreeShippingBar";
 import type { QuickProduct } from "@/lib/card";
@@ -12,6 +12,20 @@ export function CartDrawer({ suggestions = [] }: { suggestions?: QuickProduct[] 
   const { isOpen, closeCart, items, subtotalPence, setQty, remove, add } = useCart();
   const more = suggestions.filter((s) => s.inStock && !items.some((i) => i.slug === s.slug)).slice(0, 3);
   const closeRef = useRef<HTMLButtonElement>(null);
+
+  // Stay mounted through the exit so the panel can slide out as smoothly as it slides in.
+  const [mounted, setMounted] = useState(false);
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    if (isOpen) {
+      setMounted(true);
+      const id = requestAnimationFrame(() => requestAnimationFrame(() => setShown(true)));
+      return () => cancelAnimationFrame(id);
+    }
+    setShown(false);
+    const t = setTimeout(() => setMounted(false), 380);
+    return () => clearTimeout(t);
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -23,11 +37,11 @@ export function CartDrawer({ suggestions = [] }: { suggestions?: QuickProduct[] 
     return () => { document.body.style.overflow = prev; window.removeEventListener("keydown", onKey); };
   }, [isOpen, closeCart]);
 
-  if (!isOpen) return null;
+  if (!mounted) return null;
   return (
     <div className="fixed inset-0 z-[60]" role="dialog" aria-modal="true" aria-label="Basket">
-      <button aria-label="Close basket" tabIndex={-1} onClick={closeCart} className="absolute inset-0 bg-ink/60" />
-      <aside className="absolute right-0 top-0 flex h-full w-[min(28rem,100vw)] flex-col border-l border-ink/15 bg-paper">
+      <button aria-label="Close basket" tabIndex={-1} onClick={closeCart} className={`absolute inset-0 bg-black/60 transition-opacity duration-300 ease-out ${shown ? "opacity-100" : "opacity-0"}`} />
+      <aside className={`absolute right-0 top-0 flex h-full w-[min(28rem,100vw)] flex-col border-l border-ink/15 bg-paper shadow-2xl transition-transform duration-[380ms] ease-[cubic-bezier(0.32,0.72,0,1)] will-change-transform motion-reduce:transition-none ${shown ? "translate-x-0" : "translate-x-full"}`}>
         <div className="flex items-center justify-between border-b border-ink/15 px-5 py-4">
           <h2 className="display text-3xl">Your basket</h2>
           <button ref={closeRef} onClick={closeCart} className="px-2 py-1 font-bold underline underline-offset-4">Close</button>
