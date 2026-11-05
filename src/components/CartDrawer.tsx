@@ -2,52 +2,18 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
 import { useCart } from "@/components/CartProvider";
 import { FreeShippingBar } from "@/components/FreeShippingBar";
+import { SlideOver } from "@/components/SlideOver";
 import type { QuickProduct } from "@/lib/card";
 import { formatPrice } from "@/lib/site";
 
 export function CartDrawer({ suggestions = [] }: { suggestions?: QuickProduct[] }) {
   const { isOpen, closeCart, items, subtotalPence, setQty, remove, add } = useCart();
   const more = suggestions.filter((s) => s.inStock && !items.some((i) => i.slug === s.slug)).slice(0, 3);
-  const closeRef = useRef<HTMLButtonElement>(null);
-
-  // Stay mounted through the exit so the panel can slide out as smoothly as it slides in.
-  const [mounted, setMounted] = useState(false);
-  const [shown, setShown] = useState(false);
-  useEffect(() => {
-    if (isOpen) {
-      setMounted(true);
-      const id = requestAnimationFrame(() => requestAnimationFrame(() => setShown(true)));
-      return () => cancelAnimationFrame(id);
-    }
-    setShown(false);
-    const t = setTimeout(() => setMounted(false), 380);
-    return () => clearTimeout(t);
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    closeRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && closeCart();
-    window.addEventListener("keydown", onKey);
-    return () => { document.body.style.overflow = prev; window.removeEventListener("keydown", onKey); };
-  }, [isOpen, closeCart]);
-
-  if (!mounted) return null;
   return (
-    <div className="fixed inset-0 z-[60]" role="dialog" aria-modal="true" aria-label="Basket">
-      <button aria-label="Close basket" tabIndex={-1} onClick={closeCart} className={`absolute inset-0 bg-black/60 transition-opacity duration-300 ease-out ${shown ? "opacity-100" : "opacity-0"}`} />
-      <aside className={`absolute right-0 top-0 flex h-full w-[min(28rem,100vw)] flex-col border-l border-ink/15 bg-paper shadow-2xl transition-transform duration-[380ms] ease-[cubic-bezier(0.32,0.72,0,1)] will-change-transform motion-reduce:transition-none ${shown ? "translate-x-0" : "translate-x-full"}`}>
-        <div className="flex items-center justify-between border-b border-ink/15 px-5 py-4">
-          <h2 className="display text-3xl">Your basket</h2>
-          <button ref={closeRef} onClick={closeCart} className="px-2 py-1 font-bold underline underline-offset-4">Close</button>
-        </div>
-
-        {items.length === 0 ? (
+    <SlideOver open={isOpen} onClose={closeCart} title="Your basket">
+      {items.length === 0 ? (
           <div className="flex-1 p-6">
             <p className="serif text-xl text-muted">Your basket is empty.</p>
             <Link href="/new" onClick={closeCart} className="btn mt-6">Shop new arrivals</Link>
@@ -59,12 +25,12 @@ export function CartDrawer({ suggestions = [] }: { suggestions?: QuickProduct[] 
             <ul className="divide-y divide-ink/20 px-5">
               {items.map((i) => (
                 <li key={i.slug} className="flex gap-4 py-4">
-                  <Image src={i.image} alt={i.name} width={80} height={80} unoptimized className="h-20 w-20 border border-ink/20 object-cover" />
+                  <Image src={i.image} alt={i.name} width={80} height={80} unoptimized className="h-20 w-20 border border-white/20 object-cover" />
                   <div className="flex-1">
                     <Link href={`/products/${i.slug}`} onClick={closeCart} className="font-bold leading-snug hover:underline hover:underline-offset-4">{i.name}</Link>
                     <p className="text-sm text-muted">{formatPrice(i.pricePence)}</p>
                     <div className="mt-2 flex items-center gap-3">
-                      <div className="flex items-center border border-ink/20">
+                      <div className="flex items-center border border-white/20">
                         <button aria-label={`Decrease quantity of ${i.name}`} onClick={() => setQty(i.slug, i.qty - 1)} className="px-2.5 py-0.5 font-bold">−</button>
                         <span className="min-w-6 text-center text-sm font-bold" aria-live="polite">{i.qty}</span>
                         <button aria-label={`Increase quantity of ${i.name}`} onClick={() => setQty(i.slug, i.qty + 1)} className="px-2.5 py-0.5 font-bold">+</button>
@@ -77,12 +43,12 @@ export function CartDrawer({ suggestions = [] }: { suggestions?: QuickProduct[] 
               ))}
             </ul>
             {more.length > 0 && (
-              <section className="border-t border-ink/15 px-5 py-5" aria-labelledby="more-h">
+              <section className="border-t border-white/15 px-5 py-5" aria-labelledby="more-h">
                 <h3 id="more-h" className="display text-2xl">You may also like</h3>
                 <ul className="mt-3 space-y-3">
                   {more.map((s) => (
                     <li key={s.slug} className="flex items-center gap-3">
-                      <Image src={s.image} alt="" width={56} height={56} unoptimized className="h-14 w-14 shrink-0 border border-ink/20 object-cover" />
+                      <Image src={s.image} alt="" width={56} height={56} unoptimized className="h-14 w-14 shrink-0 border border-white/20 object-cover" />
                       <div className="min-w-0 flex-1">
                         <Link href={`/products/${s.slug}`} onClick={closeCart} className="block truncate font-bold hover:underline hover:underline-offset-4">{s.name}</Link>
                         <p className="text-sm text-muted">{formatPrice(s.pricePence)}</p>
@@ -94,7 +60,7 @@ export function CartDrawer({ suggestions = [] }: { suggestions?: QuickProduct[] 
               </section>
             )}
             </div>
-            <div className="border-t border-ink/15 p-5">
+            <div className="border-t border-white/15 p-5">
               <p className="flex justify-between text-lg"><span>Subtotal</span><span className="font-bold">{formatPrice(subtotalPence)}</span></p>
               <p className="mt-1 text-sm text-muted">Shipping and taxes are calculated at checkout.</p>
               <div className="mt-4 grid gap-3">
@@ -104,7 +70,6 @@ export function CartDrawer({ suggestions = [] }: { suggestions?: QuickProduct[] 
             </div>
           </>
         )}
-      </aside>
-    </div>
+    </SlideOver>
   );
 }

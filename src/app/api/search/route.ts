@@ -1,22 +1,27 @@
-import { getCategories, getFranchises, getProducts } from "@/lib/catalog";
+import { getAllProducts, getCategories, getFranchises, getProducts } from "@/lib/catalog";
 import { productImagePath } from "@/lib/card";
 
-/** Instant-search suggestions for the header search box. Small, cacheable JSON. */
+/** Instant-search data for the search drop-down: matching products, quick links and type-ahead phrases. Small, cacheable JSON. */
 export async function GET(req: Request) {
   const q = (new URL(req.url).searchParams.get("q") ?? "").trim().slice(0, 60);
-  const empty = { products: [], links: [] };
+  const empty = { products: [], links: [], suggest: [], total: 0 };
   if (q.length < 2) return Response.json(empty);
 
   const needle = q.toLowerCase();
-  const [products, franchises, categories] = await Promise.all([getProducts({ q }), getFranchises(), getCategories()]);
+  const [matches, all, franchises, categories] = await Promise.all([getProducts({ q }), getAllProducts(), getFranchises(), getCategories()]);
   const nameBySlug = Object.fromEntries(franchises.map((f) => [f.slug, f.name]));
 
-  const ranked = products
-    .map((p) => ({ p, score: p.name.toLowerCase().startsWith(needle) ? 0 : p.name.toLowerCase().includes(needle) ? 1 : 2 }))
+  const rank = (name: string) => {
+    const n = name.toLowerCase();
+    return n.startsWith(needle) ? 0 : n.split(/\s+/).some((w) => w.startsWith(needle)) ? 1 : n.includes(needle) ? 2 : 3;
+  };
+
+  const products = matches
+    .map((p) => ({ p, score: rank(p.name) }))
     .sort((a, b) => a.score - b.score)
-    .slice(0, 6)
+    .slice(0, 8)
     .map(({ p }) => ({
-      slug: p.slug, name: p.name, pricePence: p.pricePence, image: productImagePath(p), franchise: nameBySlug[p.franchiseSlug] ?? "",
+      slug: p.slug, name: p.name, pricePence: p.pricePence, image: productImagePath(p), franchise: nameBySlug[p.franchiseSlug] ?? "", inStock: p.inStock,
     }));
 
   const links = [
@@ -24,5 +29,14 @@ export async function GET(req: Request) {
     ...categories.filter((c) => c.name.toLowerCase().includes(needle)).map((c) => ({ label: c.name, href: `/categories/${c.slug}`, kind: "Type" })),
   ].slice(0, 4);
 
-  return Response.json({ products: ranked, links }, { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" } });
+  // Type-ahead phrases: franchise, type and product names that start with, or contain a word starting with, what was typed.
+  const phrases = [...franchises.map((f) => f.name), ...categories.map((c) => c.name), ...all.map((p) => p.name)];
+  const suggest = [...new Set(phrases)]
+    .map((s) => ({ s, score: rank(s) }))
+    .filter((x) => x.score < 3)
+    .sort((a, b) => a.score - b.score || a.s.length - b.s.length)
+    .slice(0, 6)
+    .map((x) => x.s);
+
+  return Response.json({ products, links, suggest, total: matches.length }, { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" } });
 }

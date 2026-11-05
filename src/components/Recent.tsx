@@ -7,14 +7,18 @@ import type { Product } from "@/lib/types";
 const KEY = "sparkthunder-recent-v1";
 const MAX = 12;
 
-function read(): string[] {
+export function readRecent(): string[] {
   try { const v = JSON.parse(localStorage.getItem(KEY) ?? "[]"); return Array.isArray(v) ? v.filter((s) => typeof s === "string") : []; } catch { return []; }
+}
+
+export function clearRecent() {
+  try { localStorage.removeItem(KEY); } catch {}
 }
 
 /** Remembers a product page visit (renders nothing). */
 export function RecentTracker({ slug }: { slug: string }) {
   useEffect(() => {
-    try { localStorage.setItem(KEY, JSON.stringify([slug, ...read().filter((s) => s !== slug)].slice(0, MAX))); } catch {}
+    try { localStorage.setItem(KEY, JSON.stringify([slug, ...readRecent().filter((s) => s !== slug)].slice(0, MAX))); } catch {}
   }, [slug]);
   return null;
 }
@@ -22,7 +26,7 @@ export function RecentTracker({ slug }: { slug: string }) {
 /** Shows the products this visitor looked at most recently. Renders nothing until there are some. */
 export function RecentlyViewed({ products, franchiseNames, excludeSlug, limit = 5 }: { products: Product[]; franchiseNames: Record<string, string>; excludeSlug?: string; limit?: number }) {
   const [slugs, setSlugs] = useState<string[]>([]);
-  useEffect(() => setSlugs(read()), []);
+  useEffect(() => setSlugs(readRecent()), []);
   const list = slugs
     .filter((s) => s !== excludeSlug)
     .map((s) => products.find((p) => p.slug === s))

@@ -3,7 +3,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { CartLink } from "@/components/CartLink";
 import { MobileMenu } from "@/components/MobileMenu";
-import { SearchBox } from "@/components/SearchBox";
+import { RecentButton } from "@/components/RecentButton";
+import { SearchTrigger } from "@/components/SearchTrigger";
 import { WishlistLink } from "@/components/WishlistLink";
 import { getAllProducts, getCategories, getFranchises } from "@/lib/catalog";
 import { SITE, formatPrice } from "@/lib/site";
@@ -27,10 +28,6 @@ function MiniProduct({ p }: { p: Product }) {
 
 export async function Header() {
   const [franchises, categories, products] = await Promise.all([getFranchises(), getCategories(), getAllProducts()]);
-  const popular = [
-    ...franchises.map((f) => ({ label: f.name, href: `/franchises/${f.slug}` })),
-    ...categories.map((c) => ({ label: c.name, href: `/categories/${c.slug}` })),
-  ];
   const newest = [...products].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 3);
 
   return (
@@ -39,7 +36,7 @@ export async function Header() {
       <div className="grid h-[5rem] grid-cols-[1fr_auto_1fr] items-center gap-2 px-(--gutter)">
         <div className="flex items-center gap-3">
           <MobileMenu franchises={franchises.map(({ slug, name }) => ({ slug, name }))} categories={categories.map(({ slug, name }) => ({ slug, name }))} />
-          <div className="hidden md:block"><SearchBox popular={popular} /></div>
+          <div className="hidden md:block"><SearchTrigger /></div>
         </div>
         <Link href="/" className="mx-auto flex flex-col items-center gap-1.5" aria-label={`${SITE.name} Shop home`}>
           <Image src="/sparkthunder-logo.png" alt="Sparkthunder" width={1200} height={186} priority className="h-6 w-auto sm:h-8" />
@@ -49,7 +46,7 @@ export async function Header() {
             <span className="h-px flex-1 bg-bolt/50" />
           </span>
         </Link>
-        <div className="flex items-center justify-end gap-2"><WishlistLink /><CartLink /></div>
+        <div className="flex items-center justify-end gap-2"><RecentButton /><WishlistLink /><CartLink /></div>
       </div>
 
       <div className="hidden border-t border-ink/15 lg:block">

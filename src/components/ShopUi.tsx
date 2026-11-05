@@ -1,7 +1,11 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
+import { useCart } from "@/components/CartProvider";
 import type { QuickProduct } from "@/lib/card";
+
+export type Panel = "wishlist" | "recent" | "search";
 
 export type CompareItem = { slug: string; name: string; image: string };
 export const COMPARE_MAX = 4;
@@ -17,6 +21,9 @@ type Ctx = {
   removeCompare: (slug: string) => void;
   clearCompare: () => void;
   notice: string;
+  panel: Panel | null;
+  openPanel: (p: Panel) => void;
+  closePanel: () => void;
 };
 
 const ShopUiCtx = createContext<Ctx | null>(null);
@@ -27,6 +34,13 @@ export function ShopUiProvider({ children }: { children: React.ReactNode }) {
   const [compare, setCompare] = useState<CompareItem[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [notice, setNotice] = useState("");
+  const [panel, setPanel] = useState<Panel | null>(null);
+  const { isOpen: cartOpen, closeCart } = useCart();
+  const pathname = usePathname();
+  const openPanel = useCallback((p: Panel) => { closeCart(); setPanel(p); }, [closeCart]);
+  const closePanel = useCallback(() => setPanel(null), []);
+  useEffect(() => { if (cartOpen) setPanel(null); }, [cartOpen]);
+  useEffect(() => setPanel(null), [pathname]);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
@@ -68,7 +82,8 @@ export function ShopUiProvider({ children }: { children: React.ReactNode }) {
     removeCompare: (slug) => setCompare((cur) => cur.filter((c) => c.slug !== slug)),
     clearCompare: () => setCompare([]),
     notice,
-  }), [quick, compare, toggleCompare, notice]);
+    panel, openPanel, closePanel,
+  }), [quick, compare, toggleCompare, notice, panel, openPanel, closePanel]);
 
   return <ShopUiCtx.Provider value={value}>{children}</ShopUiCtx.Provider>;
 }
