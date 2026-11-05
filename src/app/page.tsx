@@ -21,11 +21,16 @@ export const metadata: Metadata = buildMetadata({
 const FLUSH = "-mx-(--gutter) grid grid-cols-2 border-l border-t border-ink/15 md:grid-cols-3 xl:grid-cols-5";
 const H2 = "display text-2xl sm:text-3xl";
 
+const HERO_TILES = [
+  { src: "/hero/black-ronin-long-sleeve.jpg", alt: "Model wearing a white long-sleeve top printed with the Black Ronin logo" },
+  { src: "/hero/icon-grid-tee.jpg", alt: "Model wearing a heather blue tee printed with a colourful grid of character icons" },
+  { src: "/hero/tachi-tee.jpg", alt: "Model wearing an orange tee printed with crossed swords and the word Tachi" },
+] as const;
+
 export default async function HomePage() {
   const [franchises, categories, products] = await Promise.all([getFranchises(), getCategories(), getAllProducts()]);
   const nameBySlug = Object.fromEntries(franchises.map((f) => [f.slug, f.name]));
   const fresh = products.filter((p) => p.isNew).slice(0, 5);
-  const heroPicks = [...products].sort((a, b) => Number(b.isFeatured) - Number(a.isFeatured)).slice(0, 3);
   const drop = products.find((p) => p.isNew && p.isFeatured && p.inStock) ?? products[0];
   const dropFranchise = franchises.find((f) => f.slug === drop?.franchiseSlug);
   const [a, b] = franchises;
@@ -45,10 +50,10 @@ export default async function HomePage() {
             </div>
           </div>
           <ul className="hidden grid-cols-3 gap-3 md:grid" aria-label="Featured products">
-            {heroPicks.map((p, i) => (
-              <li key={p.slug} className={i === 1 ? "mt-14" : i === 2 ? "mt-6" : ""}>
-                <Link href={`/products/${p.slug}`} aria-label={p.name} className="block">
-                  <Image src={productImagePath(p)} alt="" width={600} height={750} priority sizes="22vw" unoptimized={isPlaceholderArt(productImagePath(p))} className="aspect-[3/4] w-full object-cover" />
+            {HERO_TILES.map((t, i) => (
+              <li key={t.src} className={i === 1 ? "mt-14" : i === 2 ? "mt-6" : ""}>
+                <Link href="/shop" className="block overflow-hidden bg-paper-2">
+                  <Image src={t.src} alt={t.alt} width={900} height={1200} priority sizes="22vw" className="aspect-[3/4] w-full object-cover transition-transform duration-500 hover:scale-[1.03]" />
                 </Link>
               </li>
             ))}
