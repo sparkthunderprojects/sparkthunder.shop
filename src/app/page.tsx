@@ -112,10 +112,11 @@ export default async function HomePage() {
         <ul className="mt-5 grid gap-2 md:grid-cols-[repeat(var(--n),1fr)]" style={{ ["--n" as string]: franchises.length }}>
           {franchises.map((f) => (
             <li key={f.slug}>
-              <Link href={`/franchises/${f.slug}`} style={worldStyle(f.accent)} className="world group relative flex aspect-[16/7] flex-col justify-end p-6 transition-[filter] hover:brightness-125 md:p-8">
-                <FranchiseLogo slug={f.slug} name={f.name} className="h-14 md:h-20" textClassName="display text-4xl md:text-5xl" />
-                <span className="mt-2 max-w-sm text-sm text-white/70">{f.tagline}</span>
-                <span className="mt-4 text-sm font-semibold">{products.filter((p) => p.franchiseSlug === f.slug).length} products</span>
+              <Link href={`/franchises/${f.slug}`} style={worldStyle(f.accent)} className="world group relative flex min-h-[18rem] flex-col items-center justify-center gap-5 p-8 text-center transition-[filter] hover:brightness-110 md:min-h-[22rem] md:p-10">
+                <FranchiseLogo slug={f.slug} name={f.name} className="h-16 max-w-[80%] !self-center !object-center md:h-24" textClassName="display text-4xl md:text-6xl" />
+                <span className="max-w-sm text-sm text-white/75 md:text-base">{f.tagline}</span>
+                <span className="btn btn-sm mt-1">Shop {f.name} <span aria-hidden>&rarr;</span></span>
+                <span className="text-xs font-semibold uppercase tracking-wide text-white/60">{products.filter((p) => p.franchiseSlug === f.slug).length} products</span>
               </Link>
             </li>
           ))}

@@ -13,5 +13,5 @@ export function FranchiseLogo({ slug, name, className = "h-12", textClassName = 
 }) {
   const logo = FRANCHISE_LOGOS[slug];
   if (!logo) return <span className={textClassName}>{name}</span>;
-  return <Image src={logo.src} alt={name} width={logo.width} height={logo.height} priority={priority} className={`w-auto ${className}`} />;
+  return <Image src={logo.src} alt={name} width={logo.width} height={logo.height} priority={priority} className={`w-auto max-w-full self-start object-contain object-left ${className}`} />;
 }
