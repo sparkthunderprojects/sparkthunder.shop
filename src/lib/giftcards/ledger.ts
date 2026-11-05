@@ -4,7 +4,7 @@ import { generateCode } from "./code";
 export type GiftCard = {
   id: string; code: string; initial_pence: number; balance_pence: number; currency: string; status: "active" | "disabled";
   recipient_name: string; recipient_email: string; sender_name: string; message: string; theme: string;
-  source: "admin" | "purchase" | "promo"; order_ref: string; note: string; expires_at: string | null; created_at: string; updated_at: string;
+  source: "admin" | "purchase" | "promo"; order_ref: string; note: string; expires_at: string | null; emailed_at: string | null; created_at: string; updated_at: string;
 };
 export type LedgerEntry = { id: string; card_id: string; delta_pence: number; balance_after: number; kind: "issue" | "redeem" | "refund" | "adjust" | "void"; order_ref: string; note: string; created_by: string; created_at: string };
 

@@ -11,3 +11,5 @@ export const isDemo =
   !hasSupabase &&
   process.env.SPARKTHUNDER_DEMO === "1" &&
   !process.env.NETLIFY && !process.env.VERCEL && !process.env.CI;
+
+export const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";

@@ -1,6 +1,8 @@
 "use client";
 
 import Image from "next/image";
+import { useState, useTransition } from "react";
+import { startCheckoutAction } from "@/app/(shop)/checkout/actions";
 import Link from "next/link";
 import { useCart } from "@/components/CartProvider";
 import { FreeShippingBar } from "@/components/FreeShippingBar";
@@ -13,6 +15,8 @@ export function CartView() {
   const { card, setCard } = useAppliedGiftCard();
   // A gift card cannot pay for another gift card.
   const payable = items.filter((i) => !isGiftCardLine(i.slug)).reduce((n, i) => n + i.pricePence * i.qty, 0);
+  const [err, setErr] = useState("");
+  const [busy, start] = useTransition();
   const applied = card ? Math.min(card.balancePence, payable) : 0;
 
   if (items.length === 0) {
@@ -55,7 +59,11 @@ export function CartView() {
           </>
         ) : card && payable === 0 ? <p className="mt-2 text-sm text-muted">Gift cards cannot be used to buy other gift cards.</p> : null}
         <p className="mt-1 text-sm text-muted">Shipping and taxes are calculated at checkout.</p>
-        <button disabled className="btn mt-6 w-full" title="Payments are not connected yet">Checkout is not available yet</button>
+        <button className="btn mt-6 w-full" disabled={busy} onClick={() => { setErr(""); start(async () => {
+          const r = await startCheckoutAction(items.map((i) => ({ slug: i.slug, qty: i.qty, pricePence: i.pricePence, gift: i.gift })), applied > 0 && card ? card.code : null);
+          if (r.ok) window.location.href = r.url; else setErr(r.error);
+        }); }}>{busy ? "Starting checkout..." : "Checkout"}</button>
+        {err ? <p role="alert" className="mt-3 text-sm font-bold text-red-700">{err}</p> : null}
       </aside>
     </div>
   );

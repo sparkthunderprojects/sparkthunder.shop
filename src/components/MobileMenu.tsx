@@ -39,6 +39,7 @@ export function MobileMenu({ franchises, categories }: { franchises: Item[]; cat
           <Link href="/gift-cards" className={row}>Gift cards</Link>
           <Link href="/shop" className={row}>All merchandise</Link>
           <Link href="/wishlist" className={row}>Favourites</Link>
+          <Link href="/account" className={row}>My Sparkthunder ID</Link>
         </nav>
       )}
     </div>

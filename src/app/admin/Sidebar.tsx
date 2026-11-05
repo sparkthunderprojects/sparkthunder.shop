@@ -8,6 +8,7 @@ const NAV: { href: string; label: string; exact?: boolean }[] = [
   { href: "/admin/products", label: "Products" },
   { href: "/admin/franchises", label: "Franchises" },
   { href: "/admin/categories", label: "Categories" },
+  { href: "/admin/orders", label: "Orders" },
   { href: "/admin/media", label: "Media library" },
   { href: "/admin/gift-cards", label: "Gift cards" },
 ];
@@ -32,8 +33,7 @@ export function Sidebar({ email, demo }: { email: string; demo: boolean }) {
         <div className="adm-sep">Search</div>
         {SEO.map(item)}
         <div className="adm-sep">Coming soon</div>
-        <span>Orders <small>Stripe</small></span>
-        <span>Customers <small>Stripe</small></span>
+        <span>Customers <small>Soon</small></span>
         <div className="adm-sep">Site</div>
         <a href="/" target="_blank" rel="noreferrer">View storefront</a>
       </nav>

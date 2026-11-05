@@ -1,6 +1,7 @@
 import { FranchiseLogo } from "@/components/FranchiseLogo";
 import Image from "next/image";
 import Link from "next/link";
+import { AccountLink } from "@/components/AccountLink";
 import { CartLink } from "@/components/CartLink";
 import { MobileMenu } from "@/components/MobileMenu";
 import { RecentButton } from "@/components/RecentButton";
@@ -46,7 +47,7 @@ export async function Header() {
             <span className="h-px flex-1 bg-bolt/50" />
           </span>
         </Link>
-        <div className="flex items-center justify-end gap-2"><RecentButton /><WishlistLink /><CartLink /></div>
+        <div className="flex items-center justify-end gap-2"><RecentButton /><AccountLink /><WishlistLink /><CartLink /></div>
       </div>
 
       <div className="hidden border-t border-ink/15 lg:block">

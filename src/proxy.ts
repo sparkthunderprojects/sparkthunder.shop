@@ -20,7 +20,8 @@ export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Admin: keep the session fresh and send signed-out visitors to the login page.
-  if (pathname.startsWith("/admin")) {
+  if (pathname.startsWith("/admin") || pathname.startsWith("/account") || pathname.startsWith("/auth")) {
+    const isAdmin = pathname.startsWith("/admin");
     let res = NextResponse.next({ request: req });
     res.headers.set("X-Robots-Tag", "noindex, nofollow");
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL, key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -37,7 +38,7 @@ export async function proxy(req: NextRequest) {
         },
       });
       const { data } = await supabase.auth.getUser();
-      if (!data.user && pathname !== "/admin/login") return NextResponse.redirect(new URL("/admin/login", req.url));
+      if (isAdmin && !data.user && pathname !== "/admin/login") return NextResponse.redirect(new URL("/admin/login", req.url));
     }
     return res;
   }

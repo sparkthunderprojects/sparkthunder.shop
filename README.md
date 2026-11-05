@@ -47,3 +47,16 @@ The shop management system lives at `/admin` (products, variants and stock, fran
 4. Optional: set `INDEXNOW_KEY` for instant indexing pings.
 
 Local trial without Supabase: `SPARKTHUNDER_DEMO=1 npm run dev` (in-memory fake DB; disabled on Netlify/Vercel/CI).
+
+## Sparkthunder ID (customer sign-in) and Google
+
+Customers sign in at `/account/login` with email + password or Google. This is the shared Supabase "Sparkthunder ID" user pool: the same project URL and anon key on other Sparkthunder sites give the same login.
+
+1. Supabase > Authentication > Providers: keep **Email** on with **Confirm email** enabled (customers can read their own orders by email, so unconfirmed emails must not be allowed).
+2. Authentication > URL Configuration: set **Site URL** to `https://sparkthunder.shop` and add Redirect URLs `https://sparkthunder.shop/auth/callback` and `http://localhost:3000/auth/callback`.
+3. Google: in Google Cloud Console create an OAuth client (Web application). Authorised redirect URI = the callback URL shown in Supabase > Authentication > Providers > Google (`https://<project-ref>.supabase.co/auth/v1/callback`). Paste the Client ID and Secret into that Supabase provider and enable it.
+4. Re-run `supabase/admin.sql` (adds orders access and the auto-admin rule).
+
+## Checkout, orders and email
+
+Set `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY` and `EMAIL_FROM` (see `.env.example`). In Stripe add a webhook endpoint `https://sparkthunder.shop/api/stripe/webhook` for `checkout.session.completed`. Prices are treated as VAT-inclusive; Stripe Tax is not enabled.

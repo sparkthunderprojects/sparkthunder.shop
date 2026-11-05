@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { emailGiftCardAction } from "../../../order-actions";
 import { changeGiftCardBalanceAction, setGiftCardStatusAction, updateGiftCardDetailsAction } from "../../../gift-actions";
 import { Field, poundsToPence, useAction } from "../../../ui";
 import type { GiftCard, LedgerEntry } from "@/lib/giftcards/ledger";
@@ -22,7 +23,7 @@ export function GiftCardDetail({ card, ledger }: { card: GiftCard; ledger: Ledge
 
   return (
     <>
-      <div className="adm-h"><div><h1><code>{formatCode(card.code)}</code></h1><p><Link href="/admin/gift-cards">All gift cards</Link> · Issued {new Date(card.created_at).toLocaleDateString("en-GB")} · {card.source}</p></div>
+      <div className="adm-h"><div><h1><code>{formatCode(card.code)}</code></h1><p><Link href="/admin/gift-cards">All gift cards</Link> · Issued {new Date(card.created_at).toLocaleDateString("en-GB")} · {card.source} · {card.emailed_at ? `emailed ${new Date(card.emailed_at).toLocaleDateString("en-GB")}` : "not emailed yet"}</p></div>
         <span className={`adm-badge ${status === "active" ? "adm-ok" : status === "used" ? "" : status === "expired" ? "adm-warn" : "adm-bad"}`}>{status}</span></div>
       <div className="adm-grid adm-g3" style={{ marginBottom: 18 }}>
         <div className="adm-card" style={{ margin: 0 }}><div className="adm-stat">{formatPrice(card.balance_pence)}</div><div className="adm-stat-l">Balance</div></div>
@@ -58,6 +59,7 @@ export function GiftCardDetail({ card, ledger }: { card: GiftCard; ledger: Ledge
         <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap" }}>
           <button className="adm-btn adm-pri" disabled={pending} onClick={() => run(() => updateGiftCardDetailsAction(card.id, d), "Saved", refresh)}>Save details</button>
           <button className="adm-btn" onClick={() => navigator.clipboard?.writeText(formatCode(card.code))}>Copy code</button>
+          <button className="adm-btn adm-bolt" disabled={pending || !d.recipientEmail} onClick={() => run(() => emailGiftCardAction(card.id, d.recipientEmail), "Email sent", refresh)}>{card.emailed_at ? "Email again" : "Email to recipient"}</button>
           {card.status === "active"
             ? <button className="adm-btn adm-danger" disabled={pending} onClick={() => { const why = prompt("Why are you disabling this card? (optional)") ?? null; if (why !== null) run(() => setGiftCardStatusAction(card.id, "disabled", why), "Disabled", refresh); }}>Disable card</button>
             : <button className="adm-btn" disabled={pending} onClick={() => run(() => setGiftCardStatusAction(card.id, "active", ""), "Re-enabled", refresh)}>Re-enable card</button>}

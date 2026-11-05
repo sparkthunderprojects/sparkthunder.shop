@@ -65,8 +65,8 @@ export function CartDrawer({ suggestions = [] }: { suggestions?: QuickProduct[] 
               <p className="flex justify-between text-lg"><span>Subtotal</span><span className="font-bold">{formatPrice(subtotalPence)}</span></p>
               <p className="mt-1 text-sm text-muted">Shipping and taxes are calculated at checkout.</p>
               <div className="mt-4 grid gap-3">
+                <Link href="/cart" onClick={closeCart} className="btn">Checkout</Link>
                 <Link href="/cart" onClick={closeCart} className="btn btn-ink">View basket</Link>
-                <button disabled className="btn" title="Payments are not connected yet">Checkout is not available yet</button>
               </div>
             </div>
           </>

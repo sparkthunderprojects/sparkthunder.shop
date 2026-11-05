@@ -37,7 +37,8 @@ export function GiftCardDesigner() {
     const key = Math.abs([...`${email}|${to}|${from}|${msg}|${theme.id}`].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7)).toString(36);
     add({
       slug: `gift-card-${value}-${key}`, name: `Sparkthunder gift card ${formatPrice(value)}`, pricePence: value, image: "/sparkthunder-logo.png",
-      href: "/gift-cards", note: `For ${to.trim() || email}${from.trim() ? ` from ${from.trim()}` : ""} (${email})`,
+      href: "/gift-cards", gift: { recipientName: to.trim(), recipientEmail: email.trim(), senderName: from.trim(), message: msg.trim(), theme: theme.id === "occult" ? "occult" : theme.id },
+      note: `For ${to.trim() || email}${from.trim() ? ` from ${from.trim()}` : ""} (${email})`,
     });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);

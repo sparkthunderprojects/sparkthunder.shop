@@ -7,7 +7,7 @@ import path from "node:path";
 type Row = Record<string, unknown>;
 type Result = { data: unknown; error: { message: string } | null; count?: number | null };
 
-const PK: Record<string, string> = { products: "slug", franchises: "slug", categories: "slug", media: "id", redirects: "id", settings: "key", subscribers: "email", admin_users: "user_id", gift_cards: "id", gift_card_ledger: "id" };
+const PK: Record<string, string> = { products: "slug", franchises: "slug", categories: "slug", media: "id", redirects: "id", settings: "key", subscribers: "email", admin_users: "user_id", gift_cards: "id", gift_card_ledger: "id", orders: "id", checkout_snapshots: "id" };
 
 type Store = Record<string, Row[]>;
 const g = globalThis as unknown as { __sparkFake?: Store; __sparkSeq?: number };
@@ -19,7 +19,7 @@ function store(): Store {
       franchises: seedCatalog.franchises.map((f) => ({ ...franchiseToRow(f), updated_at: now })),
       categories: seedCatalog.categories.map((c) => ({ ...categoryToRow(c), updated_at: now })),
       products: seedCatalog.products.map((p) => ({ ...productToRow(p), updated_at: `${p.createdAt}T00:00:00.000Z` })),
-      media: [], redirects: [], settings: [], subscribers: [], admin_users: [], gift_cards: [], gift_card_ledger: [],
+      media: [], redirects: [], settings: [], subscribers: [], admin_users: [], gift_cards: [], gift_card_ledger: [], orders: [], checkout_snapshots: [],
     };
     g.__sparkSeq = 1;
   }
@@ -59,7 +59,7 @@ class Query implements PromiseLike<Result> {
     const now = new Date().toISOString();
     const withDefaults = (r: Row): Row => {
       const out: Row = { ...r };
-      if (pk === "id" && out.id == null) out.id = ["media", "gift_cards", "gift_card_ledger"].includes(this.table) ? `${this.table[0]}-${g.__sparkSeq!++}-${Date.now().toString(36)}` : g.__sparkSeq!++;
+      if (pk === "id" && out.id == null) out.id = ["media", "gift_cards", "gift_card_ledger", "orders"].includes(this.table) ? `${this.table[0]}-${g.__sparkSeq!++}-${Date.now().toString(36)}` : g.__sparkSeq!++;
       if (!out.created_at && this.table !== "settings") out.created_at = now;
       if (["products", "franchises", "categories"].includes(this.table)) out.updated_at = now;
       return out;
@@ -69,6 +69,7 @@ class Query implements PromiseLike<Result> {
       for (const r of [this.payload].flat() as Row[]) {
         if (rows.some((x) => x[pk] === r[pk] && r[pk] != null)) return { data: null, error: { message: `duplicate key value violates unique constraint on ${this.table}.${pk}` } };
         if (this.table === "products" && rows.some((x) => x.sku === r.sku)) return { data: null, error: { message: "duplicate key value violates unique constraint \"products_sku_key\"" } };
+        if (this.table === "orders" && rows.some((x) => x.number === r.number)) return { data: null, error: { message: "duplicate key value violates unique constraint \"orders_number_key\"" } };
         if (this.table === "redirects" && rows.some((x) => x.from_path === r.from_path)) return { data: null, error: { message: "duplicate key value violates unique constraint \"redirects_from_path_key\"" } };
         const row = withDefaults(r); rows.push(row); result.push(row);
       }

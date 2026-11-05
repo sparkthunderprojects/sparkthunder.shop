@@ -21,6 +21,18 @@ insert into public.admin_users (user_id)
 select id from auth.users where email = 'thegmpfury@gmail.com'
 on conflict do nothing;
 
+-- ...and make that email an admin automatically whenever it signs up or signs in with a CONFIRMED address
+-- (so signing in with Google as thegmpfury@gmail.com works without re-running this file).
+create or replace function public.auto_admin() returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if lower(new.email) = 'thegmpfury@gmail.com' and new.email_confirmed_at is not null then
+    insert into public.admin_users (user_id) values (new.id) on conflict do nothing;
+  end if;
+  return new;
+end $$;
+drop trigger if exists auto_admin on auth.users;
+create trigger auto_admin after insert or update of email_confirmed_at on auth.users for each row execute function public.auto_admin();
+
 -- ---------------------------------------------------------------- columns
 alter table public.products
   add column if not exists seo_title text not null default '',
@@ -183,3 +195,54 @@ language sql security definer set search_path = public stable as $$
 $$;
 revoke all on function public.gift_card_lookup(text) from public;
 grant execute on function public.gift_card_lookup(text) to anon, authenticated;
+
+-- ---------------------------------------------------------------- orders and checkout (Stripe)
+alter table public.gift_cards add column if not exists emailed_at timestamptz;
+
+-- Server-side snapshot of what was in the basket when checkout started (prices come from the catalogue, never the browser).
+create table if not exists public.checkout_snapshots (
+  id text primary key,                      -- Stripe Checkout Session id
+  payload jsonb not null,
+  created_at timestamptz not null default now(),
+  fulfilled_at timestamptz
+);
+
+create table if not exists public.orders (
+  id uuid primary key default gen_random_uuid(),
+  number text not null unique,              -- e.g. SPK-1001
+  stripe_session_id text unique,
+  stripe_payment_intent text not null default '',
+  status text not null default 'paid' check (status in ('paid','shipped','cancelled','attention')),
+  email text not null default '',
+  name text not null default '',
+  phone text not null default '',
+  shipping_address jsonb,
+  items jsonb not null default '[]',
+  subtotal_pence integer not null default 0,
+  shipping_pence integer not null default 0,
+  gift_card_pence integer not null default 0,
+  total_pence integer not null default 0,
+  gift_card_code text not null default '',
+  tracking_carrier text not null default '',
+  tracking_number text not null default '',
+  notes text not null default '',
+  attention_reason text not null default '',
+  shipped_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists orders_created_idx on public.orders (created_at desc);
+drop trigger if exists orders_touch on public.orders;
+create trigger orders_touch before update on public.orders for each row execute function public.touch_updated_at();
+
+-- Only admins can read these through the API. The checkout and Stripe webhook use the service role key, which bypasses RLS.
+alter table public.orders enable row level security;
+alter table public.checkout_snapshots enable row level security;
+drop policy if exists "admin all orders" on public.orders;
+create policy "admin all orders" on public.orders for all using (public.is_admin()) with check (public.is_admin());
+drop policy if exists "admin all checkout_snapshots" on public.checkout_snapshots;
+create policy "admin all checkout_snapshots" on public.checkout_snapshots for all using (public.is_admin()) with check (public.is_admin());
+
+-- Signed-in customers (Sparkthunder ID) can read their own orders by email. Keep "Confirm email" ON in Supabase Auth.
+drop policy if exists "customers read own orders" on public.orders;
+create policy "customers read own orders" on public.orders for select using (lower(email) = lower(coalesce(auth.jwt() ->> 'email', '')));
