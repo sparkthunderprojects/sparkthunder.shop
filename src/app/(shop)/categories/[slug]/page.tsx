@@ -1,3 +1,4 @@
+import { categorySeo } from "@/lib/seo/effective";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -13,12 +14,8 @@ export async function generateMetadata(props: PageProps<"/categories/[slug]">): 
   const c = await getCategory(slug);
   if (!c) return { title: "Category not found", robots: { index: false } };
   // Filtered views are a faceted-navigation duplicate: canonical to the base page, keep out of the index.
-  return buildMetadata({
-    title: `${c.name} - Official Sparkthunder Merchandise`,
-    description: clip(`Shop official ${c.name.toLowerCase()} from Knightverge, Occult Inc and the Sparkthunder universe. ${c.description}`),
-    path: `/categories/${c.slug}`,
-    noindex: Boolean(franchise),
-  });
+  const seo = categorySeo(c);
+  return buildMetadata({ title: seo.title, description: seo.description, path: seo.path, image: seo.image, noindex: seo.noindex || Boolean(franchise) });
 }
 
 export default async function CategoryPage(props: PageProps<"/categories/[slug]">) {

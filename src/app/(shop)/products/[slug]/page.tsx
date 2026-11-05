@@ -1,3 +1,4 @@
+import { productSeo } from "@/lib/seo/effective";
 import { GRID, nb } from "@/lib/ui";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -28,12 +29,8 @@ export async function generateMetadata(props: PageProps<"/products/[slug]">): Pr
   const p = await getProduct(slug);
   if (!p) return { title: "Product not found", robots: { index: false } };
   const f = await getFranchise(p.franchiseSlug);
-  return buildMetadata({
-    title: `${p.name}${f ? ` - ${f.name}` : ""} | ${formatPrice(p.pricePence)}`,
-    description: clip(`${p.shortDescription} ${p.description}`),
-    path: `/products/${p.slug}`,
-    image: productImageUrl(p),
-  });
+  const seo = productSeo(p, f);
+  return buildMetadata({ title: seo.title, description: seo.description, path: seo.path, image: seo.image, noindex: seo.noindex, canonical: seo.canonical });
 }
 
 export default async function ProductPage(props: PageProps<"/products/[slug]">) {
@@ -74,7 +71,7 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
       </div>
 
       <div className="mt-8 grid gap-12 lg:grid-cols-[1.1fr_1fr]">
-        <ProductGallery images={gallery} name={product.name} sizes="(min-width:1024px) 55vw, 100vw" />
+        <ProductGallery images={gallery} alts={product.imageAlts} name={product.name} sizes="(min-width:1024px) 55vw, 100vw" />
 
         <div className="lg:pt-2">
           {franchise && (

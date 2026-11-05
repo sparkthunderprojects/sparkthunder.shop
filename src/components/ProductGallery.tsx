@@ -5,13 +5,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { isPlaceholderArt } from "@/lib/card";
 
 /** Main image with hover zoom, thumbnails when there are several photos, and a full-screen lightbox. */
-export function ProductGallery({ images, name, sizes }: { images: string[]; name: string; sizes: string }) {
+export function ProductGallery({ images, name, sizes, alts = [] }: { images: string[]; name: string; sizes: string; alts?: string[] }) {
   const [idx, setIdx] = useState(0);
   const [zoom, setZoom] = useState<{ x: number; y: number } | null>(null);
   const [light, setLight] = useState(false);
   const closeRef = useRef<HTMLButtonElement>(null);
   const many = images.length > 1;
-  const alt = (i: number) => (i === 0 ? `${name} - official Sparkthunder merchandise` : `${name} - photo ${i + 1}`);
+  const alt = (i: number) => alts[i]?.trim() || (i === 0 ? `${name} - official Sparkthunder merchandise` : `${name} - photo ${i + 1}`);
 
   const step = useCallback((d: number) => setIdx((i) => (i + d + images.length) % images.length), [images.length]);
 

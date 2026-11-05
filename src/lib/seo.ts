@@ -16,8 +16,9 @@ export function buildMetadata(opts: {
   image?: string;
   type?: "website" | "article";
   noindex?: boolean;
+  canonical?: string;
 }): Metadata {
-  const url = absoluteUrl(opts.path);
+  const url = opts.canonical ?? absoluteUrl(opts.path);
   return {
     title: opts.title,
     description: opts.description,
@@ -62,7 +63,7 @@ export function breadcrumbLd(items: { name: string; path: string }[]) {
   };
 }
 
-export function organizationLd() {
+export function organizationLd(sameAs: string[] = SITE.sameAs) {
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
@@ -70,7 +71,7 @@ export function organizationLd() {
     name: SITE.legalName,
     url: SITE.url,
     logo: absoluteUrl("/sparkthunder-logo.png"),
-    ...(SITE.sameAs.length ? { sameAs: SITE.sameAs } : {}),
+    ...(sameAs.length ? { sameAs } : {}),
   };
 }
 
@@ -101,7 +102,7 @@ export function productLd(p: Product, franchise: Franchise | null, category: Cat
     description: p.description,
     sku: p.sku,
     mpn: p.sku,
-    image: [productImageUrl(p)],
+    image: p.images.length ? p.images.map((src) => (src.startsWith("http") ? src : absoluteUrl(src))) : [productImageUrl(p)],
     url: absoluteUrl(`/products/${p.slug}`),
     brand: { "@type": "Brand", name: franchise?.name ?? SITE.legalName },
     ...(category ? { category: category.name } : {}),

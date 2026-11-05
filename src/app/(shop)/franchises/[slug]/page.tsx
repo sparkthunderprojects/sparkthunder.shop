@@ -1,3 +1,4 @@
+import { franchiseSeo } from "@/lib/seo/effective";
 import { FranchiseLogo } from "@/components/FranchiseLogo";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -20,11 +21,8 @@ export async function generateMetadata(props: PageProps<"/franchises/[slug]">): 
   const { slug } = await props.params;
   const f = await getFranchise(slug);
   if (!f) return { title: "Franchise not found", robots: { index: false } };
-  return buildMetadata({
-    title: `${f.name} Merchandise & Official Store`,
-    description: clip(`Shop official ${f.name} merchandise. ${f.tagline} ${f.description}`),
-    path: `/franchises/${f.slug}`,
-  });
+  const seo = franchiseSeo(f);
+  return buildMetadata({ title: seo.title, description: seo.description, path: seo.path, image: seo.image, noindex: seo.noindex });
 }
 
 export default async function FranchisePage(props: PageProps<"/franchises/[slug]">) {

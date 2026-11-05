@@ -6,7 +6,7 @@ export function ProductImage({ product, sizes, priority = false, className = "" 
   return (
     <Image
       src={src}
-      alt={`${product.name} - official Sparkthunder merchandise`}
+      alt={product.imageAlts?.[0]?.trim() || `${product.name} - official Sparkthunder merchandise`}
       width={1200}
       height={1200}
       sizes={sizes}

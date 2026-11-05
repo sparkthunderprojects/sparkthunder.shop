@@ -36,3 +36,14 @@ npm run dev
 - Franchise/category copy should be 200+ unique words per page; Occult Inc copy is generic and needs real lore.
 - Checkout/payments are **not connected** (basket works; checkout button is disabled). Choose a provider (e.g. Stripe).
 - Add `SITE.sameAs` social profiles in `src/lib/site.ts`, shipping/returns pages, and Search Console verification.
+
+## Admin (CMS) setup
+
+The shop management system lives at `/admin` (products, variants and stock, franchises, categories, image library, per-page SEO editor with live Google/social previews and score, site-wide SEO audit, redirects, settings).
+
+1. Create a Supabase project; set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` on your host.
+2. In the SQL editor run `supabase/schema.sql`, then `supabase/admin.sql`.
+3. In Supabase Authentication, add a user (email + password). `thegmpfury@gmail.com` is made an admin automatically by `admin.sql`; add other admins to the `admin_users` table.
+4. Optional: set `INDEXNOW_KEY` for instant indexing pings.
+
+Local trial without Supabase: `SPARKTHUNDER_DEMO=1 npm run dev` (in-memory fake DB; disabled on Netlify/Vercel/CI).
