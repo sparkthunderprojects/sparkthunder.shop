@@ -70,6 +70,21 @@ export default async function HomePage() {
           ),
         },
         {
+          id: "knightverge-characters",
+          label: "Shop your favourite Knightverge characters",
+          background: "#0a0b16",
+          children: (
+            <div className="-mx-(--gutter) md:relative md:min-h-[min(80vh,44rem)]">
+              <Image src="/hero/knightverge-characters.jpg" alt="Ten Knightverge characters standing side by side in colour-tinted panels" width={1600} height={880} sizes="100vw" loading="eager" className="aspect-[16/9] w-full object-cover md:absolute md:inset-0 md:h-full md:aspect-auto" />
+              <div className="absolute inset-0 hidden bg-gradient-to-r from-black/90 via-black/55 to-transparent md:block" aria-hidden />
+              <div className="relative px-(--gutter) pb-20 pt-8 md:flex md:min-h-[min(80vh,44rem)] md:max-w-[min(46rem,60%)] md:flex-col md:justify-center md:py-14">
+                <h2 className="display text-[clamp(2.5rem,5.6vw,5rem)]">Shop your Favourite Knightverge Characters</h2>
+                <div className="mt-8"><Link href="/franchises/knightverge" className="btn">Shop Knightverge</Link></div>
+              </div>
+            </div>
+          ),
+        },
+        {
           id: "jenna-hex",
           label: "Shop the Merch Now",
           background: "radial-gradient(60% 80% at 70% 50%, #0f2a12 0%, #050a05 55%, #000 100%)",
@@ -80,7 +95,7 @@ export default async function HomePage() {
                 <div className="mt-8"><Link href="/franchises/occult-inc" className="btn">Shop Occult Inc</Link></div>
               </div>
               <div className="order-1 md:order-2">
-                <Image src="/franchise/jenna-hex.png" alt="Jenna Hex, an Occult Inc character, in white and glowing green lettering with a pentagram" width={1100} height={803} sizes="(min-width:768px) 55vw, 100vw" className="mx-auto h-auto w-full max-w-3xl" />
+                <Image src="/franchise/jenna-hex.png" alt="Jenna Hex, an Occult Inc character, in white and glowing green lettering with a pentagram" width={1100} height={803} sizes="(min-width:768px) 55vw, 100vw" loading="eager" className="mx-auto h-auto w-full max-w-3xl" />
               </div>
             </div>
           ),
