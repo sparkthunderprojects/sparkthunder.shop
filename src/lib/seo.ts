@@ -69,7 +69,7 @@ export function organizationLd() {
     "@id": absoluteUrl("/#organization"),
     name: SITE.legalName,
     url: SITE.url,
-    logo: absoluteUrl("/logo"),
+    logo: absoluteUrl("/sparkthunder-logo.png"),
     ...(SITE.sameAs.length ? { sameAs: SITE.sameAs } : {}),
   };
 }

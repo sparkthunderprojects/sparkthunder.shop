@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Bolt } from "@/components/Bolt";
+import Image from "next/image";
 import { PaymentBadges } from "@/components/PaymentBadges";
 import { getCategories, getFranchises } from "@/lib/catalog";
 import { LEGAL_PAGES, SITE } from "@/lib/site";
@@ -11,10 +11,7 @@ export async function Footer() {
   return (
     <footer className="theme-dark border-t border-ink/15">
       <div className="px-(--gutter) pb-10 pt-14">
-        <div className="flex items-end gap-3">
-          <Bolt className="h-10 w-7 text-bolt sm:h-14 sm:w-10" />
-          <p className="display text-[clamp(2.25rem,6vw,4.5rem)]">Sparkthunder</p>
-        </div>
+        <Image src="/sparkthunder-logo.png" alt={SITE.name} width={1200} height={186} className="h-auto w-[min(32rem,100%)]" />
         <div className="mt-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_1fr]">
           <p className="serif max-w-sm text-lg leading-relaxed text-ink/80">{SITE.description}</p>
           <div>

@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Bolt } from "@/components/Bolt";
 import { CartLink } from "@/components/CartLink";
 import { MobileMenu } from "@/components/MobileMenu";
 import { SearchBox } from "@/components/SearchBox";
@@ -42,8 +41,7 @@ export async function Header() {
           <div className="hidden md:block"><SearchBox popular={popular} /></div>
         </div>
         <Link href="/" className="flex items-center justify-center gap-2 whitespace-nowrap" aria-label={`${SITE.name} home`}>
-          <Bolt className="h-7 w-5 text-ink" />
-          <span className="display text-[1.5rem] leading-none sm:text-[1.8rem]">Sparkthunder<span className="hidden font-light sm:inline"> Shop</span></span>
+          <Image src="/sparkthunder-logo.png" alt={SITE.name} width={1200} height={186} priority className="h-7 w-auto sm:h-9" />
         </Link>
         <div className="flex items-center justify-end gap-2"><WishlistLink /><CartLink /></div>
       </div>
