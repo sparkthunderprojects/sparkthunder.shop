@@ -62,6 +62,8 @@ export type Product = {
   bundleItems?: BundleItem[];
   /** Set from a collection with a launch date; the product cannot be bought before it. */
   launchAt?: string;
+  /** Derived from real recent sales; never stored. */
+  bestSeller?: boolean;
   /** Admin-only: draft products are hidden from the storefront. */
   published?: boolean;
 } & SeoFields;

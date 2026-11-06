@@ -2,6 +2,7 @@ import { unstable_cache } from "next/cache";
 import { publicClient } from "@/lib/db/clients";
 import { categoryFromRow, collectionFromRow, franchiseFromRow, productFromRow, type CategoryRow, type CollectionRow, type FranchiseRow, type ProductRow } from "@/lib/db/mappers";
 import { seedCatalog } from "@/data/seed";
+import { getSalesStats, withBestSellers } from "@/lib/sales";
 import type { Catalog, Collection, Product } from "@/lib/types";
 
 /**
@@ -64,9 +65,9 @@ const loadCatalog = unstable_cache(
   async (): Promise<Catalog> => {
     const c = (await loadFromSupabase()) ?? seedCatalog;
     const collections = c.collections ?? [];
-    return { ...c, collections, products: withLaunchDates(withBundleStock(c.products), collections) };
+    return { ...c, collections, products: withBestSellers(withLaunchDates(withBundleStock(c.products), collections), await getSalesStats()) };
   },
-  ["catalog-v3"],
+  ["catalog-v4"],
   { tags: [CATALOG_TAG], revalidate: 300 },
 );
 

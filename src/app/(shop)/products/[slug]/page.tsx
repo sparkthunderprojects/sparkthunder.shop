@@ -15,6 +15,9 @@ import { StickyBuyBar } from "@/components/StickyBuyBar";
 import { productImagePath } from "@/lib/card";
 import { getAllProducts, getCategory, getCompleteTheSet, getFranchise, getFranchises, getProduct, getRelatedProducts } from "@/lib/catalog";
 import { characterName, characterSlugs } from "@/lib/characters";
+import { FrequentlyBought } from "@/components/FrequentlyBought";
+import { getSalesStats } from "@/lib/sales";
+import { isUpcoming } from "@/lib/launch";
 import { ReviewsSection } from "@/components/ReviewsSection";
 import { getReviews } from "@/lib/reviews";
 import { breadcrumbLd, buildMetadata, clip, productImageUrl, productLd } from "@/lib/seo";
@@ -51,6 +54,13 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
     getAllProducts(),
     getReviews(slug),
   ]);
+  const stats = await getSalesStats();
+  const partners = (stats.together[product.slug] ?? [])
+    .map((s) => allProducts.find((x) => x.slug === s))
+    .filter((x): x is NonNullable<typeof x> => Boolean(x) && x!.inStock && !(x!.variants ?? []).length && !isUpcoming(x!.launchAt) && !x!.bundleItems?.length)
+    .slice(0, 2)
+    .map((x) => ({ slug: x.slug, name: x.name, pricePence: x.pricePence, image: productImagePath(x) }));
+  const canGroup = partners.length > 0 && product.inStock && !(product.variants ?? []).length && !isUpcoming(product.launchAt) && !product.bundleItems?.length;
   const inSet = new Set(completeSet.map((p) => p.slug));
   const related = relatedAll.filter((p) => !inSet.has(p.slug)).slice(0, 4);
   const nameBySlug = Object.fromEntries(franchises.map((f) => [f.slug, f.name]));
@@ -99,7 +109,7 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
             {product.comparePricePence && <s className="text-lg text-muted">{formatPrice(product.comparePricePence)}</s>}
           </p>
           <p className="mt-1 text-sm text-muted">
-            {!product.inStock ? "Currently sold out" : lowCount !== null ? <b className="text-amber-600">Only {lowCount} left</b> : "In stock"} · SKU {product.sku}
+            {product.bestSeller ? <b className="mr-2 bg-bolt px-2 py-0.5 text-black">Best seller</b> : null}{!product.inStock ? "Currently sold out" : lowCount !== null ? <b className="text-amber-600">Only {lowCount} left</b> : "In stock"} · SKU {product.sku}
           </p>
           {characterSlugs(product).length > 0 && (
             <p className="mt-2 text-sm">Featuring {characterSlugs(product).map((c, i) => <span key={c}>{i > 0 ? ", " : ""}<Link href={`/characters/${c}`} className="font-bold underline underline-offset-4">{characterName(c)}</Link></span>)}</p>
@@ -142,6 +152,8 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
 
       <RecentTracker slug={product.slug} />
       <StickyBuyBar targetId="buy-box" item={cartItem} inStock={product.inStock} hasOptions={(product.variants ?? []).length > 0} launchAt={product.launchAt} />
+
+      {canGroup ? <FrequentlyBought main={{ slug: product.slug, name: product.name, pricePence: product.pricePence, image: productImagePath(product) }} partners={partners} /> : null}
 
       <ReviewsSection slug={product.slug} summary={reviews} />
 
