@@ -74,13 +74,8 @@ export function ConsentManager() {
       {open ? (
         <div className="fixed inset-0 z-[90] flex items-center justify-center bg-ink/70 p-3 sm:p-6" data-consent-dialog>
           <div role="dialog" aria-modal="true" aria-labelledby="consent-h" className="relative max-h-full w-full max-w-xl overflow-y-auto border border-ink/20 bg-paper text-ink shadow-2xl">
-            <div className="relative flex flex-col items-center gap-1.5 bg-black px-14 py-5">
+            <div className="relative flex items-center justify-center bg-black px-14 py-6">
               <Image src="/sparkthunder-logo.png" alt="Sparkthunder" width={1200} height={186} className="h-7 w-auto sm:h-8" />
-              <span aria-hidden className="flex w-full max-w-[16rem] items-center gap-2.5 text-bolt">
-                <span className="h-px flex-1 bg-bolt/50" />
-                <span className="logo-shop pl-[0.5em] text-[0.7rem] tracking-[0.5em]">SHOP</span>
-                <span className="h-px flex-1 bg-bolt/50" />
-              </span>
               <button type="button" onClick={dismiss} aria-label="Close and keep only the necessary cookies" className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center border border-white/40 text-xl leading-none text-white">×</button>
             </div>
             <div className="p-5 sm:p-8">
