@@ -56,6 +56,23 @@ export async function saveProductAction(p: Product, originalSlug: string | null)
     if (p.seoDescription && p.seoDescription.length > 320) fields.seoDescription = "Keep the meta description under 320 characters.";
     if (p.canonicalUrl && !/^https?:\/\//.test(p.canonicalUrl)) fields.canonical = "The canonical URL must start with https://";
     if ((p.variants ?? []).some((v) => !v.name.trim())) fields.variants = "Every variant needs a name.";
+    const bundle = (p.bundleItems ?? []).map((i) => ({ slug: String(i.slug ?? "").trim(), qty: Math.floor(Number(i.qty)) })).filter((i) => i.slug);
+    if (bundle.length) {
+      if (bundle.length < 2) fields.bundle = "A bundle needs at least two products. Remove the bundle items to make this a normal product.";
+      else if (new Set(bundle.map((i) => i.slug)).size !== bundle.length) fields.bundle = "Each product can only be listed once. Increase its quantity instead.";
+      else if (bundle.some((i) => i.slug === p.slug || originalSlug === i.slug)) fields.bundle = "A bundle cannot contain itself.";
+      else if (bundle.some((i) => !Number.isInteger(i.qty) || i.qty < 1 || i.qty > 10)) fields.bundle = "Quantities must be between 1 and 10.";
+      else {
+        const { data } = await db.from("products").select("slug,variants,bundle_items").in("slug", bundle.map((i) => i.slug));
+        const rows = (data ?? []) as { slug: string; variants: unknown[] | null; bundle_items: unknown[] | null }[];
+        const missing = bundle.find((i) => !rows.some((r) => r.slug === i.slug));
+        const withVariants = rows.find((r) => (r.variants ?? []).length > 0);
+        const nested = rows.find((r) => (r.bundle_items ?? []).length > 0);
+        if (missing) fields.bundle = `"${missing.slug}" no longer exists.`;
+        else if (withVariants) fields.bundle = `"${withVariants.slug}" has size/colour options. Bundles can only contain products without variants.`;
+        else if (nested) fields.bundle = `"${nested.slug}" is itself a bundle. Bundles cannot contain other bundles.`;
+      }
+    }
     if (Object.keys(fields).length) return { ok: false, error: "Please fix the highlighted fields.", fields };
 
     const images = p.images.map((s) => s.trim()).filter(Boolean);
@@ -63,6 +80,7 @@ export async function saveProductAction(p: Product, originalSlug: string | null)
       ...p, images, imageAlts: images.map((_, i) => (p.imageAlts?.[i] ?? "").trim()),
       details: p.details.map((d) => d.trim()).filter(Boolean), tags: (p.tags ?? []).map((t) => t.trim()).filter(Boolean),
       variants: (p.variants ?? []).map((v) => ({ ...v, name: v.name.trim(), sku: v.sku.trim() })),
+      bundleItems: bundle,
       createdAt: p.createdAt || new Date().toISOString().slice(0, 10),
     };
     // With per-variant stock the product total is derived, so the product sells out when every option has.

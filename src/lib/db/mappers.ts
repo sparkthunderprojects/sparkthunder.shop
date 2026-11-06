@@ -1,4 +1,4 @@
-import type { Category, Franchise, Product, Variant } from "@/lib/types";
+import type { BundleItem, Category, Franchise, Product, Variant } from "@/lib/types";
 
 export type FranchiseRow = {
   slug: string; name: string; tagline: string; description: string; accent: string; sort_order: number; site_url?: string;
@@ -15,7 +15,7 @@ export type ProductRow = {
   in_stock: boolean; is_new: boolean; is_featured: boolean; published?: boolean; created_at: string;
   seo_title?: string; seo_description?: string; canonical_url?: string; og_image?: string; noindex?: boolean; focus_keyword?: string;
   tags?: string[] | null; image_alts?: string[] | null; track_stock?: boolean; stock_qty?: number; low_stock_threshold?: number;
-  variants?: Variant[] | null; updated_at?: string;
+  variants?: Variant[] | null; bundle_items?: BundleItem[] | null; updated_at?: string;
 };
 
 export const franchiseFromRow = (r: FranchiseRow): Franchise => ({
@@ -52,7 +52,7 @@ export const productFromRow = (r: ProductRow): Product => {
     inStock: tracked === null ? r.in_stock : tracked > 0,
     isNew: r.is_new, isFeatured: r.is_featured, createdAt: r.created_at, published: r.published ?? true,
     imageAlts: r.image_alts ?? [], tags: r.tags ?? [], canonicalUrl: r.canonical_url ?? "",
-    trackStock, stockQty, lowStockThreshold: r.low_stock_threshold ?? 5, variants,
+    trackStock, stockQty, lowStockThreshold: r.low_stock_threshold ?? 5, variants, bundleItems: r.bundle_items ?? [],
     seoTitle: r.seo_title ?? "", seoDescription: r.seo_description ?? "", ogImage: r.og_image ?? "", noindex: r.noindex ?? false,
     focusKeyword: r.focus_keyword ?? "", updatedAt: r.updated_at,
   };
@@ -64,5 +64,5 @@ export const productToRow = (p: Product): ProductRow => ({
   in_stock: p.inStock, is_new: p.isNew, is_featured: p.isFeatured, published: p.published ?? true, created_at: p.createdAt,
   seo_title: p.seoTitle ?? "", seo_description: p.seoDescription ?? "", canonical_url: p.canonicalUrl ?? "", og_image: p.ogImage ?? "",
   noindex: p.noindex ?? false, focus_keyword: p.focusKeyword ?? "", tags: p.tags ?? [], image_alts: p.imageAlts ?? [],
-  track_stock: p.trackStock ?? false, stock_qty: p.stockQty ?? 0, low_stock_threshold: p.lowStockThreshold ?? 5, variants: p.variants ?? [],
+  track_stock: p.trackStock ?? false, stock_qty: p.stockQty ?? 0, low_stock_threshold: p.lowStockThreshold ?? 5, variants: p.variants ?? [], bundle_items: p.bundleItems ?? [],
 });

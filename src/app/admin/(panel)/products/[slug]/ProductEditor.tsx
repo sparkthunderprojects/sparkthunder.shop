@@ -12,7 +12,7 @@ import { productInput, scoreSeo } from "@/lib/seo/score";
 import { slugify } from "@/lib/seo/text";
 import type { Category, Franchise, Product, Variant } from "@/lib/types";
 
-export function ProductEditor({ initial, isNew, franchises, categories, media }: { initial: Product; isNew: boolean; franchises: Franchise[]; categories: Category[]; media: MediaItem[] }) {
+export function ProductEditor({ initial, isNew, franchises, categories, media, bundleChoices }: { initial: Product; isNew: boolean; franchises: Franchise[]; categories: Category[]; media: MediaItem[]; bundleChoices: { slug: string; name: string; pricePence: number }[] }) {
   const router = useRouter();
   const [p, setP] = useState<Product>(initial);
   const [price, setPrice] = useState(penceToPounds(initial.pricePence));
@@ -31,6 +31,9 @@ export function ProductEditor({ initial, isNew, franchises, categories, media }:
   const originalSlug = isNew ? null : initial.slug;
   const slugChanged = !isNew && p.slug !== initial.slug;
   const variants = p.variants ?? [];
+  const bundle = p.bundleItems ?? [];
+  const bundleTotal = bundle.reduce((n, b) => n + (bundleChoices.find((c) => c.slug === b.slug)?.pricePence ?? 0) * (Number(b.qty) || 0), 0);
+  const setBundle = (i: number, v: Partial<{ slug: string; qty: number }>) => set("bundleItems", bundle.map((x, n) => (n === i ? { ...x, ...v } : x)));
   const setVariant = (i: number, v: Partial<Variant>) => set("variants", variants.map((x, n) => (n === i ? { ...x, ...v } : x)));
   const move = (i: number, d: number) => {
     const j = i + d; if (j < 0 || j >= p.images.length) return;
@@ -132,6 +135,20 @@ export function ProductEditor({ initial, isNew, franchises, categories, media }:
         ))}
         {err("variants")}
         <button type="button" className="adm-btn" onClick={() => set("variants", [...variants, { name: "", sku: p.sku ? `${p.sku}-${variants.length + 1}` : "", stockQty: 0 }])}>Add variant</button>
+      </section>
+
+      <section className="adm-card"><h2>Bundle contents</h2>
+        <p className="adm-hint" style={{ marginTop: -8, marginBottom: 12 }}>Make this a bundle: a product made of other products, sold at its own price (set the price above). It sells out when any product inside does, and buying it takes stock off each one. Leave empty for a normal product. Products with size or colour options cannot go in a bundle.</p>
+        {bundle.map((b, i) => (
+          <div key={i} className="adm-grid" style={{ gridTemplateColumns: "4fr 1fr auto", marginBottom: 8, alignItems: "end" }}>
+            <Field label="Product"><select className="adm-sel" value={b.slug} onChange={(e) => setBundle(i, { slug: e.target.value })}><option value="">Choose a product</option>{bundleChoices.map((c) => <option key={c.slug} value={c.slug}>{c.name}</option>)}</select></Field>
+            <Field label="Quantity"><input className="adm-in" type="number" min={1} max={10} value={b.qty} onChange={(e) => setBundle(i, { qty: Math.max(1, Number(e.target.value) || 1) })} /></Field>
+            <button type="button" className="adm-btn adm-danger" aria-label="Remove from bundle" onClick={() => set("bundleItems", bundle.filter((_, n) => n !== i))}>×</button>
+          </div>
+        ))}
+        {err("bundle")}
+        {bundle.length > 1 && bundleTotal > 0 ? <p className="adm-hint">Bought separately these cost <b>£{(bundleTotal / 100).toFixed(2)}</b>. {poundsToPence(price) < bundleTotal ? <>Your bundle price saves customers <b>£{((bundleTotal - poundsToPence(price)) / 100).toFixed(2)}</b>.</> : <>Your bundle price is not lower than buying separately.</>}</p> : null}
+        <button type="button" className="adm-btn" onClick={() => set("bundleItems", [...bundle, { slug: "", qty: 1 }])}>Add a product to the bundle</button>
       </section>
 
       <section className="adm-card"><h2>Search engine listing</h2>

@@ -52,6 +52,9 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
   const nameBySlug = Object.fromEntries(franchises.map((f) => [f.slug, f.name]));
   const total = product.trackStock ? (product.variants?.length ? product.variants.reduce((n, v) => n + v.stockQty, 0) : product.stockQty ?? 0) : null;
   const lowCount = product.inStock && total !== null && total > 0 && total <= (product.lowStockThreshold ?? 3) ? total : null;
+  const bundleParts = (product.bundleItems ?? []).flatMap((b) => { const part = allProducts.find((x) => x.slug === b.slug); return part ? [{ part, qty: b.qty }] : []; });
+  const separatePence = bundleParts.reduce((n, b) => n + b.part.pricePence * b.qty, 0);
+  const bundleSaving = bundleParts.length ? separatePence - product.pricePence : 0;
   const path = `/products/${product.slug}`;
   const cartItem = { slug: product.slug, name: product.name, pricePence: product.pricePence, image: productImagePath(product) };
   const gallery = product.images.length ? product.images : [productImagePath(product)];
@@ -97,6 +100,25 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
 
           <div id="buy-box" className="mt-8"><BuyBox product={toQuick(product, franchise?.name)} /></div>
           <p className="mt-4"><ShareButton title={product.name} path={path} /></p>
+
+          {bundleParts.length > 0 && (
+            <section className="mt-10 border border-ink/20 bg-paper-2 p-5" aria-labelledby="bundle-h">
+              <h2 id="bundle-h" className="display text-3xl">What&apos;s in the bundle</h2>
+              {bundleSaving > 0 && <p className="mt-1 font-bold">Buying these separately costs {formatPrice(separatePence)}. Save {formatPrice(bundleSaving)}.</p>}
+              <ul className="mt-4 divide-y divide-ink/15">
+                {bundleParts.map(({ part, qty }) => (
+                  <li key={part.slug}>
+                    <Link href={`/products/${part.slug}`} className="flex items-center gap-4 py-3 hover:underline hover:underline-offset-4">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={productImagePath(part)} alt="" width={56} height={56} className="h-14 w-14 border border-ink/20 object-cover" />
+                      <span className="flex-1 font-bold">{part.name}{qty > 1 ? ` × ${qty}` : ""}</span>
+                      <span className="text-muted">{formatPrice(part.pricePence * qty)}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
           <p className="prose-lore mt-10">{product.description}</p>
 

@@ -4,6 +4,27 @@ import { categoryFromRow, franchiseFromRow, productFromRow, type CategoryRow, ty
 import { seedCatalog } from "@/data/seed";
 import type { Catalog, Product } from "@/lib/types";
 
+/**
+ * A bundle is available only while every product in it is, and its stock is how many complete bundles can be made.
+ * Derived here (not stored) so it can never drift from the real stock of the products inside.
+ */
+function withBundleStock(products: Product[]): Product[] {
+  const by = new Map(products.map((p) => [p.slug, p]));
+  return products.map((p) => {
+    const items = p.bundleItems ?? [];
+    if (!items.length) return p;
+    let sets = Infinity;
+    let available = p.inStock;
+    for (const it of items) {
+      const c = by.get(it.slug);
+      if (!c || !c.inStock) { available = false; sets = 0; continue; }
+      if (c.trackStock) sets = Math.min(sets, Math.floor((c.stockQty ?? 0) / Math.max(1, it.qty)));
+    }
+    if (sets === 0) available = false;
+    return Number.isFinite(sets) ? { ...p, inStock: available, trackStock: true, stockQty: sets, lowStockThreshold: p.lowStockThreshold ?? 3 } : { ...p, inStock: available };
+  });
+}
+
 export const CATALOG_TAG = "catalog";
 
 async function loadFromSupabase(): Promise<Catalog | null> {
@@ -27,8 +48,11 @@ async function loadFromSupabase(): Promise<Catalog | null> {
 
 /** One cached read of the whole catalogue (revalidates every 5 min or via /api/revalidate). */
 const loadCatalog = unstable_cache(
-  async (): Promise<Catalog> => (await loadFromSupabase()) ?? seedCatalog,
-  ["catalog-v1"],
+  async (): Promise<Catalog> => {
+    const c = (await loadFromSupabase()) ?? seedCatalog;
+    return { ...c, products: withBundleStock(c.products) };
+  },
+  ["catalog-v2"],
   { tags: [CATALOG_TAG], revalidate: 300 },
 );
 

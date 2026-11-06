@@ -276,5 +276,23 @@ export const seedCatalog: Catalog = {
       isFeatured: false,
       createdAt: "2026-08-22",
     },
+    {
+      slug: "knightverge-game-night-bundle",
+      sku: "SPK-KV-BND-001",
+      name: "Knightverge Game Night Bundle",
+      franchiseSlug: "knightverge",
+      categorySlug: "tabletop",
+      pricePence: 3799,
+      shortDescription: "Dice set, character sheet pad and mug, together for less.",
+      description:
+        "Everything you need to host a Knightverge session in one box: the seven-piece resin dice set, a 50-sheet pad of official character sheets and the Heroes mug for the Game Master's tea. Bought together they cost less than buying each one separately.",
+      details: ["Polyhedral dice set (7 dice)", "Character sheet pad (50 sheets)", "Knightverge Heroes mug"],
+      images: [],
+      inStock: true,
+      isNew: true,
+      isFeatured: false,
+      createdAt: "2026-11-06",
+      bundleItems: [{ slug: "knightverge-polyhedral-dice-set", qty: 1 }, { slug: "knightverge-character-sheet-pad", qty: 1 }, { slug: "knightverge-heroes-mug", qty: 1 }],
+    },
   ],
 };

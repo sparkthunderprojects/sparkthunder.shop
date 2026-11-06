@@ -28,6 +28,7 @@ export type SeoFields = {
   updatedAt?: string;
 };
 
+export type BundleItem = { slug: string; qty: number };
 export type Variant = { name: string; sku: string; stockQty: number; pricePence?: number };
 
 export type Product = {
@@ -57,6 +58,8 @@ export type Product = {
   stockQty?: number;
   lowStockThreshold?: number;
   variants?: Variant[];
+  /** A bundle contains these products (no variants) and sells at its own price. */
+  bundleItems?: BundleItem[];
   /** Admin-only: draft products are hidden from the storefront. */
   published?: boolean;
 } & SeoFields;

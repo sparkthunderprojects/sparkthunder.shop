@@ -18,6 +18,25 @@ async function nextNumber(db: Db): Promise<string> {
   return `SPK-${1001 + (count ?? 0)}`;
 }
 
+/** Take tracked stock off one product (or one variant of it) and record if it was oversold. */
+async function takeStock(db: Db, slug: string, variant: string | undefined, qty: number, label: string, problems: string[]) {
+  const { data } = await db.from("products").select("slug,track_stock,stock_qty,variants").eq("slug", slug).maybeSingle();
+  const p = data as { track_stock: boolean; stock_qty: number; variants: { name: string; stockQty: number }[] | null } | null;
+  if (!p?.track_stock) return;
+  if (variant && p.variants?.length) {
+    // Per-variant stock is authoritative; the product total is the sum so the product sells out when every option has.
+    let before = 0;
+    const variants = p.variants.map((v) => { if (v.name !== variant) return v; before = v.stockQty; return { ...v, stockQty: Math.max(0, v.stockQty - qty) }; });
+    const total = variants.reduce((n, v) => n + v.stockQty, 0);
+    await db.from("products").update({ variants, stock_qty: total, in_stock: total > 0 }).eq("slug", slug);
+    if (before < qty) problems.push(`${label} oversold: ${qty} bought, ${before} were in stock.`);
+  } else {
+    const left = Math.max(0, p.stock_qty - qty);
+    await db.from("products").update({ stock_qty: left, ...(left === 0 ? { in_stock: false } : {}) }).eq("slug", slug);
+    if (p.stock_qty < qty) problems.push(`${label} oversold: ${qty} bought, ${p.stock_qty} were in stock.`);
+  }
+}
+
 /**
  * Turn a paid Checkout Session into an order. Safe to call twice for the same session (Stripe retries webhooks):
  * the second call returns the existing order and does nothing else.
@@ -76,24 +95,13 @@ export async function fulfilOrder(db: Db, s: PaidSession): Promise<{ order: Orde
         } catch (e) { problems.push(`A purchased gift card could not be created: ${e instanceof Error ? e.message : "error"}.`); }
       }
     }
-    // 3. Take tracked stock off.
+    // 3. Take tracked stock off. A bundle takes stock off every product inside it.
     for (const line of payload.lines) {
       if (line.type !== "product") continue;
-      const { data } = await db.from("products").select("slug,track_stock,stock_qty,variants").eq("slug", line.slug).maybeSingle();
-      const p = data as { track_stock: boolean; stock_qty: number; variants: { name: string; stockQty: number }[] | null } | null;
-      if (!p?.track_stock) continue;
-      if (line.variant && p.variants?.length) {
-        // Per-variant stock is authoritative; the product total is the sum so the product sells out when every option has.
-        let before = 0;
-        const variants = p.variants.map((v) => { if (v.name !== line.variant) return v; before = v.stockQty; return { ...v, stockQty: Math.max(0, v.stockQty - line.qty) }; });
-        const total = variants.reduce((n, v) => n + v.stockQty, 0);
-        await db.from("products").update({ variants, stock_qty: total, in_stock: total > 0 }).eq("slug", line.slug);
-        if (before < line.qty) problems.push(`${line.name} oversold: ${line.qty} bought, ${before} were in stock.`);
-      } else {
-        const left = Math.max(0, p.stock_qty - line.qty);
-        await db.from("products").update({ stock_qty: left, ...(left === 0 ? { in_stock: false } : {}) }).eq("slug", line.slug);
-        if (p.stock_qty < line.qty) problems.push(`${line.name} oversold: ${line.qty} bought, ${p.stock_qty} were in stock.`);
-      }
+      const { data } = await db.from("products").select("bundle_items").eq("slug", line.slug).maybeSingle();
+      const items = (data as { bundle_items: { slug: string; qty: number }[] | null } | null)?.bundle_items ?? [];
+      if (items.length) { for (const it of items) await takeStock(db, it.slug, undefined, it.qty * line.qty, `${line.name} (contains ${it.slug})`, problems); }
+      else await takeStock(db, line.slug, line.variant, line.qty, line.name, problems);
     }
     // 4. Confirmation email.
     const mail = orderEmail({ number: order.number, name: s.name, lines: payload.lines, subtotalPence: payload.subtotalPence, shippingPence: payload.shippingPence, discountPence: payload.discount?.appliedPence ?? 0, discountCode: payload.discount?.code ?? "", giftCardPence: payload.giftCard?.appliedPence ?? 0, totalPence: payload.totalPence, address: s.address, giftCardsIssued });
