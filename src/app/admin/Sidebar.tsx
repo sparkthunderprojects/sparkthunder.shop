@@ -11,6 +11,7 @@ const NAV: { href: string; label: string; exact?: boolean }[] = [
   { href: "/admin/orders", label: "Orders" },
   { href: "/admin/media", label: "Media library" },
   { href: "/admin/gift-cards", label: "Gift cards" },
+  { href: "/admin/discounts", label: "Discount codes" },
   { href: "/admin/universe-sites", label: "Universe sites" },
 ];
 const SEO: typeof NAV = [

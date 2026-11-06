@@ -29,6 +29,7 @@ export function OrderDetail({ order: o }: { order: OrderRow }) {
           <table className="adm-table"><tbody>
             {o.items.map((l, i) => <tr key={i}><td>{l.name}{l.type === "product" ? <div className="adm-hint">{l.sku}</div> : <div className="adm-hint">Gift card to {l.gift.recipientEmail}</div>}</td><td>× {l.qty}</td><td align="right">{formatPrice(l.unitPence * l.qty)}</td></tr>)}
             <tr><td colSpan={2} className="adm-hint">Shipping</td><td align="right">{formatPrice(o.shipping_pence)}</td></tr>
+            {o.discount_pence ? <tr><td colSpan={2} className="adm-hint">Discount code {o.discount_code}</td><td align="right">-{formatPrice(o.discount_pence)}</td></tr> : null}
             {o.gift_card_pence ? <tr><td colSpan={2} className="adm-hint">Gift card {o.gift_card_code ? <Link href="/admin/gift-cards">({o.gift_card_code.slice(0, 4)}…)</Link> : null}</td><td align="right">-{formatPrice(o.gift_card_pence)}</td></tr> : null}
             <tr><td colSpan={2}><b>Paid by card</b></td><td align="right"><b>{formatPrice(o.total_pence)}</b></td></tr>
           </tbody></table>

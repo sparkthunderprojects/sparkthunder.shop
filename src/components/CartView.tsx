@@ -6,6 +6,7 @@ import { startCheckoutAction } from "@/app/(shop)/checkout/actions";
 import Link from "next/link";
 import { useCart } from "@/components/CartProvider";
 import { FreeShippingBar } from "@/components/FreeShippingBar";
+import { DiscountApply, useDiscount } from "@/components/DiscountApply";
 import { GiftCardApply, useAppliedGiftCard } from "@/components/GiftCardApply";
 import { isGiftCardLine } from "@/lib/giftcards/format";
 import { formatPrice } from "@/lib/site";
@@ -17,7 +18,10 @@ export function CartView() {
   const payable = items.filter((i) => !isGiftCardLine(i.slug)).reduce((n, i) => n + i.pricePence * i.qty, 0);
   const [err, setErr] = useState("");
   const [busy, start] = useTransition();
-  const applied = card ? Math.min(card.balancePence, payable) : 0;
+  const cartInput = items.map((i) => ({ slug: i.slug, qty: i.qty, pricePence: i.pricePence, gift: i.gift }));
+  const disc = useDiscount(cartInput);
+  const discount = Math.min(disc.amountPence, payable);
+  const applied = card ? Math.min(card.balancePence, payable - discount) : 0;
 
   if (items.length === 0) {
     return (
@@ -51,16 +55,15 @@ export function CartView() {
         <h2 className="display text-3xl">Order summary</h2>
         <div className="-mx-6 mt-4 border-y border-ink/15 [&>div]:border-b-0"><FreeShippingBar /></div>
         <p className="mt-5 flex justify-between text-lg"><span>Subtotal</span><span className="font-bold">{formatPrice(subtotalPence)}</span></p>
+        <DiscountApply code={disc.code} setCode={disc.setCode} quote={disc.quote} />
+        {discount > 0 ? <p className="mt-3 flex justify-between"><span>Discount</span><span className="font-bold">-{formatPrice(discount)}</span></p> : null}
         <GiftCardApply card={card} setCard={setCard} />
-        {applied > 0 ? (
-          <>
-            <p className="mt-3 flex justify-between"><span>Gift card</span><span className="font-bold">-{formatPrice(applied)}</span></p>
-            <p className="mt-1 flex justify-between text-lg"><span>To pay</span><span className="font-bold">{formatPrice(subtotalPence - applied)}</span></p>
-          </>
-        ) : card && payable === 0 ? <p className="mt-2 text-sm text-muted">Gift cards cannot be used to buy other gift cards.</p> : null}
+        {applied > 0 ? <p className="mt-3 flex justify-between"><span>Gift card</span><span className="font-bold">-{formatPrice(applied)}</span></p> : null}
+        {discount > 0 || applied > 0 ? <p className="mt-1 flex justify-between text-lg"><span>To pay</span><span className="font-bold">{formatPrice(subtotalPence - discount - applied)}</span></p> : null}
+        {!(applied > 0) && card && payable === 0 ? <p className="mt-2 text-sm text-muted">Gift cards cannot be used to buy other gift cards.</p> : null}
         <p className="mt-1 text-sm text-muted">Shipping and taxes are calculated at checkout.</p>
         <button className="btn mt-6 w-full" disabled={busy} onClick={() => { setErr(""); start(async () => {
-          const r = await startCheckoutAction(items.map((i) => ({ slug: i.slug, qty: i.qty, pricePence: i.pricePence, gift: i.gift })), applied > 0 && card ? card.code : null);
+          const r = await startCheckoutAction(cartInput, applied > 0 && card ? card.code : null, disc.code);
           if (r.ok) window.location.href = r.url; else setErr(r.error);
         }); }}>{busy ? "Starting checkout..." : "Checkout"}</button>
         {err ? <p role="alert" className="mt-3 text-sm font-bold text-red-700">{err}</p> : null}

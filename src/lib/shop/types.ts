@@ -9,6 +9,7 @@ export type Snapshot = {
   subtotalPence: number;
   shippingPence: number;
   needsShipping: boolean;
+  discount?: { id: string; code: string; appliedPence: number } | null;
   giftCard: { cardId: string; code: string; appliedPence: number } | null;
   totalPence: number;
 };

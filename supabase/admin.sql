@@ -249,3 +249,48 @@ create policy "customers read own orders" on public.orders for select using (low
 
 -- ---------------------------------------------------------------- universe websites
 alter table public.franchises add column if not exists site_url text not null default '';
+
+-- ============================================================================
+-- Round 2: discount codes, bundles, back-in-stock alerts (idempotent)
+-- ============================================================================
+
+-- Discount codes. Checked and redeemed only by the server (service role); admins manage them here.
+create table if not exists public.discount_codes (
+  id uuid primary key default gen_random_uuid(),
+  code text not null unique,
+  kind text not null check (kind in ('percent', 'fixed')),
+  value integer not null check (value > 0),          -- percent (1-100) or pence off
+  min_spend_pence integer not null default 0,
+  max_uses integer,                                  -- null = unlimited
+  uses integer not null default 0,
+  franchise_slug text not null default '',           -- '' = every universe
+  starts_at timestamptz,
+  expires_at timestamptz,
+  active boolean not null default true,
+  note text not null default '',
+  created_at timestamptz not null default now()
+);
+alter table public.discount_codes enable row level security;
+drop policy if exists "admin all discount_codes" on public.discount_codes;
+create policy "admin all discount_codes" on public.discount_codes for all using (public.is_admin()) with check (public.is_admin());
+
+alter table public.orders add column if not exists discount_code text not null default '';
+alter table public.orders add column if not exists discount_pence integer not null default 0;
+
+-- Bundles: a product that contains other products, e.g. [{"slug":"knightverge-heroes-mug","qty":1}]
+alter table public.products add column if not exists bundle_items jsonb not null default '[]'::jsonb;
+
+-- Back-in-stock alerts. Written by the server (service role) only; admins can read and manage.
+create table if not exists public.stock_alerts (
+  id uuid primary key default gen_random_uuid(),
+  product_slug text not null,
+  variant text not null default '',
+  email text not null,
+  created_at timestamptz not null default now(),
+  notified_at timestamptz,
+  unique (product_slug, variant, email)
+);
+create index if not exists stock_alerts_product_idx on public.stock_alerts (product_slug) where notified_at is null;
+alter table public.stock_alerts enable row level security;
+drop policy if exists "admin all stock_alerts" on public.stock_alerts;
+create policy "admin all stock_alerts" on public.stock_alerts for all using (public.is_admin()) with check (public.is_admin());

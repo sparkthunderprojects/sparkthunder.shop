@@ -2,6 +2,7 @@ import { getAllProducts } from "@/lib/catalog";
 import type { Db } from "@/lib/db/clients";
 import { isGiftCardLine } from "@/lib/giftcards/format";
 import { GIFT_LIMITS, getCardByCode, effectiveStatus } from "@/lib/giftcards/ledger";
+import { checkDiscount } from "@/lib/discounts";
 import { FREE_SHIPPING_PENCE, absoluteUrl, formatPrice } from "@/lib/site";
 import type { CartInput, Snapshot, SnapshotLine } from "./types";
 
@@ -13,10 +14,11 @@ export const MIN_CHARGE_PENCE = 30; // Stripe's minimum card charge in GBP
  * Turn the browser's basket into a trusted order plan. Product prices and names come from the catalogue,
  * never from the client; gift card amounts are range-checked; a gift card code is verified and capped.
  */
-export async function buildPlan(db: Db, cart: CartInput, giftCode: string | null): Promise<{ ok: true; snapshot: Snapshot } | { ok: false; error: string }> {
+export async function buildPlan(db: Db, cart: CartInput, giftCode: string | null, discountCode: string | null = null): Promise<{ ok: true; snapshot: Snapshot } | { ok: false; error: string }> {
   if (!cart.length) return { ok: false, error: "Your basket is empty." };
   const catalogue = new Map((await getAllProducts()).map((p) => [p.slug, p]));
   const lines: SnapshotLine[] = [];
+  const franchiseOf = new Map<string, string>(); // product slug -> universe, for universe-only discount codes
   for (const item of cart) {
     const qty = Math.min(20, Math.max(1, Math.floor(Number(item.qty) || 0)));
     if (isGiftCardLine(item.slug)) {
@@ -43,6 +45,7 @@ export async function buildPlan(db: Db, cart: CartInput, giftCode: string | null
       const left = variant ? variant.stockQty : p.stockQty ?? 0;
       if (left < qty) return { ok: false, error: left <= 0 ? `${label} is sold out.` : `Only ${left} of ${label} left in stock.` };
     }
+    franchiseOf.set(p.slug, p.franchiseSlug);
     lines.push({ type: "product", slug: p.slug, ...(variant ? { variant: variant.name } : {}), name: label, sku: variant?.sku || p.sku, unitPence: variant?.pricePence ?? p.pricePence, qty, image: p.images[0] ? (p.images[0].startsWith("http") ? p.images[0] : absoluteUrl(p.images[0])) : "" });
   }
   const productSubtotal = lines.filter((l) => l.type === "product").reduce((n, l) => n + l.unitPence * l.qty, 0);
@@ -50,15 +53,23 @@ export async function buildPlan(db: Db, cart: CartInput, giftCode: string | null
   const needsShipping = productSubtotal > 0;
   const shippingPence = !needsShipping ? 0 : FREE_SHIPPING_PENCE && productSubtotal >= FREE_SHIPPING_PENCE ? 0 : SHIPPING_FLAT_PENCE;
 
+  let discount: Snapshot["discount"] = null;
+  if (discountCode) {
+    const check = await checkDiscount(db, discountCode, lines.flatMap((l) => (l.type === "product" ? [{ franchiseSlug: franchiseOf.get(l.slug) ?? "", totalPence: l.unitPence * l.qty }] : [])));
+    if (!check.ok) return { ok: false, error: `${check.error} Remove the code from your basket to continue.` };
+    discount = { id: check.row.id, code: check.row.code, appliedPence: check.amountPence };
+  }
+  const payableProducts = productSubtotal - (discount?.appliedPence ?? 0);
+
   let giftCard: Snapshot["giftCard"] = null;
   if (giftCode) {
     const card = await getCardByCode(db, giftCode);
     const status = card ? effectiveStatus(card) : "disabled";
     if (!card || status !== "active") return { ok: false, error: "That gift card cannot be used. Remove it from your basket to continue." };
-    const applied = Math.min(card.balance_pence, productSubtotal); // a gift card cannot buy another gift card
+    const applied = Math.min(card.balance_pence, payableProducts); // a gift card cannot buy another gift card
     if (applied > 0) giftCard = { cardId: card.id, code: card.code, appliedPence: applied };
   }
-  const totalPence = subtotalPence + shippingPence - (giftCard?.appliedPence ?? 0);
-  if (totalPence > 0 && totalPence < MIN_CHARGE_PENCE) return { ok: false, error: `After your gift card the amount left to pay is ${formatPrice(totalPence)}. Card payments must be at least ${formatPrice(MIN_CHARGE_PENCE)}, so add another item or remove the gift card.` };
-  return { ok: true, snapshot: { lines, subtotalPence, shippingPence, needsShipping, giftCard, totalPence } };
+  const totalPence = subtotalPence + shippingPence - (discount?.appliedPence ?? 0) - (giftCard?.appliedPence ?? 0);
+  if (totalPence > 0 && totalPence < MIN_CHARGE_PENCE) return { ok: false, error: `After your discounts the amount left to pay is ${formatPrice(totalPence)}. Card payments must be at least ${formatPrice(MIN_CHARGE_PENCE)}, so add another item or remove the gift card or code.` };
+  return { ok: true, snapshot: { lines, subtotalPence, shippingPence, needsShipping, discount, giftCard, totalPence } };
 }

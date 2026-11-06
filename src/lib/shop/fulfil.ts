@@ -1,13 +1,14 @@
 import type { Db } from "@/lib/db/clients";
 import { giftCardEmail, orderEmail } from "@/lib/email/templates";
 import { sendEmail } from "@/lib/email/send";
+import { recordDiscountUse } from "@/lib/discounts";
 import { changeBalance, issueCard } from "@/lib/giftcards/ledger";
 import type { Snapshot } from "./types";
 
 export type OrderRow = {
   id: string; number: string; stripe_session_id: string | null; stripe_payment_intent: string; status: "paid" | "shipped" | "cancelled" | "attention";
   email: string; name: string; phone: string; shipping_address: Record<string, string> | null; items: Snapshot["lines"];
-  subtotal_pence: number; shipping_pence: number; gift_card_pence: number; total_pence: number; gift_card_code: string;
+  subtotal_pence: number; shipping_pence: number; discount_code?: string; discount_pence?: number; gift_card_pence: number; total_pence: number; gift_card_code: string;
   tracking_carrier: string; tracking_number: string; notes: string; attention_reason: string; shipped_at: string | null; created_at: string;
 };
 export type PaidSession = { sessionId: string; paymentIntent: string; email: string; name: string; phone: string; address: Record<string, string> | null };
@@ -37,6 +38,7 @@ export async function fulfilOrder(db: Db, s: PaidSession): Promise<{ order: Orde
     const ins = await db.from("orders").insert({
       number, stripe_session_id: s.sessionId, stripe_payment_intent: s.paymentIntent, status: "paid", email: s.email, name: s.name, phone: s.phone,
       shipping_address: s.address, items: payload?.lines ?? [], subtotal_pence: payload?.subtotalPence ?? 0, shipping_pence: payload?.shippingPence ?? 0,
+      discount_code: payload?.discount?.code ?? "", discount_pence: payload?.discount?.appliedPence ?? 0,
       gift_card_pence: payload?.giftCard?.appliedPence ?? 0, total_pence: payload?.totalPence ?? 0, gift_card_code: payload?.giftCard?.code ?? "",
     }).select("*").single();
     if (ins.error) {
@@ -52,6 +54,8 @@ export async function fulfilOrder(db: Db, s: PaidSession): Promise<{ order: Orde
   if (!order) throw new Error("Could not allocate an order number.");
 
   if (payload) {
+    // 0. Count the discount code use.
+    if (payload.discount) { try { await recordDiscountUse(db, payload.discount.id); } catch { problems.push(`Discount code ${payload.discount.code} use could not be counted.`); } }
     // 1. Charge the gift card the customer used.
     if (payload.giftCard) {
       try { await changeBalance(db, payload.giftCard.cardId, -payload.giftCard.appliedPence, "redeem", { orderRef: order.number, note: "Used at checkout", createdBy: "checkout" }); }
@@ -92,7 +96,7 @@ export async function fulfilOrder(db: Db, s: PaidSession): Promise<{ order: Orde
       }
     }
     // 4. Confirmation email.
-    const mail = orderEmail({ number: order.number, name: s.name, lines: payload.lines, subtotalPence: payload.subtotalPence, shippingPence: payload.shippingPence, giftCardPence: payload.giftCard?.appliedPence ?? 0, totalPence: payload.totalPence, address: s.address, giftCardsIssued });
+    const mail = orderEmail({ number: order.number, name: s.name, lines: payload.lines, subtotalPence: payload.subtotalPence, shippingPence: payload.shippingPence, discountPence: payload.discount?.appliedPence ?? 0, discountCode: payload.discount?.code ?? "", giftCardPence: payload.giftCard?.appliedPence ?? 0, totalPence: payload.totalPence, address: s.address, giftCardsIssued });
     const sent = s.email ? await sendEmail({ to: s.email, ...mail }) : { ok: false as const, error: "no email address" };
     if (!sent.ok) problems.push(`Order confirmation email not sent: ${sent.error}`);
     await db.from("checkout_snapshots").update({ fulfilled_at: new Date().toISOString() }).eq("id", s.sessionId);

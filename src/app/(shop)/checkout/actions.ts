@@ -9,13 +9,13 @@ import { SITE } from "@/lib/site";
 
 export type CheckoutResult = { ok: true; url: string } | { ok: false; error: string };
 
-export async function startCheckoutAction(cart: CartInput, giftCode: string | null): Promise<CheckoutResult> {
+export async function startCheckoutAction(cart: CartInput, giftCode: string | null, discountCode: string | null = null): Promise<CheckoutResult> {
   try {
     const db = serviceClient();
     const demoPay = isDemo && !hasStripe();
     if (!db || (!hasStripe() && !demoPay)) return { ok: false, error: "Checkout is not switched on yet. Please check back soon." };
 
-    const plan = await buildPlan(db, cart, giftCode);
+    const plan = await buildPlan(db, cart, giftCode, discountCode);
     if (!plan.ok) return plan;
     const snap = plan.snapshot;
 
@@ -32,8 +32,11 @@ export async function startCheckoutAction(cart: CartInput, giftCode: string | nu
       price_data: { currency: "gbp", unit_amount: l.unitPence, product_data: { name: l.name, ...(l.type === "product" && l.image ? { images: [l.image] } : {}) } },
     }));
     let discounts: { coupon: string }[] | undefined;
-    if (snap.giftCard) {
-      const coupon = await stripe.coupons.create({ amount_off: snap.giftCard.appliedPence, currency: "gbp", duration: "once", max_redemptions: 1, name: "Sparkthunder gift card" });
+    // Stripe takes one coupon per session, so the discount code and gift card are combined into a single amount off.
+    const off = (snap.discount?.appliedPence ?? 0) + (snap.giftCard?.appliedPence ?? 0);
+    if (off > 0) {
+      const name = snap.discount && snap.giftCard ? "Discount code and gift card" : snap.discount ? "Discount code" : "Sparkthunder gift card";
+      const coupon = await stripe.coupons.create({ amount_off: off, currency: "gbp", duration: "once", max_redemptions: 1, name });
       discounts = [{ coupon: coupon.id }];
     }
     const session = await stripe.checkout.sessions.create({
