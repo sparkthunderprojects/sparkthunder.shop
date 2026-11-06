@@ -4,12 +4,16 @@ export type SnapshotLine =
   | { type: "product"; slug: string; variant?: string; name: string; sku: string; unitPence: number; qty: number; image: string }
   | { type: "gift"; name: string; unitPence: number; qty: number; gift: GiftDetails };
 
+export type GiftOptionsInput = { message: string; wrap: boolean };
+
 export type Snapshot = {
   lines: SnapshotLine[];
   subtotalPence: number;
   shippingPence: number;
   needsShipping: boolean;
   discount?: { id: string; code: string; appliedPence: number } | null;
+  /** "This is a gift" options for a posted order: a printed note and/or gift wrap. */
+  giftOptions?: { message: string; wrap: boolean; wrapPence: number } | null;
   giftCard: { cardId: string; code: string; appliedPence: number } | null;
   totalPence: number;
 };

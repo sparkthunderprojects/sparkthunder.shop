@@ -9,7 +9,7 @@ import type { Snapshot } from "./types";
 export type OrderRow = {
   id: string; number: string; stripe_session_id: string | null; stripe_payment_intent: string; status: "paid" | "shipped" | "cancelled" | "attention";
   email: string; name: string; phone: string; shipping_address: Record<string, string> | null; items: Snapshot["lines"];
-  subtotal_pence: number; shipping_pence: number; discount_code?: string; discount_pence?: number; gift_card_pence: number; total_pence: number; gift_card_code: string;
+  subtotal_pence: number; shipping_pence: number; discount_code?: string; discount_pence?: number; gift_card_pence: number; total_pence: number; gift_card_code: string; gift_message?: string; gift_wrap?: boolean; gift_wrap_pence?: number;
   tracking_carrier: string; tracking_number: string; notes: string; attention_reason: string; shipped_at: string | null; created_at: string;
 };
 export type PaidSession = { sessionId: string; paymentIntent: string; email: string; name: string; phone: string; address: Record<string, string> | null };
@@ -59,6 +59,7 @@ export async function fulfilOrder(db: Db, s: PaidSession): Promise<{ order: Orde
       number, stripe_session_id: s.sessionId, stripe_payment_intent: s.paymentIntent, status: "paid", email: s.email, name: s.name, phone: s.phone,
       shipping_address: s.address, items: payload?.lines ?? [], subtotal_pence: payload?.subtotalPence ?? 0, shipping_pence: payload?.shippingPence ?? 0,
       discount_code: payload?.discount?.code ?? "", discount_pence: payload?.discount?.appliedPence ?? 0,
+      gift_message: payload?.giftOptions?.message ?? "", gift_wrap: payload?.giftOptions?.wrap ?? false, gift_wrap_pence: payload?.giftOptions?.wrapPence ?? 0,
       gift_card_pence: payload?.giftCard?.appliedPence ?? 0, total_pence: payload?.totalPence ?? 0, gift_card_code: payload?.giftCard?.code ?? "",
     }).select("*").single();
     if (ins.error) {
@@ -107,7 +108,7 @@ export async function fulfilOrder(db: Db, s: PaidSession): Promise<{ order: Orde
     // 3b. Spark points for signed-up customers (matched by email, so it works whether or not they were logged in at checkout).
     if (s.email) { try { await awardPoints(db, { email: s.email, points: pointsForOrder(payload), reason: "order", ref: order.number, note: `Order ${order.number}` }); } catch { problems.push("Spark points could not be added for this order."); } }
     // 4. Confirmation email.
-    const mail = orderEmail({ number: order.number, name: s.name, lines: payload.lines, subtotalPence: payload.subtotalPence, shippingPence: payload.shippingPence, discountPence: payload.discount?.appliedPence ?? 0, discountCode: payload.discount?.code ?? "", giftCardPence: payload.giftCard?.appliedPence ?? 0, totalPence: payload.totalPence, address: s.address, giftCardsIssued });
+    const mail = orderEmail({ number: order.number, name: s.name, lines: payload.lines, subtotalPence: payload.subtotalPence, shippingPence: payload.shippingPence, discountPence: payload.discount?.appliedPence ?? 0, discountCode: payload.discount?.code ?? "", giftWrapPence: payload.giftOptions?.wrapPence ?? 0, giftMessage: payload.giftOptions?.message ?? "", giftCardPence: payload.giftCard?.appliedPence ?? 0, totalPence: payload.totalPence, address: s.address, giftCardsIssued });
     const sent = s.email ? await sendEmail({ to: s.email, ...mail }) : { ok: false as const, error: "no email address" };
     if (!sent.ok) problems.push(`Order confirmation email not sent: ${sent.error}`);
     await db.from("checkout_snapshots").update({ fulfilled_at: new Date().toISOString() }).eq("id", s.sessionId);

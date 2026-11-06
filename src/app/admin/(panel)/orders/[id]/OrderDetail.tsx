@@ -24,11 +24,16 @@ export function OrderDetail({ order: o }: { order: OrderRow }) {
       {o.attention_reason ? <section className="adm-card" style={{ borderColor: "#c0392b" }}><h2 style={{ color: "#c0392b" }}>Needs your attention</h2><p style={{ whiteSpace: "pre-line", margin: 0 }}>{o.attention_reason}</p>
         <button className="adm-btn" style={{ marginTop: 12 }} disabled={pending} onClick={() => run(() => updateOrderAction(o.id, { status: o.status === "attention" ? "paid" : o.status, notes }), "Marked as handled", () => router.refresh())}>Mark as handled</button></section> : null}
 
+      {o.gift_wrap || o.gift_message ? <section className="adm-card" style={{ borderColor: "#e0a800" }}><h2>🎁 This is a gift</h2>
+        <p style={{ margin: 0 }}>{o.gift_wrap ? <b>Gift wrap this order. </b> : "No gift wrap. "}{o.gift_message ? <>Print this note and include it:</> : "No message."}</p>
+        {o.gift_message ? <blockquote style={{ margin: "10px 0 0", padding: "8px 12px", borderLeft: "3px solid #e0a800", whiteSpace: "pre-line" }}>{o.gift_message}</blockquote> : null}</section> : null}
+
       <div className="adm-grid adm-g2">
         <section className="adm-card"><h2>Items</h2>
           <table className="adm-table"><tbody>
             {o.items.map((l, i) => <tr key={i}><td>{l.name}{l.type === "product" ? <div className="adm-hint">{l.sku}</div> : <div className="adm-hint">Gift card to {l.gift.recipientEmail}</div>}</td><td>× {l.qty}</td><td align="right">{formatPrice(l.unitPence * l.qty)}</td></tr>)}
             <tr><td colSpan={2} className="adm-hint">Shipping</td><td align="right">{formatPrice(o.shipping_pence)}</td></tr>
+            {o.gift_wrap_pence ? <tr><td colSpan={2} className="adm-hint">Gift wrap</td><td align="right">{formatPrice(o.gift_wrap_pence)}</td></tr> : null}
             {o.discount_pence ? <tr><td colSpan={2} className="adm-hint">Discount code {o.discount_code}</td><td align="right">-{formatPrice(o.discount_pence)}</td></tr> : null}
             {o.gift_card_pence ? <tr><td colSpan={2} className="adm-hint">Gift card {o.gift_card_code ? <Link href="/admin/gift-cards">({o.gift_card_code.slice(0, 4)}…)</Link> : null}</td><td align="right">-{formatPrice(o.gift_card_pence)}</td></tr> : null}
             <tr><td colSpan={2}><b>Paid by card</b></td><td align="right"><b>{formatPrice(o.total_pence)}</b></td></tr>

@@ -4,18 +4,18 @@ import { serviceClient } from "@/lib/db/clients";
 import { isDemo } from "@/lib/db/env";
 import { buildPlan, SHIPPING_COUNTRIES, SHIPPING_FLAT_PENCE } from "@/lib/shop/plan";
 import { getStripe, hasStripe } from "@/lib/shop/stripe";
-import type { CartInput } from "@/lib/shop/types";
+import type { CartInput, GiftOptionsInput } from "@/lib/shop/types";
 import { SITE } from "@/lib/site";
 
 export type CheckoutResult = { ok: true; url: string } | { ok: false; error: string };
 
-export async function startCheckoutAction(cart: CartInput, giftCode: string | null, discountCode: string | null = null): Promise<CheckoutResult> {
+export async function startCheckoutAction(cart: CartInput, giftCode: string | null, discountCode: string | null = null, giftOpts: GiftOptionsInput | null = null): Promise<CheckoutResult> {
   try {
     const db = serviceClient();
     const demoPay = isDemo && !hasStripe();
     if (!db || (!hasStripe() && !demoPay)) return { ok: false, error: "Checkout is not switched on yet. Please check back soon." };
 
-    const plan = await buildPlan(db, cart, giftCode, discountCode);
+    const plan = await buildPlan(db, cart, giftCode, discountCode, giftOpts);
     if (!plan.ok) return plan;
     const snap = plan.snapshot;
 
@@ -31,6 +31,9 @@ export async function startCheckoutAction(cart: CartInput, giftCode: string | nu
       quantity: l.qty,
       price_data: { currency: "gbp", unit_amount: l.unitPence, product_data: { name: l.name, ...(l.type === "product" && l.image ? { images: [l.image] } : {}) } },
     }));
+    if (snap.giftOptions && snap.giftOptions.wrapPence > 0) {
+      line_items.push({ quantity: 1, price_data: { currency: "gbp", unit_amount: snap.giftOptions.wrapPence, product_data: { name: "Gift wrap" } } });
+    }
     let discounts: { coupon: string }[] | undefined;
     // Stripe takes one coupon per session, so the discount code and gift card are combined into a single amount off.
     const off = (snap.discount?.appliedPence ?? 0) + (snap.giftCard?.appliedPence ?? 0);

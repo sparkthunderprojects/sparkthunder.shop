@@ -30,19 +30,21 @@ ${card.message ? `<div style="font-style:italic;color:#ddd;margin:0 0 12px">&ldq
   return { subject: `${from} sent you a ${amount} Sparkthunder gift card`, html, text };
 }
 
-export function orderEmail(o: { number: string; name: string; lines: SnapshotLine[]; subtotalPence: number; shippingPence: number; discountPence?: number; discountCode?: string; giftCardPence: number; totalPence: number; address?: Record<string, string> | null; giftCardsIssued: number }) {
+export function orderEmail(o: { number: string; name: string; lines: SnapshotLine[]; subtotalPence: number; shippingPence: number; discountPence?: number; discountCode?: string; giftWrapPence?: number; giftMessage?: string; giftCardPence: number; totalPence: number; address?: Record<string, string> | null; giftCardsIssued: number }) {
   const rows = o.lines.map((l) => `<tr><td style="padding:6px 0">${esc(l.name)} × ${l.qty}</td><td align="right">${formatPrice(l.unitPence * l.qty)}</td></tr>`).join("");
   const addr = o.address ? Object.values(o.address).filter(Boolean).map(esc).join("<br>") : "";
   const html = shell(`Thanks for your order, ${esc(o.name.split(" ")[0] || "fan")}`, `
 <p style="margin:0 0 16px">Order <b>${o.number}</b> is confirmed.${o.giftCardsIssued ? " Your gift card is being emailed separately to the recipient." : ""}</p>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #e5e5e5;border-bottom:1px solid #e5e5e5">${rows}
 <tr><td style="padding:6px 0;color:#6a6a70">Shipping</td><td align="right">${o.shippingPence ? formatPrice(o.shippingPence) : "Free"}</td></tr>
+${o.giftWrapPence ? `<tr><td style="padding:6px 0;color:#6a6a70">Gift wrap</td><td align="right">${formatPrice(o.giftWrapPence)}</td></tr>` : ""}
 ${o.discountPence ? `<tr><td style="padding:6px 0;color:#6a6a70">Discount${o.discountCode ? ` (${esc(o.discountCode)})` : ""}</td><td align="right">-${formatPrice(o.discountPence)}</td></tr>` : ""}
 ${o.giftCardPence ? `<tr><td style="padding:6px 0;color:#6a6a70">Gift card</td><td align="right">-${formatPrice(o.giftCardPence)}</td></tr>` : ""}
 <tr><td style="padding:10px 0;font-weight:700">Total</td><td align="right" style="font-weight:700">${formatPrice(o.totalPence)}</td></tr></table>
 ${addr ? `<p style="margin:16px 0 4px;font-weight:700">Shipping to</p><p style="margin:0">${addr}</p>` : ""}
+${o.giftMessage ? `<p style="margin:16px 0 4px;font-weight:700">Your gift message</p><p style="margin:0">${esc(o.giftMessage)}</p>` : ""}
 <p style="margin:20px 0 0;color:#6a6a70">We will email you again when your order ships.</p>`);
-  const text = `Thanks for your order. Order ${o.number} is confirmed.\n\n${o.lines.map((l) => `${l.name} x ${l.qty}  ${formatPrice(l.unitPence * l.qty)}`).join("\n")}\nShipping: ${o.shippingPence ? formatPrice(o.shippingPence) : "Free"}\n${o.discountPence ? `Discount: -${formatPrice(o.discountPence)}\n` : ""}${o.giftCardPence ? `Gift card: -${formatPrice(o.giftCardPence)}\n` : ""}Total: ${formatPrice(o.totalPence)}\n`;
+  const text = `Thanks for your order. Order ${o.number} is confirmed.\n\n${o.lines.map((l) => `${l.name} x ${l.qty}  ${formatPrice(l.unitPence * l.qty)}`).join("\n")}\nShipping: ${o.shippingPence ? formatPrice(o.shippingPence) : "Free"}\n${o.discountPence ? `Discount: -${formatPrice(o.discountPence)}\n` : ""}${o.giftWrapPence ? `Gift wrap: ${formatPrice(o.giftWrapPence)}\n` : ""}${o.giftCardPence ? `Gift card: -${formatPrice(o.giftCardPence)}\n` : ""}Total: ${formatPrice(o.totalPence)}\n`;
   return { subject: `Your Sparkthunder order ${o.number}`, html, text };
 }
 

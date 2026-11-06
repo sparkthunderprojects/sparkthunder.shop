@@ -362,3 +362,8 @@ drop policy if exists "customers read own points" on public.reward_points;
 create policy "customers read own points" on public.reward_points for select using (lower(email) = lower(coalesce(auth.jwt() ->> 'email', '')));
 drop policy if exists "admin all reward points" on public.reward_points;
 create policy "admin all reward points" on public.reward_points for all using (public.is_admin()) with check (public.is_admin());
+
+-- ---------------------------------------------------------------- Amazon-style round: gift options and product questions
+alter table public.orders add column if not exists gift_message text not null default '';
+alter table public.orders add column if not exists gift_wrap boolean not null default false;
+alter table public.orders add column if not exists gift_wrap_pence integer not null default 0;

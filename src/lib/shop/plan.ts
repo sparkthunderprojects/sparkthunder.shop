@@ -4,8 +4,8 @@ import type { Db } from "@/lib/db/clients";
 import { isGiftCardLine } from "@/lib/giftcards/format";
 import { GIFT_LIMITS, getCardByCode, effectiveStatus } from "@/lib/giftcards/ledger";
 import { checkDiscount } from "@/lib/discounts";
-import { FREE_SHIPPING_PENCE, absoluteUrl, formatPrice } from "@/lib/site";
-import type { CartInput, Snapshot, SnapshotLine } from "./types";
+import { FREE_SHIPPING_PENCE, GIFT_WRAP_PENCE, absoluteUrl, formatPrice } from "@/lib/site";
+import type { CartInput, GiftOptionsInput, Snapshot, SnapshotLine } from "./types";
 
 export const SHIPPING_FLAT_PENCE = Number(process.env.SHIPPING_FLAT_PENCE ?? 399) || 0;
 export const SHIPPING_COUNTRIES = (process.env.SHIPPING_COUNTRIES ?? "GB").split(",").map((c) => c.trim().toUpperCase()).filter(Boolean);
@@ -15,7 +15,7 @@ export const MIN_CHARGE_PENCE = 30; // Stripe's minimum card charge in GBP
  * Turn the browser's basket into a trusted order plan. Product prices and names come from the catalogue,
  * never from the client; gift card amounts are range-checked; a gift card code is verified and capped.
  */
-export async function buildPlan(db: Db, cart: CartInput, giftCode: string | null, discountCode: string | null = null): Promise<{ ok: true; snapshot: Snapshot } | { ok: false; error: string }> {
+export async function buildPlan(db: Db, cart: CartInput, giftCode: string | null, discountCode: string | null = null, giftOpts: GiftOptionsInput | null = null): Promise<{ ok: true; snapshot: Snapshot } | { ok: false; error: string }> {
   if (!cart.length) return { ok: false, error: "Your basket is empty." };
   const catalogue = new Map((await getAllProducts()).map((p) => [p.slug, p]));
   const lines: SnapshotLine[] = [];
@@ -71,7 +71,11 @@ export async function buildPlan(db: Db, cart: CartInput, giftCode: string | null
     const applied = Math.min(card.balance_pence, payableProducts); // a gift card cannot buy another gift card
     if (applied > 0) giftCard = { cardId: card.id, code: card.code, appliedPence: applied };
   }
-  const totalPence = subtotalPence + shippingPence - (discount?.appliedPence ?? 0) - (giftCard?.appliedPence ?? 0);
+  // Gift options only make sense for something we post.
+  const giftMessage = needsShipping ? String(giftOpts?.message ?? "").replace(/\s+/g, " ").trim().slice(0, 200) : "";
+  const wrap = needsShipping && giftOpts?.wrap === true;
+  const giftOptions: Snapshot["giftOptions"] = wrap || giftMessage ? { message: giftMessage, wrap, wrapPence: wrap ? GIFT_WRAP_PENCE : 0 } : null;
+  const totalPence = subtotalPence + shippingPence + (giftOptions?.wrapPence ?? 0) - (discount?.appliedPence ?? 0) - (giftCard?.appliedPence ?? 0);
   if (totalPence > 0 && totalPence < MIN_CHARGE_PENCE) return { ok: false, error: `After your discounts the amount left to pay is ${formatPrice(totalPence)}. Card payments must be at least ${formatPrice(MIN_CHARGE_PENCE)}, so add another item or remove the gift card or code.` };
-  return { ok: true, snapshot: { lines, subtotalPence, shippingPence, needsShipping, discount, giftCard, totalPence } };
+  return { ok: true, snapshot: { lines, subtotalPence, shippingPence, needsShipping, discount, giftOptions, giftCard, totalPence } };
 }

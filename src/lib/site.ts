@@ -17,6 +17,9 @@ export const SITE = {
  * Leave unset until the shop really offers it: the progress bar only appears when this has a value.
  */
 const freeShipping = Number(process.env.NEXT_PUBLIC_FREE_SHIPPING_PENCE);
+const giftWrap = Number(process.env.NEXT_PUBLIC_GIFT_WRAP_PENCE);
+/** Optional gift wrap price in pence (default £3.00; set NEXT_PUBLIC_GIFT_WRAP_PENCE=0 to make wrapping free). */
+export const GIFT_WRAP_PENCE: number = Number.isFinite(giftWrap) && giftWrap >= 0 && process.env.NEXT_PUBLIC_GIFT_WRAP_PENCE !== undefined && process.env.NEXT_PUBLIC_GIFT_WRAP_PENCE !== "" ? Math.round(giftWrap) : 300;
 export const FREE_SHIPPING_PENCE: number | null = Number.isFinite(freeShipping) && freeShipping > 0 ? freeShipping : null;
 
 /** Public contact address shown on the legal pages. Set NEXT_PUBLIC_CONTACT_EMAIL once a real inbox exists. */
