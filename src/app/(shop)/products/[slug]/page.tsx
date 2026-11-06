@@ -14,6 +14,7 @@ import { ShareButton } from "@/components/ShareButton";
 import { StickyBuyBar } from "@/components/StickyBuyBar";
 import { productImagePath } from "@/lib/card";
 import { getAllProducts, getCategory, getCompleteTheSet, getFranchise, getFranchises, getProduct, getRelatedProducts } from "@/lib/catalog";
+import { characterName, characterSlugs } from "@/lib/characters";
 import { ReviewsSection } from "@/components/ReviewsSection";
 import { getReviews } from "@/lib/reviews";
 import { breadcrumbLd, buildMetadata, clip, productImageUrl, productLd } from "@/lib/seo";
@@ -100,6 +101,9 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
           <p className="mt-1 text-sm text-muted">
             {!product.inStock ? "Currently sold out" : lowCount !== null ? <b className="text-amber-600">Only {lowCount} left</b> : "In stock"} · SKU {product.sku}
           </p>
+          {characterSlugs(product).length > 0 && (
+            <p className="mt-2 text-sm">Featuring {characterSlugs(product).map((c, i) => <span key={c}>{i > 0 ? ", " : ""}<Link href={`/characters/${c}`} className="font-bold underline underline-offset-4">{characterName(c)}</Link></span>)}</p>
+          )}
 
           <div id="buy-box" className="mt-8"><BuyBox product={toQuick(product, franchise?.name)} /></div>
           <p className="mt-4"><ShareButton title={product.name} path={path} /></p>

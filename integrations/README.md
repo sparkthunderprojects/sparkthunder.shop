@@ -22,3 +22,11 @@ Public, read-only, CORS `*`, cached 5 minutes.
 Allow `script-src`, `connect-src` and `img-src` for `https://sparkthunder.shop` (and your Supabase storage host for `img-src`).
 
 Set each universe's website in **Admin > Franchises**; it then appears in the shop footer and on the universe page. The **Admin > Universe sites** page generates these snippets with a live preview.
+
+## Shop by character
+
+Tag a product in **Admin > Products > Tags** with `character:their-slug` (for example `character:kael-ironwood`). The slug must match the character's slug on the universe site. That product then appears on `https://sparkthunder.shop/characters/their-slug`, in the "Shop by character" index, and in the feed:
+
+`GET /api/feed/products?character=their-slug&limit=4&ref=knightverge-com`
+
+To show a character's merch on its own page, copy `integrations/next/SparkthunderCharacterMerch.tsx` into the universe site and render `<SparkthunderCharacterMerch character={character.slug} name={character.name} />` on the character page. It renders nothing when there is no merch for that character, so it is safe on every character page.

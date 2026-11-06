@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { getCharacters } from "@/lib/characters";
 import { getAllProducts, getCategories, getCollections, getFranchises } from "@/lib/catalog";
 import { franchiseSeo, categorySeo, productSeo } from "@/lib/seo/effective";
 import { LEGAL_PAGES, absoluteUrl } from "@/lib/site";
@@ -7,7 +8,7 @@ export const revalidate = 3600;
 const LEGAL_UPDATED = "2026-11-04";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [franchises, categories, products, collections] = await Promise.all([getFranchises(), getCategories(), getAllProducts(), getCollections()]);
+  const [franchises, categories, products, collections, characters] = await Promise.all([getFranchises(), getCategories(), getAllProducts(), getCollections(), getCharacters()]);
   const latest = products.reduce((m, p) => (p.createdAt > m ? p.createdAt : m), "2026-01-01");
   return [
     { url: absoluteUrl("/"), lastModified: latest, changeFrequency: "daily", priority: 1 },
@@ -16,6 +17,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: absoluteUrl("/shop"), lastModified: latest, changeFrequency: "daily", priority: 0.8 },
     { url: absoluteUrl("/collections"), lastModified: latest, changeFrequency: "weekly", priority: 0.7 },
     ...collections.map((c) => ({ url: absoluteUrl(`/collections/${c.slug}`), lastModified: latest, changeFrequency: "weekly" as const, priority: 0.7 })),
+    { url: absoluteUrl("/characters"), lastModified: latest, changeFrequency: "weekly", priority: 0.6 },
+    ...characters.map((c) => ({ url: absoluteUrl(`/characters/${c.slug}`), lastModified: latest, changeFrequency: "weekly" as const, priority: 0.6 })),
     { url: absoluteUrl("/gift-cards"), lastModified: latest, changeFrequency: "monthly", priority: 0.7 },
     { url: absoluteUrl("/gifts"), lastModified: latest, changeFrequency: "weekly", priority: 0.7 },
     ...LEGAL_PAGES.map((l) => ({ url: absoluteUrl(l.href), lastModified: LEGAL_UPDATED, changeFrequency: "yearly" as const, priority: 0.2 })),

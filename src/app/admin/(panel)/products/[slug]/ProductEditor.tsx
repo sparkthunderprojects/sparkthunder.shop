@@ -82,7 +82,7 @@ export function ProductEditor({ initial, isNew, franchises, categories, media, b
           <Field label="Short description" hint="One or two sentences. Shown on cards and used as the fallback meta description."><textarea className="adm-ta" style={{ minHeight: 64 }} value={p.shortDescription} onChange={(e) => set("shortDescription", e.target.value)} /></Field>
           <Field label="Full description" hint="Unique copy ranks. Aim for 120+ words describing the design, fit, material and who it is for."><textarea className="adm-ta" style={{ minHeight: 180 }} value={p.description} onChange={(e) => set("description", e.target.value)} /></Field>
           <Field label="Details (one per line)"><textarea className="adm-ta" value={p.details.join("\n")} onChange={(e) => set("details", e.target.value.split("\n"))} /></Field>
-          <Field label="Tags (comma separated)"><input className="adm-in" value={(p.tags ?? []).join(", ")} onChange={(e) => set("tags", e.target.value.split(",").map((t) => t.trim()))} /></Field>
+          <Field label="Tags (comma separated)" hint="Add character:their-slug (for example character:kael-ironwood) to list this product on that character's shop page and in the character feed."><input className="adm-in" value={(p.tags ?? []).join(", ")} onChange={(e) => set("tags", e.target.value.split(",").map((t) => t.trim()))} /></Field>
         </div>
       </section>
 
