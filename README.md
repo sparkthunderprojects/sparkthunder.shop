@@ -60,3 +60,14 @@ Customers sign in at `/account/login` with email + password or Google. This is t
 ## Checkout, orders and email
 
 Set `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY` and `EMAIL_FROM` (see `.env.example`). In Stripe add a webhook endpoint `https://sparkthunder.shop/api/stripe/webhook` for `checkout.session.completed`. Prices are treated as VAT-inclusive; Stripe Tax is not enabled.
+
+## Running many stores (Spark Merchant)
+
+One deployment serves any number of stores. Each store has its own domains, products, orders, design, SEO, shipping rules, Stripe account and sending address.
+
+- **Add a store:** Admin > Stores (owners only), either blank or as a copy of an existing store (design, shipping rules, categories; never products, orders or keys). Then point the domain at the platform.
+- **Connect money and email:** switch to the store in the sidebar, open Shipping and payments, and add its own Stripe keys and Resend key. A store with no keys cannot take payment and never falls back to another store's accounts. Create a Stripe webhook on that store's domain pointing at `/api/stripe/webhook`.
+- **Staff:** owners can give someone access to one store only (Stores page). Database row-level security enforces it.
+- **Unknown domains** pointed at the platform get a 404 with `noindex`. Set `PLATFORM_HOSTS` (comma separated) for your own platform hostnames, such as a preview URL.
+- **Safety net:** every query on store-owned tables is scoped to the current store by `src/lib/db/scope.ts`, caches and their tags are per store, and uploads are stored under the store's id.
+- **Test it:** `SPARKTHUNDER_DEMO=1 SPARKTHUNDER_DEMO_STORES=100 npx next start -p 3460`, then `node scripts/isolation-test.mjs 3460 100`. It checks that each of 100 stores shows only its own products, canonicals and sitemap, and that unknown domains are refused.

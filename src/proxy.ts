@@ -1,21 +1,6 @@
+import { hostInfo } from "@/lib/db/edge-data";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-
-type Rule = { from_path: string; to_path: string; status: number };
-const caches = new Map<string, { at: number; map: Map<string, Rule> }>();
-
-async function rules(origin: string): Promise<Map<string, Rule>> {
-  const cache = caches.get(origin);
-  if (cache && Date.now() - cache.at < 10_000) return cache.map;
-  try {
-    const res = await fetch(`${origin}/api/redirects`, { signal: AbortSignal.timeout(1500) });
-    const list: Rule[] = res.ok ? await res.json() : [];
-    caches.set(origin, { at: Date.now(), map: new Map(list.map((r) => [r.from_path, r])) });
-  } catch {
-    caches.set(origin, { at: Date.now() - 5_000, map: cache?.map ?? new Map() });
-  }
-  return caches.get(origin)!.map;
-}
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -48,7 +33,9 @@ export async function proxy(req: NextRequest) {
   }
 
   // Storefront: apply admin-managed redirects.
-  const rule = (await rules(req.nextUrl.origin)).get(pathname.length > 1 ? pathname.replace(/\/$/, "") : pathname);
+  const info = await hostInfo(req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? "");
+  if (!info.known) return new NextResponse("Not found", { status: 404, headers: { "X-Robots-Tag": "noindex, nofollow", "Content-Type": "text/plain" } });
+  const rule = info.rules.get(pathname.length > 1 ? pathname.replace(/\/$/, "") : pathname);
   if (rule) {
     const to = /^https?:\/\//.test(rule.to_path) ? rule.to_path : new URL(rule.to_path, req.url).toString();
     return NextResponse.redirect(to, rule.status as 301 | 302 | 307 | 308);

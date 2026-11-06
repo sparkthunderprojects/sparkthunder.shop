@@ -455,3 +455,99 @@ create unique index if not exists reward_points_once on public.reward_points (st
 
 -- Public reads of reviews keep hiding the buyer's email; store_id is safe to expose.
 grant select (store_id) on public.reviews to anon, authenticated;
+
+-- ============================================================================
+-- Scale hardening for many stores (idempotent)
+-- ============================================================================
+
+-- Per-store credentials (Stripe, Resend). RLS is on with NO policies, so only the server's service key can read or write them.
+create table if not exists public.store_secrets (
+  store_id text primary key references public.stores(id) on update cascade on delete cascade,
+  stripe_secret text not null default '',
+  stripe_webhook_secret text not null default '',
+  resend_key text not null default '',
+  email_from text not null default ''
+);
+alter table public.store_secrets enable row level security;
+revoke all on public.store_secrets from anon, authenticated;
+
+-- Store staff: a person can be allowed to run one store (or several) without touching the others.
+-- Owners (rows in admin_users) can still manage every store.
+create table if not exists public.store_admins (
+  user_id uuid not null references auth.users(id) on delete cascade,
+  store_id text not null references public.stores(id) on update cascade on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (user_id, store_id)
+);
+alter table public.store_admins enable row level security;
+drop policy if exists "owners manage store admins" on public.store_admins;
+create policy "owners manage store admins" on public.store_admins for all using (public.is_admin()) with check (public.is_admin());
+drop policy if exists "staff see own access" on public.store_admins;
+create policy "staff see own access" on public.store_admins for select using (user_id = auth.uid());
+
+create or replace function public.can_admin_store(sid text) returns boolean
+language sql security definer set search_path = public stable as $$
+  select public.is_admin() or exists (select 1 from public.store_admins a where a.user_id = auth.uid() and a.store_id = sid);
+$$;
+grant execute on function public.can_admin_store(text) to anon, authenticated;
+
+-- Owners add or remove staff by email (the person must already have signed up).
+create or replace function public.set_store_staff(p_email text, p_store text, p_add boolean) returns void
+language plpgsql security definer set search_path = public, auth as $$
+declare uid uuid;
+begin
+  if not public.is_admin() then raise exception 'Only owners can manage staff'; end if;
+  select id into uid from auth.users where lower(email) = lower(p_email);
+  if uid is null then raise exception 'No account with that email. Ask them to sign up first.'; end if;
+  if p_add then insert into public.store_admins (user_id, store_id) values (uid, p_store) on conflict do nothing;
+  else delete from public.store_admins where user_id = uid and store_id = p_store; end if;
+end $$;
+revoke all on function public.set_store_staff(text, text, boolean) from public;
+grant execute on function public.set_store_staff(text, text, boolean) to authenticated;
+
+-- Every store-owned table is managed by that store's staff (and owners), never by staff of another store.
+do $$
+declare t text; pol record;
+begin
+  foreach t in array array['franchises','categories','products','collections','orders','checkout_snapshots','discount_codes','gift_cards',
+                           'reviews','stock_alerts','reward_points','product_questions','media','redirects','settings','subscribers'] loop
+    for pol in select policyname from pg_policies where schemaname = 'public' and tablename = t and policyname like 'admin all%' loop
+      execute format('drop policy %I on public.%I', pol.policyname, t);
+    end loop;
+    execute format('drop policy if exists "store admin all %1$s" on public.%1$I', t);
+    execute format('create policy "store admin all %1$s" on public.%1$I for all using (public.can_admin_store(store_id)) with check (public.can_admin_store(store_id))', t);
+  end loop;
+end $$;
+drop policy if exists "admin all stores" on public.stores;
+create policy "owners manage stores" on public.stores for all using (public.is_admin()) with check (public.is_admin());
+
+-- Uploads live under <store id>/..., and only that store's staff can write there.
+drop policy if exists "admins write product images" on storage.objects;
+create policy "store staff write product images" on storage.objects for insert with check (bucket_id = 'product-images' and public.can_admin_store((storage.foldername(name))[1]));
+drop policy if exists "admins update product images" on storage.objects;
+create policy "store staff update product images" on storage.objects for update using (bucket_id = 'product-images' and public.can_admin_store((storage.foldername(name))[1]));
+drop policy if exists "admins delete product images" on storage.objects;
+create policy "store staff delete product images" on storage.objects for delete using (bucket_id = 'product-images' and public.can_admin_store((storage.foldername(name))[1]));
+
+-- Gift card balance lookups are per store: a card from one store cannot be probed from another.
+drop function if exists public.gift_card_lookup(text);
+create or replace function public.gift_card_lookup(p_code text, p_store text)
+returns table (balance_pence integer, currency text, status text, expires_at timestamptz)
+language sql security definer set search_path = public stable as $$
+  select g.balance_pence, g.currency,
+    case when g.status <> 'active' then 'disabled'
+         when g.expires_at is not null and g.expires_at < now() then 'expired'
+         when g.balance_pence = 0 then 'used'
+         else 'active' end,
+    g.expires_at
+  from public.gift_cards g where g.code = upper(p_code) and g.store_id = p_store limit 1;
+$$;
+revoke all on function public.gift_card_lookup(text, text) from public;
+grant execute on function public.gift_card_lookup(text, text) to anon, authenticated;
+
+-- Indexes for the busiest per-store queries.
+create index if not exists products_store_pub_idx on public.products (store_id, published, created_at desc);
+create index if not exists orders_store_created_idx on public.orders (store_id, created_at desc);
+create index if not exists reviews_store_product_idx on public.reviews (store_id, product_slug, status);
+create index if not exists discount_codes_store_idx on public.discount_codes (store_id, code);
+create index if not exists gift_cards_store_idx on public.gift_cards (store_id, code);

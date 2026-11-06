@@ -1,5 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { publicClient } from "@/lib/db/clients";
+import { storeTag } from "@/lib/tags";
 import { currentStoreId, DEFAULT_STORE_ID } from "@/lib/db/stores";
 import { categoryFromRow, collectionFromRow, franchiseFromRow, productFromRow, type CategoryRow, type CollectionRow, type FranchiseRow, type ProductRow } from "@/lib/db/mappers";
 import { seedCatalog } from "@/data/seed";
@@ -72,7 +73,7 @@ const loadCatalogFor = (storeId: string) =>
       return { ...c, collections, products: withBestSellers(withLaunchDates(withBundleStock(c.products), collections), await getSalesStats()) };
     },
     ["catalog-v5", storeId],
-    { tags: [CATALOG_TAG], revalidate: 300 },
+    { tags: [storeTag(CATALOG_TAG, storeId)], revalidate: 300 },
   )();
 const loadCatalog = async () => loadCatalogFor(await currentStoreId());
 
@@ -154,6 +155,6 @@ export const getSiteSettings = async (): Promise<PublicSettings> => {
       return { ...EMPTY_SETTINGS, ...((data as { value?: Partial<PublicSettings> } | null)?.value ?? {}) };
     },
     ["site-settings-v2", storeId],
-    { tags: ["settings"], revalidate: 600 },
+    { tags: [storeTag("settings", storeId)], revalidate: 600 },
   )();
 };

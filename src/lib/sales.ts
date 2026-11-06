@@ -1,5 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { serviceClient } from "@/lib/db/clients";
+import { storeTag } from "@/lib/tags";
 import { currentStoreId } from "@/lib/db/stores";
 import type { OrderRow } from "@/lib/shop/fulfil";
 import type { Product } from "@/lib/types";
@@ -37,7 +38,7 @@ const getSalesStatsFor = (storeId: string) => unstable_cache(
     return { units, together };
   },
   ["sales-stats-v2", storeId],
-  { tags: ["catalog", "sales"], revalidate: 3600 },
+  { tags: [storeTag("catalog", storeId), storeTag("sales", storeId)], revalidate: 3600 },
 )();
 
 export function withBestSellers(products: Product[], stats: SalesStats): Product[] {

@@ -1,6 +1,7 @@
 "use server";
 
-import { revalidatePath, updateTag } from "next/cache";
+import { revalidatePath } from "next/cache";
+import { bustTag } from "@/lib/tags";
 import { requireAdminAction } from "@/lib/admin/auth";
 import { CATALOG_TAG } from "@/lib/catalog";
 import { slugify } from "@/lib/seo/text";
@@ -13,8 +14,8 @@ export type CollectionInput = {
   launchAt: string; productSlugs: string[]; sortOrder: number; published: boolean; isNew: boolean;
 };
 
-function bust(slug: string) {
-  updateTag(CATALOG_TAG);
+async function bust(slug: string) {
+  await bustTag(CATALOG_TAG);
   revalidatePath("/", "layout");
   revalidatePath("/collections");
   revalidatePath(`/collections/${slug}`);
@@ -45,7 +46,7 @@ export async function saveCollectionAction(i: CollectionInput): Promise<Result> 
     };
     const { error } = i.isNew ? await db.from("collections").insert(row) : await db.from("collections").update(row).eq("slug", slug);
     if (error) return { ok: false, error: error.message };
-    bust(slug);
+    await bust(slug);
     return { ok: true };
   } catch (e) { return { ok: false, error: message(e) }; }
 }
@@ -55,7 +56,7 @@ export async function deleteCollectionAction(slug: string): Promise<Result> {
     const { db } = await requireAdminAction();
     const { error } = await db.from("collections").delete().eq("slug", slug);
     if (error) return { ok: false, error: error.message };
-    bust(slug);
+    await bust(slug);
     return { ok: true };
   } catch (e) { return { ok: false, error: message(e) }; }
 }

@@ -6,7 +6,7 @@ import { hasStripe } from "@/lib/shop/stripe";
 
 /** LOCAL DEMO ONLY: stands in for Stripe's "payment complete" so the whole order flow can be tried without keys. */
 export async function GET(req: Request) {
-  if (!isDemo || hasStripe()) return new NextResponse("Not found", { status: 404 });
+  if (!isDemo || await hasStripe()) return new NextResponse("Not found", { status: 404 });
   const id = new URL(req.url).searchParams.get("id") ?? "";
   const db = serviceClient()!;
   await fulfilOrder(db, { sessionId: id, paymentIntent: "pi_demo", email: "demo@sparkthunder.shop", name: "Demo Buyer", phone: "", address: { name: "Demo Buyer", line1: "1 Test Street", line2: "", city: "London", postcode: "N1 1AA", country: "GB" } });

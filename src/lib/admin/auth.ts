@@ -4,18 +4,22 @@ import { connection } from "next/server";
 import { sessionClient, type Db } from "@/lib/db/clients";
 import { hasSupabase, isDemo } from "@/lib/db/env";
 
-export type AdminSession = { db: Db; email: string; demo: boolean };
+/** `access` is "*" for owners (every store) or the ids of the stores a staff member may manage. */
+export type AdminSession = { db: Db; email: string; demo: boolean; access: string[] | "*" };
 
 /** The signed-in admin for this request, or null. Row-level security is the real gate; this is the UX check. */
 export const getAdmin = cache(async (): Promise<AdminSession | null> => {
   const db = await sessionClient();
   if (!db) return null;
-  if (isDemo) return { db, email: "demo@sparkthunder.shop", demo: true };
+  if (isDemo) return { db, email: "demo@sparkthunder.shop", demo: true, access: "*" };
   const { data } = await db.auth.getUser();
   const user = data.user;
   if (!user) return null;
   const { data: row } = await db.from("admin_users").select("user_id").eq("user_id", user.id).maybeSingle();
-  return row ? { db, email: user.email ?? "", demo: false } : null;
+  if (row) return { db, email: user.email ?? "", demo: false, access: "*" };
+  const { data: staff } = await db.from("store_admins").select("store_id").eq("user_id", user.id);
+  const ids = ((staff ?? []) as { store_id: string }[]).map((s) => s.store_id);
+  return ids.length ? { db, email: user.email ?? "", demo: false, access: ids } : null;
 });
 
 export async function requireAdmin(): Promise<AdminSession> {
@@ -30,5 +34,12 @@ export async function requireAdmin(): Promise<AdminSession> {
 export async function requireAdminAction(): Promise<AdminSession> {
   const admin = await getAdmin();
   if (!admin) throw new Error("Not signed in as an admin.");
+  return admin;
+}
+
+/** Owner-only actions (creating stores, managing staff). */
+export async function requireOwnerAction(): Promise<AdminSession> {
+  const admin = await requireAdminAction();
+  if (admin.access !== "*") throw new Error("Only owners can do that.");
   return admin;
 }

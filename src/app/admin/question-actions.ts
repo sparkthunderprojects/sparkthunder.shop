@@ -1,12 +1,13 @@
 "use server";
 
-import { revalidatePath, updateTag } from "next/cache";
+import { revalidatePath } from "next/cache";
+import { bustTag } from "@/lib/tags";
 import { requireAdminAction } from "@/lib/admin/auth";
 import { QUESTIONS_TAG } from "@/lib/questions";
 
 type Result = { ok: true } | { ok: false; error: string };
 const message = (e: unknown) => (e instanceof Error ? e.message : "Something went wrong.");
-function bust(slug: string) { updateTag(QUESTIONS_TAG); revalidatePath(`/products/${slug}`); revalidatePath("/admin/questions"); }
+async function bust(slug: string) { await bustTag(QUESTIONS_TAG); revalidatePath(`/products/${slug}`); revalidatePath("/admin/questions"); }
 
 export async function answerQuestionAction(id: string, slug: string, answer: string, question: string): Promise<Result> {
   try {
@@ -15,7 +16,7 @@ export async function answerQuestionAction(id: string, slug: string, answer: str
     if (a.length < 2) return { ok: false, error: "Write an answer first." };
     const { error } = await db.from("product_questions").update({ answer: a.slice(0, 1000), question: question.trim().slice(0, 300), status: "answered", answered_at: new Date().toISOString() }).eq("id", id);
     if (error) return { ok: false, error: error.message };
-    bust(slug);
+    await bust(slug);
     return { ok: true };
   } catch (e) { return { ok: false, error: message(e) }; }
 }
@@ -25,7 +26,7 @@ export async function setQuestionStatusAction(id: string, slug: string, status: 
     const { db } = await requireAdminAction();
     const { error } = await db.from("product_questions").update({ status }).eq("id", id);
     if (error) return { ok: false, error: error.message };
-    bust(slug);
+    await bust(slug);
     return { ok: true };
   } catch (e) { return { ok: false, error: message(e) }; }
 }
@@ -35,7 +36,7 @@ export async function deleteQuestionAction(id: string, slug: string): Promise<Re
     const { db } = await requireAdminAction();
     const { error } = await db.from("product_questions").delete().eq("id", id);
     if (error) return { ok: false, error: error.message };
-    bust(slug);
+    await bust(slug);
     return { ok: true };
   } catch (e) { return { ok: false, error: message(e) }; }
 }

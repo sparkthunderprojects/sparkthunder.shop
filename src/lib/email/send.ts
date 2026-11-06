@@ -1,10 +1,12 @@
 import { fillForRequest } from "@/lib/site-info";
+import { currentStoreId } from "@/lib/db/stores";
+import { getStoreSecrets } from "@/lib/secrets";
 
 /** Transactional email through Resend's HTTP API. Never throws: callers record the outcome. */
 export async function sendEmail(msg: { to: string; subject: string; html: string; text: string }): Promise<{ ok: true } | { ok: false; error: string }> {
-  const key = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM;
-  if (!key || !from) return { ok: false, error: "Email is not configured (set RESEND_API_KEY and EMAIL_FROM)." };
+  const secrets = await getStoreSecrets(await currentStoreId());
+  const key = secrets.resendKey, from = secrets.emailFrom;
+  if (!key || !from) return { ok: false, error: "Email is not set up for this store (add a Resend key and from-address under Payments and email)." };
   try {
     // The templates carry store stand-ins (brand, domain, colours); fill them for the store this request belongs to.
     msg = await fillForRequest(msg);

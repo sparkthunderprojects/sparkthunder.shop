@@ -1,11 +1,13 @@
 "use client";
 
 import { useCart } from "@/components/CartProvider";
-import { FREE_SHIPPING_PENCE, formatPrice } from "@/lib/site";
+import { formatPrice } from "@/lib/site";
+import { useCommerce } from "@/components/CommerceProvider";
 
 /** Progress toward free shipping. Renders nothing unless NEXT_PUBLIC_FREE_SHIPPING_PENCE is configured. */
 export function FreeShippingBar() {
   const { subtotalPence, count } = useCart();
+  const FREE_SHIPPING_PENCE = useCommerce().freeShippingPence;
   if (!FREE_SHIPPING_PENCE || count === 0) return null;
   const left = FREE_SHIPPING_PENCE - subtotalPence;
   const pct = Math.min(100, Math.round((subtotalPence / FREE_SHIPPING_PENCE) * 100));

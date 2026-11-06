@@ -2,7 +2,8 @@
 
 import { serviceClient } from "@/lib/db/clients";
 import { isDemo } from "@/lib/db/env";
-import { buildPlan, SHIPPING_COUNTRIES, SHIPPING_FLAT_PENCE } from "@/lib/shop/plan";
+import { buildPlan } from "@/lib/shop/plan";
+import { getCommerce } from "@/lib/commerce";
 import { getStripe, hasStripe } from "@/lib/shop/stripe";
 import type { CartInput, GiftOptionsInput } from "@/lib/shop/types";
 import { siteOrigin } from "@/lib/site-info";
@@ -12,8 +13,9 @@ export type CheckoutResult = { ok: true; url: string } | { ok: false; error: str
 export async function startCheckoutAction(cart: CartInput, giftCode: string | null, discountCode: string | null = null, giftOpts: GiftOptionsInput | null = null): Promise<CheckoutResult> {
   try {
     const db = serviceClient();
-    const demoPay = isDemo && !hasStripe();
-    if (!db || (!hasStripe() && !demoPay)) return { ok: false, error: "Checkout is not switched on yet. Please check back soon." };
+    const stripeOn = await hasStripe();
+    const demoPay = isDemo && !stripeOn;
+    if (!db || (!stripeOn && !demoPay)) return { ok: false, error: "Checkout is not switched on yet. Please check back soon." };
 
     const plan = await buildPlan(db, cart, giftCode, discountCode, giftOpts);
     if (!plan.ok) return plan;
@@ -26,7 +28,7 @@ export async function startCheckoutAction(cart: CartInput, giftCode: string | nu
       return { ok: true, url: `/api/dev/complete?id=${id}` };
     }
 
-    const stripe = getStripe();
+    const stripe = await getStripe();
     const line_items = snap.lines.map((l) => ({
       quantity: l.qty,
       price_data: { currency: "gbp", unit_amount: l.unitPence, product_data: { name: l.name, ...(l.type === "product" && l.image ? { images: [l.image] } : {}) } },
@@ -49,7 +51,7 @@ export async function startCheckoutAction(cart: CartInput, giftCode: string | nu
       ...(discounts ? { discounts } : {}),
       payment_method_collection: "if_required",
       ...(snap.needsShipping ? {
-        shipping_address_collection: { allowed_countries: SHIPPING_COUNTRIES as never },
+        shipping_address_collection: { allowed_countries: (await getCommerce()).shippingCountries as never },
         phone_number_collection: { enabled: true },
         shipping_options: [{ shipping_rate_data: { type: "fixed_amount" as const, display_name: snap.shippingPence ? "Standard delivery" : "Free delivery", fixed_amount: { amount: snap.shippingPence, currency: "gbp" } } }],
       } : {}),
@@ -68,4 +70,4 @@ export async function startCheckoutAction(cart: CartInput, giftCode: string | nu
   }
 }
 
-export const shippingInfo = async () => ({ flat: SHIPPING_FLAT_PENCE, countries: SHIPPING_COUNTRIES });
+export const shippingInfo = async () => { const c = await getCommerce(); return { flat: c.shippingFlatPence, countries: c.shippingCountries }; };

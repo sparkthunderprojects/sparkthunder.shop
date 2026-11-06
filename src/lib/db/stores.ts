@@ -2,15 +2,14 @@ import { unstable_cache } from "next/cache";
 import { cookies, headers } from "next/headers";
 import { createClient } from "@supabase/supabase-js";
 import { createFakeClient } from "@/lib/db/fake";
+import { DEFAULT_STORE_ID, FALLBACK, storeForHost, type StoreRow } from "@/lib/db/stores-core";
+export { DEFAULT_STORE_ID, isKnownHost, isPlatformHost, storeForHost, type StoreRow } from "@/lib/db/stores-core";
 import { SUPABASE_ANON_KEY, SUPABASE_URL, hasSupabase, isDemo } from "@/lib/db/env";
 
 /** The store used when no host matches (local dev, preview URLs) and for data created before multi-store existed. */
-export const DEFAULT_STORE_ID = "sparkthunder";
 export const ADMIN_STORE_COOKIE = "spark-admin-store";
 
-export type StoreRow = { id: string; name: string; domains: string[]; is_default: boolean };
 
-const FALLBACK: StoreRow[] = [{ id: DEFAULT_STORE_ID, name: "Sparkthunder Shop", domains: [], is_default: true }];
 
 /** Every store on the platform. Public by design: it only holds names and domains. Cached for a minute. */
 export const listStores = unstable_cache(
@@ -24,13 +23,6 @@ export const listStores = unstable_cache(
   ["stores-v1"],
   { tags: ["stores"], revalidate: 60 },
 );
-
-const bareHost = (h: string) => h.toLowerCase().replace(/:\d+$/, "").replace(/^www\./, "");
-
-export function storeForHost(stores: StoreRow[], host: string | null | undefined): StoreRow {
-  const h = bareHost(host ?? "");
-  return stores.find((s) => s.domains.some((d) => bareHost(d) === h)) ?? stores.find((s) => s.is_default) ?? stores[0] ?? FALLBACK[0];
-}
 
 /**
  * The store this request is for: the admin's chosen store inside /admin, otherwise whichever store owns the host.

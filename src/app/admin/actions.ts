@@ -1,6 +1,8 @@
 "use server";
 
-import { revalidatePath, updateTag } from "next/cache";
+import { revalidatePath } from "next/cache";
+import { bustTag } from "@/lib/tags";
+import { currentStoreId } from "@/lib/db/stores";
 import { requireAdminAction } from "@/lib/admin/auth";
 import { notifyBackInStock } from "@/lib/shop/alerts";
 import * as repo from "@/lib/admin/repo";
@@ -18,9 +20,9 @@ async function notifyRestocks(db: Parameters<typeof notifyBackInStock>[0]) {
   try { await notifyBackInStock(db); } catch (e) { console.error("[stock-alerts]", e); }
 }
 
-function refresh(paths: string[] = []) {
-  updateTag(CATALOG_TAG);
-  updateTag("redirects");
+async function refresh(paths: string[] = []) {
+  await bustTag(CATALOG_TAG);
+  await bustTag("redirects");
   revalidatePath("/", "layout");
   revalidatePath("/sitemap.xml");
   revalidatePath("/llms.txt");
@@ -201,7 +203,7 @@ export async function uploadMediaAction(form: FormData): Promise<Result<{ item: 
     const name = slugify(String(form.get("name") ?? file.name).replace(/\.[a-z0-9]+$/i, "")) || "image";
     const ext = file.type === "image/jpeg" ? "jpg" : file.type.split("/")[1];
     const now = new Date();
-    const path = `${now.getUTCFullYear()}/${String(now.getUTCMonth() + 1).padStart(2, "0")}/${name}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const path = `${await currentStoreId()}/${now.getUTCFullYear()}/${String(now.getUTCMonth() + 1).padStart(2, "0")}/${name}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
     const up = await db.storage.from("product-images").upload(path, file, { contentType: file.type, cacheControl: "31536000", upsert: false });
     if (up.error) return { ok: false, error: `Upload failed: ${up.error.message}` };
     const { data } = db.storage.from("product-images").getPublicUrl(path);
@@ -229,19 +231,19 @@ export async function addRedirectAction(from: string, to: string, status: number
     if (f === t) return { ok: false, error: "The old and new URLs are the same." };
     if (![301, 302, 307, 308].includes(status)) return { ok: false, error: "Choose a redirect type." };
     await repo.addRedirect(db, { from_path: f.replace(/\/$/, "") || "/", to_path: t, status, note: note.trim() });
-    updateTag("redirects");
+    await bustTag("redirects");
     revalidatePath("/admin/redirects");
     return { ok: true };
   } catch (e) { return { ok: false, error: message(e) }; }
 }
 export async function deleteRedirectAction(id: number): Promise<Result> {
-  try { const { db } = await requireAdminAction(); await repo.removeRedirect(db, id); updateTag("redirects"); revalidatePath("/admin/redirects"); return { ok: true }; } catch (e) { return { ok: false, error: message(e) }; }
+  try { const { db } = await requireAdminAction(); await repo.removeRedirect(db, id); await bustTag("redirects"); revalidatePath("/admin/redirects"); return { ok: true }; } catch (e) { return { ok: false, error: message(e) }; }
 }
 export async function saveSettingsAction(s: repo.SiteSettings): Promise<Result> {
   try {
     const { db } = await requireAdminAction();
     await repo.writeSettings(db, { ...s, sameAs: s.sameAs.map((x) => x.trim()).filter(Boolean) });
-    updateTag("settings");
+    await bustTag("settings");
     revalidatePath("/", "layout");
     return { ok: true };
   } catch (e) { return { ok: false, error: message(e) }; }

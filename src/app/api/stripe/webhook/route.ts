@@ -1,19 +1,23 @@
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath } from "next/cache";
+import { revalidateStoreTag } from "@/lib/tags";
+import { currentStoreId } from "@/lib/db/stores";
 import type Stripe from "stripe";
 import { CATALOG_TAG } from "@/lib/catalog";
 import { serviceClient } from "@/lib/db/clients";
 import { fulfilOrder } from "@/lib/shop/fulfil";
 import { getStripe } from "@/lib/shop/stripe";
+import { getStoreSecrets } from "@/lib/secrets";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
-  const secret = process.env.STRIPE_WEBHOOK_SECRET;
+  // The store is the one that owns the host Stripe posted to, so each store verifies with its own webhook secret.
+  const secret = (await getStoreSecrets(await currentStoreId())).stripeWebhookSecret;
   const sig = req.headers.get("stripe-signature");
   if (!secret || !sig) return new Response("Webhook is not configured", { status: 400 });
 
   let event: Stripe.Event;
-  try { event = getStripe().webhooks.constructEvent(await req.text(), sig, secret); }
+  try { event = (await getStripe()).webhooks.constructEvent(await req.text(), sig, secret); }
   catch { return new Response("Invalid signature", { status: 400 }); }
 
   if (event.type === "checkout.session.completed") {
@@ -31,7 +35,7 @@ export async function POST(req: Request) {
           email: s.customer_details?.email ?? "", name: s.customer_details?.name ?? ship?.name ?? "", phone: s.customer_details?.phone ?? "",
           address: a ? { name: ship?.name ?? "", line1: a.line1 ?? "", line2: a.line2 ?? "", city: a.city ?? "", postcode: a.postal_code ?? "", country: a.country ?? "" } : null,
         });
-        revalidateTag(CATALOG_TAG, "max");
+        await revalidateStoreTag(CATALOG_TAG, await currentStoreId());
         revalidatePath("/admin", "layout");
       } catch (e) {
         console.error("[stripe webhook] fulfilment failed", e);

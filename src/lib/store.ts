@@ -1,5 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { publicClient } from "@/lib/db/clients";
+import { storeTag } from "@/lib/tags";
 import { currentStoreId, DEFAULT_STORE_ID, listStores } from "@/lib/db/stores";
 import { DEFAULT_STORE, normaliseStore, type StoreSettings } from "@/lib/store-config";
 
@@ -20,6 +21,6 @@ export const getStore = async (): Promise<StoreSettings> => {
     return normaliseStore({ name, legalName: name, tagline: "Welcome", heroHeading: name, description: `Shop ${name}.`, logoUrl: "", logoLabel: "", announcements: [] });
   },
   ["store-settings-v2", storeId],
-  { tags: ["settings"], revalidate: 600 },
+  { tags: [storeTag("settings", storeId)], revalidate: 600 },
 )();
 };

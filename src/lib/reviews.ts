@@ -1,5 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { publicClient } from "@/lib/db/clients";
+import { storeTag } from "@/lib/tags";
 import { currentStoreId } from "@/lib/db/stores";
 
 export type ReviewRow = {
@@ -25,6 +26,6 @@ export const getReviews = async (slug: string) => {
       return { count: rows.length, average, reviews: rows.map((r) => ({ id: r.id, name: r.name, rating: r.rating, title: r.title, body: r.body, photos: r.photos ?? [], createdAt: r.created_at })) };
     },
     ["reviews", storeId, slug],
-    { tags: [REVIEWS_TAG], revalidate: 300 },
+    { tags: [storeTag(REVIEWS_TAG, storeId)], revalidate: 300 },
   )();
 };

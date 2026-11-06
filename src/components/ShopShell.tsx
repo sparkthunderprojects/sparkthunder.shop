@@ -15,6 +15,8 @@ import { ShopUiProvider } from "@/components/ShopUi";
 import { WishlistProvider } from "@/components/WishlistProvider";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
+import { CommerceProvider } from "@/components/CommerceProvider";
+import { getCommerce } from "@/lib/commerce";
 import { JsonLd } from "@/components/JsonLd";
 import { getAllProducts, getCategories, getFranchises, getSiteSettings } from "@/lib/catalog";
 import { toQuick } from "@/lib/card";
@@ -24,7 +26,7 @@ import { getStore } from "@/lib/store";
 
 /** Storefront chrome: providers, header, footer and the slide-over panels. Used by the (shop) layout and the global 404. */
 export async function ShopShell({ children }: { children: React.ReactNode }) {
-  const [products, franchises, categories, settings, store] = await Promise.all([getAllProducts(), getFranchises(), getCategories(), getSiteSettings(), getStore()]);
+  const [products, franchises, categories, settings, store, commerce] = await Promise.all([getAllProducts(), getFranchises(), getCategories(), getSiteSettings(), getStore(), getCommerce()]);
   const names = Object.fromEntries(franchises.map((f) => [f.slug, f.name]));
   const popular = [
     ...franchises.map((f) => ({ label: f.name, href: `/franchises/${f.slug}` })),
@@ -35,6 +37,7 @@ export async function ShopShell({ children }: { children: React.ReactNode }) {
   return (
     <>
       <JsonLd data={[organizationLd([...SITE.sameAs, ...settings.sameAs], { name: store.legalName, logo: store.logoUrl }), websiteLd({ name: store.name, description: store.description })]} />
+      <CommerceProvider value={{ freeShippingPence: commerce.freeShippingPence, giftWrapPence: commerce.giftWrapPence }}>
       <CartProvider>
         <WishlistProvider>
           <ShopUiProvider>
@@ -57,6 +60,7 @@ export async function ShopShell({ children }: { children: React.ReactNode }) {
           </ShopUiProvider>
         </WishlistProvider>
       </CartProvider>
+      </CommerceProvider>
     </>
   );
 }

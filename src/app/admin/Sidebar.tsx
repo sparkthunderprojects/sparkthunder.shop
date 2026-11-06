@@ -26,11 +26,11 @@ const SEO: typeof NAV = [
   { href: "/admin/seo", label: "SEO audit" },
   { href: "/admin/redirects", label: "Redirects" },
   { href: "/admin/store", label: "Brand and design" },
-  { href: "/admin/stores", label: "Stores" },
+  { href: "/admin/commerce", label: "Shipping and payments" },
   { href: "/admin/settings", label: "Settings" },
 ];
 
-export function Sidebar({ email, demo, stores, current }: { email: string; demo: boolean; stores: StoreRow[]; current: string }) {
+export function Sidebar({ email, demo, stores, current, owner }: { email: string; demo: boolean; stores: StoreRow[]; current: string; owner: boolean }) {
   const path = usePathname();
   const router = useRouter();
   const item = (n: (typeof NAV)[number]) => {
@@ -44,6 +44,7 @@ export function Sidebar({ email, demo, stores, current }: { email: string; demo:
         Store
         <select value={current} aria-label="Store being edited" style={{ width: "100%", marginTop: 4 }}
           onChange={async (e) => { await switchStoreAction(e.target.value); router.refresh(); }}>
+          {current === "" ? <option value="">Choose a store</option> : null}
           {stores.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
       </label>
@@ -51,6 +52,7 @@ export function Sidebar({ email, demo, stores, current }: { email: string; demo:
         {NAV.map(item)}
         <div className="adm-sep">Search</div>
         {SEO.map(item)}
+        {owner ? item({ href: "/admin/stores", label: "Stores" }) : null}
         <div className="adm-sep">Coming soon</div>
         <span>Customers <small>Soon</small></span>
         <div className="adm-sep">Site</div>

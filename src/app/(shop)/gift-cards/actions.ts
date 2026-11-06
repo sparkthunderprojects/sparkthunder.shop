@@ -1,5 +1,6 @@
 "use server";
 
+import { currentStoreId } from "@/lib/db/stores";
 import { headers } from "next/headers";
 import { publicClient } from "@/lib/db/clients";
 import { normaliseCode, type CardStatus } from "@/lib/giftcards/format";
@@ -28,7 +29,7 @@ export async function lookupGiftCardAction(input: string): Promise<LookupResult>
   if (!code) return { ok: false, error: "That does not look like a gift card code. It starts with SPK and has 12 more characters." };
   const db = publicClient();
   if (!db) return { ok: false, error: "Gift cards are not available yet." };
-  const { data, error } = await db.rpc("gift_card_lookup", { p_code: code });
+  const { data, error } = await db.rpc("gift_card_lookup", { p_code: code, p_store: await currentStoreId() });
   if (error) return { ok: false, error: "We could not check that right now. Please try again shortly." };
   const row = (data as { balance_pence: number; status: CardStatus; expires_at: string | null }[] | null)?.[0];
   if (!row) return { ok: false, error: "We could not find a gift card with that code. Check it and try again." };

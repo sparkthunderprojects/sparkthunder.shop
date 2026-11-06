@@ -1,5 +1,6 @@
 "use server";
 
+import { currentStoreId } from "@/lib/db/stores";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { getProduct } from "@/lib/catalog";
@@ -75,7 +76,7 @@ export async function submitReviewAction(form: FormData): Promise<ReviewResult> 
       if (!/^image\/(webp|jpeg|png)$/.test(file.type)) return { ok: false, error: "Photos must be JPEG, PNG or WebP." };
       if (file.size > 3 * 1024 * 1024) return { ok: false, error: "Each photo must be under 3MB." };
       const ext = file.type === "image/jpeg" ? "jpg" : file.type.split("/")[1];
-      const path = `${slug}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const path = `${await currentStoreId()}/${slug}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
       const up = await db.storage.from("review-photos").upload(path, file, { contentType: file.type, cacheControl: "31536000", upsert: false });
       if (up.error) return { ok: false, error: "A photo could not be uploaded. Please try again." };
       photos.push(db.storage.from("review-photos").getPublicUrl(path).data.publicUrl);

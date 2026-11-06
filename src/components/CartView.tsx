@@ -9,7 +9,8 @@ import { FreeShippingBar } from "@/components/FreeShippingBar";
 import { DiscountApply, useDiscount } from "@/components/DiscountApply";
 import { GiftCardApply, useAppliedGiftCard } from "@/components/GiftCardApply";
 import { isGiftCardLine } from "@/lib/giftcards/format";
-import { GIFT_WRAP_PENCE, formatPrice } from "@/lib/site";
+import { formatPrice } from "@/lib/site";
+import { useCommerce } from "@/components/CommerceProvider";
 
 export function CartView() {
   const { items, subtotalPence, setQty, remove } = useCart();
@@ -22,6 +23,7 @@ export function CartView() {
   const physical = items.some((i) => !isGiftCardLine(i.slug));
   const [gift, setGift] = useState(false);
   const [wrap, setWrap] = useState(false);
+  const GIFT_WRAP_PENCE = useCommerce().giftWrapPence;
   const [note, setNote] = useState("");
   const wrapPence = physical && gift && wrap ? GIFT_WRAP_PENCE : 0;
   const disc = useDiscount(cartInput);

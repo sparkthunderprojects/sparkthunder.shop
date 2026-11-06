@@ -1,5 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { publicClient } from "@/lib/db/clients";
+import { storeTag } from "@/lib/tags";
 import { currentStoreId } from "@/lib/db/stores";
 
 export type QuestionRow = { id: string; product_slug: string; name: string; question: string; answer: string; status: "pending" | "answered" | "rejected"; created_at: string; answered_at: string | null };
@@ -18,6 +19,6 @@ export const getQuestions = async (slug: string) => {
       return (data as QuestionRow[]).map((r) => ({ id: r.id, name: r.name, question: r.question, answer: r.answer, answeredAt: r.answered_at ?? r.created_at }));
     },
     ["questions", storeId, slug],
-    { tags: [QUESTIONS_TAG], revalidate: 300 },
+    { tags: [storeTag(QUESTIONS_TAG, storeId)], revalidate: 300 },
   )();
 };

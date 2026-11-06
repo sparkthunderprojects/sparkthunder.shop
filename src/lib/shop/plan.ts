@@ -4,11 +4,11 @@ import type { Db } from "@/lib/db/clients";
 import { isGiftCardLine } from "@/lib/giftcards/format";
 import { GIFT_LIMITS, getCardByCode, effectiveStatus } from "@/lib/giftcards/ledger";
 import { checkDiscount } from "@/lib/discounts";
-import { FREE_SHIPPING_PENCE, GIFT_WRAP_PENCE, absoluteUrl, formatPrice } from "@/lib/site";
+import { absoluteUrl, formatPrice } from "@/lib/site";
+import { getCommerce } from "@/lib/commerce";
+import { getStore } from "@/lib/store";
 import type { CartInput, GiftOptionsInput, Snapshot, SnapshotLine } from "./types";
 
-export const SHIPPING_FLAT_PENCE = Number(process.env.SHIPPING_FLAT_PENCE ?? 399) || 0;
-export const SHIPPING_COUNTRIES = (process.env.SHIPPING_COUNTRIES ?? "GB").split(",").map((c) => c.trim().toUpperCase()).filter(Boolean);
 export const MIN_CHARGE_PENCE = 30; // Stripe's minimum card charge in GBP
 
 /**
@@ -17,6 +17,8 @@ export const MIN_CHARGE_PENCE = 30; // Stripe's minimum card charge in GBP
  */
 export async function buildPlan(db: Db, cart: CartInput, giftCode: string | null, discountCode: string | null = null, giftOpts: GiftOptionsInput | null = null): Promise<{ ok: true; snapshot: Snapshot } | { ok: false; error: string }> {
   if (!cart.length) return { ok: false, error: "Your basket is empty." };
+  const commerce = await getCommerce();
+  const FREE_SHIPPING_PENCE = commerce.freeShippingPence, GIFT_WRAP_PENCE = commerce.giftWrapPence, SHIPPING_FLAT_PENCE = commerce.shippingFlatPence;
   const catalogue = new Map((await getAllProducts()).map((p) => [p.slug, p]));
   const lines: SnapshotLine[] = [];
   const franchiseOf = new Map<string, string>(); // product slug -> universe, for universe-only discount codes
@@ -27,7 +29,7 @@ export async function buildPlan(db: Db, cart: CartInput, giftCode: string | null
       if (!item.gift || !Number.isInteger(amount) || amount < GIFT_LIMITS.min || amount > GIFT_LIMITS.max) return { ok: false, error: "A gift card in your basket is invalid. Remove it and add it again." };
       const email = String(item.gift.recipientEmail ?? "").trim();
       if (!/^\S+@\S+\.\S+$/.test(email)) return { ok: false, error: "A gift card in your basket has no valid email address." };
-      lines.push({ type: "gift", name: `Sparkthunder gift card ${formatPrice(amount)}`, unitPence: amount, qty, gift: {
+      lines.push({ type: "gift", name: `${(await getStore()).name} gift card ${formatPrice(amount)}`, unitPence: amount, qty, gift: {
         recipientName: String(item.gift.recipientName ?? "").slice(0, 40), recipientEmail: email.toLowerCase(), senderName: String(item.gift.senderName ?? "").slice(0, 40),
         message: String(item.gift.message ?? "").slice(0, 200), theme: ["bolt", "knightverge", "occult"].includes(item.gift.theme) ? item.gift.theme : "bolt",
       } });

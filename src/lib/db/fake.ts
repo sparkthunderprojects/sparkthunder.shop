@@ -7,7 +7,7 @@ import path from "node:path";
 type Row = Record<string, unknown>;
 type Result = { data: unknown; error: { message: string } | null; count?: number | null };
 
-const PK: Record<string, string> = { products: "slug", franchises: "slug", categories: "slug", media: "id", redirects: "id", settings: "key", subscribers: "email", admin_users: "user_id", gift_cards: "id", gift_card_ledger: "id", orders: "id", checkout_snapshots: "id", collections: "slug", stock_alerts: "id", reviews: "id", reward_points: "id", product_questions: "id", stores: "id" };
+const PK: Record<string, string> = { products: "slug", franchises: "slug", categories: "slug", media: "id", redirects: "id", settings: "key", subscribers: "email", admin_users: "user_id", gift_cards: "id", gift_card_ledger: "id", orders: "id", checkout_snapshots: "id", collections: "slug", stock_alerts: "id", reviews: "id", reward_points: "id", product_questions: "id", stores: "id", store_secrets: "store_id" };
 /** Rows created before multi-store (and the seed catalogue) belong to the default store. */
 const sid = (r: Row) => (r.store_id as string | undefined) ?? "sparkthunder";
 
@@ -24,6 +24,7 @@ function store(): Store {
       media: [], redirects: [], settings: [], subscribers: [], admin_users: [], gift_cards: [], gift_card_ledger: [], orders: [], checkout_snapshots: [],
       collections: (seedCatalog.collections ?? []).map((c) => ({ slug: c.slug, name: c.name, description: c.description, image: c.image, launch_at: c.launchAt ?? null, product_slugs: c.productSlugs, sort_order: c.sortOrder, published: c.published })),
       stock_alerts: [], discount_codes: [], reviews: [], reward_points: [], product_questions: [],
+      store_secrets: [],
       stores: [
         { id: "sparkthunder", name: "Sparkthunder Shop", domains: ["localhost", "127.0.0.1", "sparkthunder.shop"], is_default: true, created_at: now },
         { id: "misspetty", name: "Miss Petty", domains: ["petty.localhost", "misspetty.com"], is_default: false, created_at: now },
@@ -33,6 +34,15 @@ function store(): Store {
     const S = "misspetty";
     g.__sparkFake.franchises.push({ store_id: S, slug: "face", name: "Face", tagline: "Skin that looks like skin", description: "Complexion makeup for every undertone.", accent: "#e58ba5", sort_order: 1, updated_at: now });
     g.__sparkFake.categories.push({ store_id: S, slug: "lips", name: "Lips", description: "Balms, tints and lipsticks.", sort_order: 1, updated_at: now }, { store_id: S, slug: "cheeks", name: "Cheeks", description: "Blush and bronzer.", sort_order: 2, updated_at: now });
+    // Load testing: SPARKTHUNDER_DEMO_STORES=100 adds that many small stores (s1.localhost ... sN.localhost), each with its own products.
+    const extra = Math.min(500, Number(process.env.SPARKTHUNDER_DEMO_STORES) || 0);
+    for (let i = 1; i <= extra; i++) {
+      const id = `shop${i}`;
+      g.__sparkFake.stores.push({ id, name: `Shop ${i}`, domains: [`s${i}.localhost`], is_default: false, created_at: now });
+      g.__sparkFake.franchises.push({ store_id: id, slug: "main", name: `Shop ${i} Range`, tagline: "", description: "", accent: "#3a5fc8", sort_order: 1, updated_at: now });
+      g.__sparkFake.categories.push({ store_id: id, slug: "all", name: "Everything", description: "", sort_order: 1, updated_at: now });
+      for (const k of ["a", "b"]) g.__sparkFake.products.push({ store_id: id, slug: `item-${k}`, sku: `S${i}-${k}`.toUpperCase(), name: `Shop ${i} Item ${k.toUpperCase()}`, franchise_slug: "main", category_slug: "all", price_pence: 1000 + i, compare_price_pence: null, short_description: `Item ${k} of shop ${i}.`, description: `Only sold by shop ${i}.`, details: [], images: [], in_stock: true, is_new: true, is_featured: true, published: true, created_at: now, updated_at: now });
+    }
     for (const [slug, name, cat, price] of [["velvet-tint", "Velvet Lip Tint", "lips", 1200], ["cloud-blush", "Cloud Blush", "cheeks", 1500], ["petal-balm", "Petal Lip Balm", "lips", 900]] as const) {
       g.__sparkFake.products.push({ store_id: S, slug, sku: `MP-${slug}`.toUpperCase(), name, franchise_slug: "face", category_slug: cat, price_pence: price, compare_price_pence: null, short_description: `${name} from Miss Petty.`, description: `${name}: a soft, buildable finish that lasts all day.`, details: [], images: [], in_stock: true, is_new: true, is_featured: true, published: true, created_at: now, updated_at: now });
     }
@@ -124,7 +134,7 @@ export function createFakeClient() {
     from: (table: string) => new Query(table),
     rpc: async (name: string, args: Record<string, unknown>) => {
       if (name !== "gift_card_lookup") return { data: null, error: { message: `Unknown function ${name}` } };
-      const c = (store().gift_cards ?? []).find((r) => r.code === String(args.p_code).toUpperCase());
+      const c = (store().gift_cards ?? []).find((r) => r.code === String(args.p_code).toUpperCase() && sid(r) === (args.p_store ?? "sparkthunder"));
       if (!c) return { data: [], error: null };
       const exp = c.expires_at as string | null;
       const status = c.status !== "active" ? "disabled" : exp && new Date(exp) < new Date() ? "expired" : c.balance_pence === 0 ? "used" : "active";
