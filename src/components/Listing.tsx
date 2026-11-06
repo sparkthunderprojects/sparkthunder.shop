@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ProductCard } from "@/components/ProductCard";
+import { formatPrice } from "@/lib/site";
 import type { Product } from "@/lib/types";
 
 type Sort = "featured" | "newest" | "price-asc" | "price-desc" | "name";
@@ -14,13 +15,8 @@ const SORTS: { value: Sort; label: string }[] = [
   { value: "price-desc", label: "Price: high to low" },
   { value: "name", label: "Name: A to Z" },
 ];
-const BANDS: { value: string; label: string; test: (pence: number) => boolean }[] = [
-  { value: "all", label: "Any price", test: () => true },
-  { value: "u15", label: "Under £15", test: (p) => p < 1500 },
-  { value: "15-25", label: "£15 to £25", test: (p) => p >= 1500 && p < 2500 },
-  { value: "25-50", label: "£25 to £50", test: (p) => p >= 2500 && p < 5000 },
-  { value: "50+", label: "£50 and over", test: (p) => p >= 5000 },
-];
+const STEP = 100; // the slider moves in whole pounds
+const BINS = 14;
 const VIEW_CLASS: Record<View, string> = {
   large: "grid-cols-1 gap-x-6 gap-y-12 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-4",
   default: "grid-cols-2 gap-x-5 gap-y-10 md:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6",
@@ -59,7 +55,7 @@ export function Listing({ products, franchiseNames, categoryNames = {}, priority
   const [sort, setSort] = useState<Sort>("featured");
   const [franchise, setFranchise] = useState("all");
   const [category, setCategory] = useState("all");
-  const [band, setBand] = useState("all");
+  const [range, setRange] = useState<[number, number] | null>(null); // null = the full price range
   const [inStock, setInStock] = useState(false);
   const [view, setView] = useState<View>("default");
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -77,8 +73,27 @@ export function Listing({ products, franchiseNames, categoryNames = {}, priority
   const franchiseOptions = useMemo(() => [...new Set(products.map((p) => p.franchiseSlug))], [products]);
   const categoryOptions = useMemo(() => [...new Set(products.map((p) => p.categorySlug))], [products]);
 
+  // Slider bounds come from the real catalogue, rounded out to whole pounds.
+  const bounds = useMemo<[number, number]>(() => {
+    if (products.length === 0) return [0, 0];
+    const prices = products.map((p) => p.pricePence);
+    return [Math.floor(Math.min(...prices) / STEP) * STEP, Math.ceil(Math.max(...prices) / STEP) * STEP];
+  }, [products]);
+  const canSlide = bounds[1] > bounds[0];
+  const [lo, hi] = range ?? bounds;
+  const priceActive = canSlide && (lo > bounds[0] || hi < bounds[1]);
+  // A small chart of how many products sit at each price, so shoppers can see where the range is worth narrowing.
+  const histogram = useMemo(() => {
+    const bins = Array<number>(BINS).fill(0);
+    const span = bounds[1] - bounds[0] || 1;
+    for (const p of products) bins[Math.min(BINS - 1, Math.floor(((p.pricePence - bounds[0]) / span) * BINS))]++;
+    return bins;
+  }, [products, bounds]);
+  const setLo = (v: number) => change(() => setRange([Math.min(v, hi), hi]));
+  const setHi = (v: number) => change(() => setRange([lo, Math.max(v, lo)]));
+
   const shown = useMemo(() => {
-    const test = BANDS.find((b) => b.value === band)?.test ?? (() => true);
+    const test = (pence: number) => !priceActive || (pence >= lo && pence <= hi);
     const list = products.filter((p) =>
       (franchise === "all" || p.franchiseSlug === franchise) &&
       (category === "all" || p.categorySlug === category) &&
@@ -92,11 +107,11 @@ export function Listing({ products, franchiseNames, categoryNames = {}, priority
       name: (a, b) => a.name.localeCompare(b.name),
     };
     return [...list].sort(by[sort]);
-  }, [products, franchise, category, band, inStock, sort]);
+  }, [products, franchise, category, priceActive, lo, hi, inStock, sort]);
 
-  const active = franchise !== "all" || category !== "all" || band !== "all" || inStock;
-  const activeCount = Number(franchise !== "all") + Number(category !== "all") + Number(band !== "all") + Number(inStock);
-  const reset = () => { change(() => { setFranchise("all"); setCategory("all"); setBand("all"); setInStock(false); setSort("featured"); }); };
+  const active = franchise !== "all" || category !== "all" || priceActive || inStock;
+  const activeCount = Number(franchise !== "all") + Number(category !== "all") + Number(priceActive) + Number(inStock);
+  const reset = () => { change(() => { setFranchise("all"); setCategory("all"); setRange(null); setInStock(false); setSort("featured"); }); };
 
   // Filters apply instantly (no reload); a brief fade signals the results refreshing, like an AJAX update.
   function change(fn: () => void) {
@@ -132,7 +147,7 @@ export function Listing({ products, franchiseNames, categoryNames = {}, priority
   const chips: { label: string; clear: () => void }[] = [
     ...(franchise !== "all" ? [{ label: franchiseNames[franchise] ?? franchise, clear: () => setFranchise("all") }] : []),
     ...(category !== "all" ? [{ label: categoryNames[category] ?? category, clear: () => setCategory("all") }] : []),
-    ...(band !== "all" ? [{ label: BANDS.find((b) => b.value === band)?.label ?? band, clear: () => setBand("all") }] : []),
+    ...(priceActive ? [{ label: `${formatPrice(lo)} to ${formatPrice(hi)}`, clear: () => setRange(null) }] : []),
     ...(inStock ? [{ label: "In stock only", clear: () => setInStock(false) }] : []),
   ];
 
@@ -213,10 +228,31 @@ export function Listing({ products, franchiseNames, categoryNames = {}, priority
                   </ul>
                 </fieldset>
               )}
-              <fieldset>
-                <legend className="display mb-2 text-2xl">Price</legend>
-                <ul>{BANDS.map((b) => facet("price", b.value, band, setBand, b.label, b.value === "all" ? products.length : countFor((p) => b.test(p.pricePence))))}</ul>
-              </fieldset>
+              {canSlide && (
+                <fieldset>
+                  <legend className="display mb-2 text-2xl">Price</legend>
+                  <div className="px-1">
+                    <div className="flex h-10 items-end gap-0.5" aria-hidden="true">
+                      {histogram.map((n, i) => {
+                        const binLo = bounds[0] + ((bounds[1] - bounds[0]) / BINS) * i;
+                        const inside = binLo + (bounds[1] - bounds[0]) / BINS > lo && binLo < hi;
+                        return <span key={i} className={`flex-1 ${inside ? "bg-ink/70" : "bg-ink/15"}`} style={{ height: `${Math.max(6, (n / Math.max(...histogram)) * 100)}%` }} />;
+                      })}
+                    </div>
+                    <div className="price-range">
+                      <span className="track" />
+                      <span className="fill" style={{ left: `${((lo - bounds[0]) / (bounds[1] - bounds[0])) * 100}%`, right: `${100 - ((hi - bounds[0]) / (bounds[1] - bounds[0])) * 100}%` }} />
+                      <input type="range" aria-label="Minimum price" min={bounds[0]} max={bounds[1]} step={STEP} value={lo} onChange={(e) => setLo(Number(e.target.value))} aria-valuetext={formatPrice(lo)} style={{ zIndex: lo > bounds[0] + (bounds[1] - bounds[0]) / 2 ? 2 : 1 }} />
+                      <input type="range" aria-label="Maximum price" min={bounds[0]} max={bounds[1]} step={STEP} value={hi} onChange={(e) => setHi(Number(e.target.value))} aria-valuetext={formatPrice(hi)} />
+                    </div>
+                    <div className="mt-2 flex items-center justify-between text-sm font-bold" aria-live="polite">
+                      <span className="border border-ink/20 px-2.5 py-1">{formatPrice(lo)}</span>
+                      <span aria-hidden className="text-muted">to</span>
+                      <span className="border border-ink/20 px-2.5 py-1">{formatPrice(hi)}</span>
+                    </div>
+                  </div>
+                </fieldset>
+              )}
               <fieldset>
                 <legend className="display mb-2 text-2xl">Availability</legend>
                 <label className={`${facetBtn} cursor-pointer ${inStock ? "bg-ink text-paper" : "hover:bg-paper-2"}`}>
