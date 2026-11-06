@@ -7,6 +7,8 @@ import { findVariant, optionGroups } from "@/lib/variants";
 import { formatPrice } from "@/lib/site";
 import { SizeGuide } from "@/components/SizeGuide";
 import { StockAlertForm } from "@/components/StockAlertForm";
+import { Countdown, useNow } from "@/components/Countdown";
+import { isUpcoming } from "@/lib/launch";
 
 /** Option pickers (size, colour...), quantity and add-to-basket for one product. Used by quick view and the product page. */
 export function BuyBox({ product, onAdded }: { product: QuickProduct; onAdded?: () => void }) {
@@ -42,6 +44,13 @@ export function BuyBox({ product, onAdded }: { product: QuickProduct; onAdded?: 
     setAdded(true); setTimeout(() => setAdded(false), 1800); onAdded?.();
   }
 
+  const now = useNow(Boolean(product.launchAt));
+  if (isUpcoming(product.launchAt, now)) return (
+    <div className="space-y-3">
+      <Countdown to={product.launchAt!} />
+      <button disabled className="btn w-full">Coming soon</button>
+    </div>
+  );
   if (!product.inStock) return (
     <div className="space-y-3">
       <button disabled className="btn w-full">Sold out</button>

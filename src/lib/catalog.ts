@@ -1,8 +1,8 @@
 import { unstable_cache } from "next/cache";
 import { publicClient } from "@/lib/db/clients";
-import { categoryFromRow, franchiseFromRow, productFromRow, type CategoryRow, type FranchiseRow, type ProductRow } from "@/lib/db/mappers";
+import { categoryFromRow, collectionFromRow, franchiseFromRow, productFromRow, type CategoryRow, type CollectionRow, type FranchiseRow, type ProductRow } from "@/lib/db/mappers";
 import { seedCatalog } from "@/data/seed";
-import type { Catalog, Product } from "@/lib/types";
+import type { Catalog, Collection, Product } from "@/lib/types";
 
 /**
  * A bundle is available only while every product in it is, and its stock is how many complete bundles can be made.
@@ -25,15 +25,26 @@ export function withBundleStock(products: Product[]): Product[] {
   });
 }
 
+/** A product takes the latest launch date of any published collection it is in (derived, so it can never drift). */
+export function withLaunchDates(products: Product[], collections: Collection[]): Product[] {
+  const launch = new Map<string, string>();
+  for (const col of collections) {
+    if (!col.published || !col.launchAt) continue;
+    for (const s of col.productSlugs) { const cur = launch.get(s); if (!cur || Date.parse(col.launchAt) > Date.parse(cur)) launch.set(s, col.launchAt); }
+  }
+  return products.map((p) => (launch.has(p.slug) ? { ...p, launchAt: launch.get(p.slug) } : p));
+}
+
 export const CATALOG_TAG = "catalog";
 
 async function loadFromSupabase(): Promise<Catalog | null> {
   const supabase = publicClient();
   if (!supabase) return null;
-  const [f, c, p] = await Promise.all([
+  const [f, c, p, col] = await Promise.all([
     supabase.from("franchises").select("*").order("sort_order"),
     supabase.from("categories").select("*").order("sort_order"),
     supabase.from("products").select("*").eq("published", true).order("created_at", { ascending: false }),
+    supabase.from("collections").select("*").eq("published", true).order("sort_order"),
   ]);
   if (f.error || c.error || p.error) {
     console.error("[catalog] Supabase error, falling back to seed:", f.error ?? c.error ?? p.error);
@@ -43,6 +54,8 @@ async function loadFromSupabase(): Promise<Catalog | null> {
     franchises: (f.data as FranchiseRow[]).map(franchiseFromRow),
     categories: (c.data as CategoryRow[]).map(categoryFromRow),
     products: (p.data as ProductRow[]).map(productFromRow),
+    // The table may not exist yet on an older database: no collections is fine.
+    collections: col.error ? [] : (col.data as CollectionRow[]).map(collectionFromRow),
   };
 }
 
@@ -50,9 +63,10 @@ async function loadFromSupabase(): Promise<Catalog | null> {
 const loadCatalog = unstable_cache(
   async (): Promise<Catalog> => {
     const c = (await loadFromSupabase()) ?? seedCatalog;
-    return { ...c, products: withBundleStock(c.products) };
+    const collections = c.collections ?? [];
+    return { ...c, collections, products: withLaunchDates(withBundleStock(c.products), collections) };
   },
-  ["catalog-v2"],
+  ["catalog-v3"],
   { tags: [CATALOG_TAG], revalidate: 300 },
 );
 
@@ -67,6 +81,12 @@ export async function getCategories() {
 }
 export async function getCategory(slug: string) {
   return (await getCategories()).find((c) => c.slug === slug) ?? null;
+}
+export async function getCollections() {
+  return ((await loadCatalog()).collections ?? []).filter((x) => x.published).sort((a, b) => a.sortOrder - b.sortOrder);
+}
+export async function getCollection(slug: string) {
+  return (await getCollections()).find((x) => x.slug === slug) ?? null;
 }
 export async function getAllProducts() {
   return (await loadCatalog()).products;

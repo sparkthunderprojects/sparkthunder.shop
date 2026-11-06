@@ -294,3 +294,23 @@ create index if not exists stock_alerts_product_idx on public.stock_alerts (prod
 alter table public.stock_alerts enable row level security;
 drop policy if exists "admin all stock_alerts" on public.stock_alerts;
 create policy "admin all stock_alerts" on public.stock_alerts for all using (public.is_admin()) with check (public.is_admin());
+
+-- ---------------------------------------------------------------- Round 3: collections and drops
+create table if not exists public.collections (
+  slug text primary key,
+  name text not null,
+  description text not null default '',
+  image text not null default '',
+  launch_at timestamptz,                      -- empty = already on sale
+  product_slugs text[] not null default '{}',
+  sort_order integer not null default 0,
+  published boolean not null default true,
+  updated_at timestamptz not null default now()
+);
+drop trigger if exists collections_touch on public.collections;
+create trigger collections_touch before update on public.collections for each row execute function public.touch_updated_at();
+alter table public.collections enable row level security;
+drop policy if exists "public read collections" on public.collections;
+create policy "public read collections" on public.collections for select using (published);
+drop policy if exists "admin all collections" on public.collections;
+create policy "admin all collections" on public.collections for all using (public.is_admin()) with check (public.is_admin());

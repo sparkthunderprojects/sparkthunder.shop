@@ -1,4 +1,4 @@
-import type { BundleItem, Category, Franchise, Product, Variant } from "@/lib/types";
+import type { BundleItem, Category, Collection, Franchise, Product, Variant } from "@/lib/types";
 
 export type FranchiseRow = {
   slug: string; name: string; tagline: string; description: string; accent: string; sort_order: number; site_url?: string;
@@ -65,4 +65,13 @@ export const productToRow = (p: Product): ProductRow => ({
   seo_title: p.seoTitle ?? "", seo_description: p.seoDescription ?? "", canonical_url: p.canonicalUrl ?? "", og_image: p.ogImage ?? "",
   noindex: p.noindex ?? false, focus_keyword: p.focusKeyword ?? "", tags: p.tags ?? [], image_alts: p.imageAlts ?? [],
   track_stock: p.trackStock ?? false, stock_qty: p.stockQty ?? 0, low_stock_threshold: p.lowStockThreshold ?? 5, variants: p.variants ?? [], bundle_items: p.bundleItems ?? [],
+});
+
+export type CollectionRow = {
+  slug: string; name: string; description: string; image: string; launch_at: string | null;
+  product_slugs: string[] | null; sort_order: number; published: boolean; updated_at?: string;
+};
+export const collectionFromRow = (r: CollectionRow): Collection => ({
+  slug: r.slug, name: r.name, description: r.description ?? "", image: r.image ?? "", launchAt: r.launch_at ?? undefined,
+  productSlugs: r.product_slugs ?? [], sortOrder: r.sort_order ?? 0, published: r.published,
 });

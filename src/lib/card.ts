@@ -16,6 +16,7 @@ export type QuickProduct = {
   /** Show "Only N left" at or below this many (set per product in the admin). */
   lowStockThreshold: number;
   categorySlug: string;
+  launchAt?: string;
   variants: { name: string; stockQty: number; pricePence?: number }[];
 };
 
@@ -39,6 +40,7 @@ export function toQuick(p: Product, franchiseName?: string): QuickProduct {
     trackStock: Boolean(p.trackStock),
     lowStockThreshold: p.lowStockThreshold ?? 3,
     categorySlug: p.categorySlug,
+    launchAt: p.launchAt,
     variants: (p.variants ?? []).map((v) => ({ name: v.name, stockQty: v.stockQty, pricePence: v.pricePence })),
   };
 }

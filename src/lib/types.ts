@@ -60,12 +60,22 @@ export type Product = {
   variants?: Variant[];
   /** A bundle contains these products (no variants) and sells at its own price. */
   bundleItems?: BundleItem[];
+  /** Set from a collection with a launch date; the product cannot be bought before it. */
+  launchAt?: string;
   /** Admin-only: draft products are hidden from the storefront. */
   published?: boolean;
 } & SeoFields;
+
+/** A themed drop or collection. Products in a collection with a future launch date can be seen but not bought until then. */
+export type Collection = {
+  slug: string; name: string; description: string; image: string;
+  /** ISO timestamp the collection goes on sale (empty = already live). */
+  launchAt?: string; productSlugs: string[]; sortOrder: number; published: boolean;
+};
 
 export type Catalog = {
   franchises: Franchise[];
   categories: Category[];
   products: Product[];
+  collections?: Collection[];
 };

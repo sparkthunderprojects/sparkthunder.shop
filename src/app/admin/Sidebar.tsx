@@ -12,6 +12,7 @@ const NAV: { href: string; label: string; exact?: boolean }[] = [
   { href: "/admin/sales", label: "Sales" },
   { href: "/admin/media", label: "Media library" },
   { href: "/admin/gift-cards", label: "Gift cards" },
+  { href: "/admin/collections", label: "Collections" },
   { href: "/admin/discounts", label: "Discount codes" },
   { href: "/admin/stock-alerts", label: "Stock alerts" },
   { href: "/admin/universe-sites", label: "Universe sites" },

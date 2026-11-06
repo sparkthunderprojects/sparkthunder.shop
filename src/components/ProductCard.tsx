@@ -5,13 +5,14 @@ import { QuickAdd } from "@/components/QuickAdd";
 import { QuickViewOverlay } from "@/components/QuickViewOverlay";
 import { discountPercent, productImagePath, toQuick } from "@/lib/card";
 import { formatPrice } from "@/lib/site";
+import { isUpcoming } from "@/lib/launch";
 import type { Product } from "@/lib/types";
 
 type Props = { product: Product; franchiseName?: string; priority?: boolean; variant?: "default" | "flush" };
 
 export function ProductCard({ product, franchiseName, priority = false, variant = "default" }: Props) {
   const pct = discountPercent(product);
-  const badge = !product.inStock ? "Sold out" : pct ? `-${pct}%` : product.isNew ? "New" : null;
+  const badge = isUpcoming(product.launchAt) ? "Coming soon" : !product.inStock ? "Sold out" : pct ? `-${pct}%` : product.isNew ? "New" : null;
   const sizes = "(min-width:1536px) 16vw, (min-width:1280px) 20vw, (min-width:768px) 33vw, 50vw";
   const badgeEl = badge && <span className={`absolute left-0 top-0 z-[1] px-3 py-1 text-sm font-bold ${badge === "New" ? "bg-bolt text-black" : "bg-ink text-paper"}`}>{badge}</span>;
   const quick = toQuick(product, franchiseName);
@@ -54,7 +55,7 @@ export function ProductCard({ product, franchiseName, priority = false, variant 
         </p>
       </Link>
       <CardActions quick={quick} />
-      {product.inStock && (
+      {product.inStock && !isUpcoming(product.launchAt) && (
         <div className="pointer-events-none absolute inset-x-0 top-0 aspect-square overflow-hidden">
           <QuickAdd quick={quick} />
         </div>

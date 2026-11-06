@@ -10,6 +10,9 @@ import type { Catalog } from "@/lib/types";
  * Supabase (or here) with real merchandise before launch.
  */
 export const seedCatalog: Catalog = {
+  collections: [
+    { slug: "game-night", name: "Game Night", description: "Everything you need at the table: dice, character sheets, and the mug to keep the Game Master going.", image: "", productSlugs: ["knightverge-polyhedral-dice-set", "knightverge-character-sheet-pad", "knightverge-heroes-mug", "knightverge-game-night-bundle"], sortOrder: 1, published: true },
+  ],
   franchises: [
     {
       slug: "knightverge",

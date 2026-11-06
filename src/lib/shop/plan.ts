@@ -1,3 +1,4 @@
+import { isUpcoming } from "@/lib/launch";
 import { getAllProducts } from "@/lib/catalog";
 import type { Db } from "@/lib/db/clients";
 import { isGiftCardLine } from "@/lib/giftcards/format";
@@ -35,6 +36,7 @@ export async function buildPlan(db: Db, cart: CartInput, giftCode: string | null
     const [baseSlug, variantName] = String(item.slug).split("::");
     const p = catalogue.get(baseSlug);
     if (!p) return { ok: false, error: "An item in your basket is no longer available. Please remove it and try again." };
+    if (isUpcoming(p.launchAt)) return { ok: false, error: `${p.name} is not on sale yet. It launches ${new Date(p.launchAt!).toLocaleString("en-GB", { dateStyle: "long", timeStyle: "short", timeZone: "UTC" })} UTC.` };
     if (!p.inStock) return { ok: false, error: `${p.name} is sold out.` };
     const hasVariants = (p.variants ?? []).length > 0;
     const variant = variantName ? (p.variants ?? []).find((v) => v.name === variantName) : undefined;
