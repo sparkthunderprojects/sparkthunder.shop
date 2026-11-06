@@ -36,7 +36,7 @@ export function NewsletterPopup() {
     let armed = false;
     let done = false;
     const show = () => {
-      if (done || busy.current) return;
+      if (done || busy.current || document.querySelector("[data-consent-dialog]")) return;
       done = true;
       try { localStorage.setItem(SEEN_KEY, String(Date.now())); } catch {}
       setOpen(true);

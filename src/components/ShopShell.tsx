@@ -9,6 +9,7 @@ import { CompareBar } from "@/components/CompareBar";
 import { MobileBottomBar } from "@/components/MobileBottomBar";
 import { Newsletter } from "@/components/Newsletter";
 import { NewsletterPopup } from "@/components/NewsletterPopup";
+import { ConsentManager } from "@/components/ConsentManager";
 import { QuickViewModal } from "@/components/QuickViewModal";
 import { ShopUiProvider } from "@/components/ShopUi";
 import { WishlistProvider } from "@/components/WishlistProvider";
@@ -51,6 +52,7 @@ export async function ShopShell({ children }: { children: React.ReactNode }) {
             <MobileBottomBar />
             <BackToTop />
             <NewsletterPopup />
+            <ConsentManager />
           </ShopUiProvider>
         </WishlistProvider>
       </CartProvider>

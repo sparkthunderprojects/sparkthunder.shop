@@ -3,6 +3,7 @@ import Image from "next/image";
 import { PaymentBadges } from "@/components/PaymentBadges";
 import { getCategories, getFranchises } from "@/lib/catalog";
 import { LEGAL_PAGES, SITE, outbound } from "@/lib/site";
+import { CookieSettingsLink } from "@/components/CookieSettingsLink";
 
 export async function Footer() {
   const [franchises, categories] = await Promise.all([getFranchises(), getCategories()]);
@@ -53,6 +54,7 @@ export async function Footer() {
           <nav aria-label="Legal">
             <ul className="flex flex-wrap gap-x-7 gap-y-2 font-semibold text-ink/75">
               {LEGAL_PAGES.map((l) => <li key={l.href}><Link className={lnk} href={l.href}>{l.label}</Link></li>)}
+              <li><CookieSettingsLink className={lnk} /></li>
             </ul>
           </nav>
         </div>
