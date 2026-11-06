@@ -141,7 +141,7 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
       </div>
 
       <RecentTracker slug={product.slug} />
-      <StickyBuyBar targetId="buy-box" item={cartItem} inStock={product.inStock} hasOptions={(product.variants ?? []).length > 0} />
+      <StickyBuyBar targetId="buy-box" item={cartItem} inStock={product.inStock} hasOptions={(product.variants ?? []).length > 0} launchAt={product.launchAt} />
 
       <ReviewsSection slug={product.slug} summary={reviews} />
 
