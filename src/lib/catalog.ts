@@ -8,7 +8,7 @@ import type { Catalog, Product } from "@/lib/types";
  * A bundle is available only while every product in it is, and its stock is how many complete bundles can be made.
  * Derived here (not stored) so it can never drift from the real stock of the products inside.
  */
-function withBundleStock(products: Product[]): Product[] {
+export function withBundleStock(products: Product[]): Product[] {
   const by = new Map(products.map((p) => [p.slug, p]));
   return products.map((p) => {
     const items = p.bundleItems ?? [];

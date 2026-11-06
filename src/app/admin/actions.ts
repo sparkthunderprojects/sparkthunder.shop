@@ -2,6 +2,7 @@
 
 import { revalidatePath, updateTag } from "next/cache";
 import { requireAdminAction } from "@/lib/admin/auth";
+import { notifyBackInStock } from "@/lib/shop/alerts";
 import * as repo from "@/lib/admin/repo";
 import { CATALOG_TAG } from "@/lib/catalog";
 import { sessionClient } from "@/lib/db/clients";
@@ -11,6 +12,11 @@ import type { Category, Franchise, Product } from "@/lib/types";
 
 export type Result<T = object> = ({ ok: true } & T) | { ok: false; error: string; fields?: Record<string, string> };
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+/** After a stock change, email anyone waiting for something that is now available. Never blocks or fails the save. */
+async function notifyRestocks(db: Parameters<typeof notifyBackInStock>[0]) {
+  try { await notifyBackInStock(db); } catch (e) { console.error("[stock-alerts]", e); }
+}
 
 function refresh(paths: string[] = []) {
   updateTag(CATALOG_TAG);
@@ -92,6 +98,7 @@ export async function saveProductAction(p: Product, originalSlug: string | null)
       await repo.addRedirect(db, { from_path: `/products/${originalSlug}`, to_path: `/products/${clean.slug}`, note: "Slug changed" });
     }
     await refresh(changed);
+    await notifyRestocks(db);
     revalidatePath("/admin", "layout");
     return { ok: true, slug: clean.slug };
   } catch (e) {
@@ -123,6 +130,7 @@ export async function bulkProductsAction(slugs: string[], action: "publish" | "u
     }[action];
     await repo.patchProducts(db, slugs, patch);
     await refresh(slugs.map((s) => `/products/${s}`));
+    if (action === "in-stock") await notifyRestocks(db);
     revalidatePath("/admin", "layout");
     return { ok: true };
   } catch (e) { return { ok: false, error: message(e) }; }

@@ -6,6 +6,7 @@ import type { QuickProduct } from "@/lib/card";
 import { findVariant, optionGroups } from "@/lib/variants";
 import { formatPrice } from "@/lib/site";
 import { SizeGuide } from "@/components/SizeGuide";
+import { StockAlertForm } from "@/components/StockAlertForm";
 
 /** Option pickers (size, colour...), quantity and add-to-basket for one product. Used by quick view and the product page. */
 export function BuyBox({ product, onAdded }: { product: QuickProduct; onAdded?: () => void }) {
@@ -41,7 +42,12 @@ export function BuyBox({ product, onAdded }: { product: QuickProduct; onAdded?: 
     setAdded(true); setTimeout(() => setAdded(false), 1800); onAdded?.();
   }
 
-  if (!product.inStock) return <button disabled className="btn w-full">Sold out</button>;
+  if (!product.inStock) return (
+    <div className="space-y-3">
+      <button disabled className="btn w-full">Sold out</button>
+      <StockAlertForm slug={product.slug} variant="" label={product.name} />
+    </div>
+  );
   return (
     <div>
       {vs.length > 0 ? og.groups.map((g, gi) => (
@@ -60,7 +66,7 @@ export function BuyBox({ product, onAdded }: { product: QuickProduct; onAdded?: 
       )) : null}
       {chosen?.pricePence !== undefined && chosen.pricePence !== product.pricePence ? <p className="mb-3 text-sm text-muted">Price for this option: <b className="text-ink">{formatPrice(chosen.pricePence)}</b></p> : null}
       {warn ? <p role="alert" className="mb-3 font-bold text-red-600">Please choose {og.labels.map((l) => l.toLowerCase()).join(" and ")} first.</p> : null}
-      {chosen && !avail(chosen) ? <p className="mb-3 font-bold text-red-600">That option is sold out.</p> : chosen && product.trackStock && chosen.stockQty <= product.lowStockThreshold ? <p className="mb-3 text-sm font-bold text-amber-500">Only {chosen.stockQty} left</p> : null}
+      {chosen && !avail(chosen) ? <div className="mb-4"><p className="mb-3 font-bold text-red-600">That option is sold out.</p><StockAlertForm slug={product.slug} variant={chosen.name} label={`${product.name} (${chosen.name})`} /></div> : chosen && product.trackStock && chosen.stockQty <= product.lowStockThreshold ? <p className="mb-3 text-sm font-bold text-amber-500">Only {chosen.stockQty} left</p> : null}
       <div className="flex gap-3">
         <label className="sr-only" htmlFor={`${id}-q`}>Quantity</label>
         <select id={`${id}-q`} value={qty} onChange={(e) => setQty(Number(e.target.value))} className="w-20 border border-ink/20 bg-paper px-3 font-bold">

@@ -49,3 +49,9 @@ export function shippedEmail(o: { number: string; name: string; carrier: string;
   const html = shell("Your order is on its way", `<p style="margin:0 0 12px">Order <b>${esc(o.number)}</b> has shipped${o.carrier ? ` with ${esc(o.carrier)}` : ""}.</p>${o.tracking ? `<p style="margin:0">Tracking number: <b>${esc(o.tracking)}</b></p>` : ""}`);
   return { subject: `Your Sparkthunder order ${o.number} has shipped`, html, text: `Order ${o.number} has shipped${o.carrier ? ` with ${o.carrier}` : ""}.${o.tracking ? ` Tracking: ${o.tracking}` : ""}\n` };
 }
+
+export function backInStockEmail(o: { name: string; variant: string; url: string }) {
+  const what = o.variant ? `${o.name} (${o.variant})` : o.name;
+  const html = shell("Good news: it's back in stock", `<p style="margin:0 0 16px"><b>${esc(what)}</b> is available again at the Sparkthunder shop.</p><p style="margin:0 0 20px;color:#6a6a70">Stock can go quickly, so we would not wait.</p><p style="margin:0"><a href="${esc(o.url)}" style="background:#ffd400;color:#000;padding:12px 22px;text-decoration:none;font-weight:700">Shop it now</a></p><p style="margin:24px 0 0;font-size:12px;color:#6a6a70">You asked us to email you when this came back. This is a one-off message and we will not email you about it again.</p>`);
+  return { subject: `Back in stock: ${what}`, html, text: `${what} is back in stock: ${o.url}\n\nYou asked us to email you when it came back. This is a one-off message.\n` };
+}
