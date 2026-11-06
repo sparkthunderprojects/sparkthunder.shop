@@ -1,13 +1,60 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useState } from "react";
 import { ProductCard } from "@/components/ProductCard";
 import { useWishlist } from "@/components/WishlistProvider";
 import { GRID } from "@/lib/ui";
 import type { Product } from "@/lib/types";
 
+const MAX_SHARED = 60;
+
 export function WishlistView({ products, franchiseNames }: { products: Product[]; franchiseNames: Record<string, string> }) {
-  const { slugs } = useWishlist();
+  const { slugs, has, toggle } = useWishlist();
+  const params = useSearchParams();
+  const [copied, setCopied] = useState(false);
+  const [added, setAdded] = useState(false);
+
+  // A shared link looks like /wishlist?items=slug-a,slug-b. Only slugs that exist in the catalogue are shown.
+  const sharedParam = params.get("items");
+  const sharedSlugs = sharedParam ? [...new Set(sharedParam.split(",").map((s) => s.trim()).filter(Boolean))].slice(0, MAX_SHARED) : null;
+  const sharedProducts = sharedSlugs ? sharedSlugs.map((s) => products.find((p) => p.slug === s)).filter((p): p is Product => Boolean(p)) : [];
+
+  async function share() {
+    const url = `${location.origin}/wishlist?items=${slugs.join(",")}`;
+    try {
+      if (navigator.share) { await navigator.share({ title: "My Sparkthunder favourites", url }); return; }
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2200);
+    } catch {}
+  }
+
+  if (sharedSlugs) {
+    const toAdd = sharedProducts.filter((p) => !has(p.slug));
+    return (
+      <div className="mt-8">
+        <p className="serif text-xl text-muted">Someone shared their favourites with you.</p>
+        {sharedProducts.length === 0 ? (
+          <p className="mt-6">None of those products are available any more. <Link href="/new" className="font-bold underline underline-offset-4">See new arrivals</Link></p>
+        ) : (
+          <>
+            <div className="mt-4 flex flex-wrap items-center gap-4">
+              <button type="button" disabled={toAdd.length === 0 || added} onClick={() => { toAdd.forEach((p) => toggle(p.slug)); setAdded(true); }} className="btn btn-sm" aria-live="polite">
+                {added ? "Added to your favourites" : toAdd.length === 0 ? "Already in your favourites" : `Add all ${toAdd.length} to my favourites`}
+              </button>
+              <Link href="/wishlist" className="font-bold underline underline-offset-4">View my own favourites</Link>
+            </div>
+            <div className={`mt-10 ${GRID}`}>
+              {sharedProducts.map((p) => <ProductCard key={p.slug} product={p} franchiseName={franchiseNames[p.franchiseSlug]} />)}
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
+
   const saved = products.filter((p) => slugs.includes(p.slug));
   if (saved.length === 0) {
     return (
@@ -18,8 +65,14 @@ export function WishlistView({ products, franchiseNames }: { products: Product[]
     );
   }
   return (
-    <div className={`mt-10 ${GRID}`}>
-      {saved.map((p) => <ProductCard key={p.slug} product={p} franchiseName={franchiseNames[p.franchiseSlug]} />)}
+    <div>
+      <p className="mt-4 flex flex-wrap items-center gap-4">
+        <button type="button" onClick={share} className="btn btn-sm" aria-live="polite">{copied ? "Link copied" : "Share my favourites"}</button>
+        <span className="text-sm text-muted">Send the link to a friend (or hint at your birthday).</span>
+      </p>
+      <div className={`mt-8 ${GRID}`}>
+        {saved.map((p) => <ProductCard key={p.slug} product={p} franchiseName={franchiseNames[p.franchiseSlug]} />)}
+      </div>
     </div>
   );
 }

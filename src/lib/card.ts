@@ -13,6 +13,9 @@ export type QuickProduct = {
   images: string[];
   details: string[];
   trackStock: boolean;
+  /** Show "Only N left" at or below this many (set per product in the admin). */
+  lowStockThreshold: number;
+  categorySlug: string;
   variants: { name: string; stockQty: number; pricePence?: number }[];
 };
 
@@ -34,6 +37,8 @@ export function toQuick(p: Product, franchiseName?: string): QuickProduct {
     images: (p.images.length ? p.images : [`/art/${p.slug}`]).slice(0, 5),
     details: p.details.slice(0, 5),
     trackStock: Boolean(p.trackStock),
+    lowStockThreshold: p.lowStockThreshold ?? 3,
+    categorySlug: p.categorySlug,
     variants: (p.variants ?? []).map((v) => ({ name: v.name, stockQty: v.stockQty, pricePence: v.pricePence })),
   };
 }

@@ -66,6 +66,17 @@ export async function getFeaturedProducts(limit = 8) {
   return (await getAllProducts()).filter((p) => p.isFeatured).slice(0, limit);
 }
 
+/** Other kinds of product from the same universe (a tee's matching poster, mug...), so the page suggests a whole collection rather than more of the same. */
+export async function getCompleteTheSet(product: Product, limit = 4) {
+  const all = await getAllProducts();
+  const seenCategory = new Set<string>();
+  return all
+    .filter((p) => p.slug !== product.slug && p.franchiseSlug === product.franchiseSlug && p.categorySlug !== product.categorySlug && p.inStock)
+    .sort((a, b) => Number(b.isFeatured) - Number(a.isFeatured) || b.createdAt.localeCompare(a.createdAt))
+    .filter((p) => (seenCategory.has(p.categorySlug) ? false : (seenCategory.add(p.categorySlug), true)))
+    .slice(0, limit);
+}
+
 export async function getRelatedProducts(product: Product, limit = 4) {
   const all = await getAllProducts();
   const scored = all

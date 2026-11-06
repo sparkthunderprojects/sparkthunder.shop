@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { WishlistView } from "@/components/WishlistView";
 import { getAllProducts, getFranchises } from "@/lib/catalog";
 
@@ -11,7 +12,9 @@ export default async function WishlistPage() {
   return (
     <>
       <h1 className="display pt-10 text-[clamp(2rem,4.2vw,3.25rem)]">Your favourites</h1>
-      <WishlistView products={products} franchiseNames={names} />
+      <Suspense fallback={null}>
+        <WishlistView products={products} franchiseNames={names} />
+      </Suspense>
     </>
   );
 }

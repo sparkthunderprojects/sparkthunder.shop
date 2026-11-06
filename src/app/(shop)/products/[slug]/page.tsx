@@ -13,7 +13,7 @@ import { RecentTracker, RecentlyViewed } from "@/components/Recent";
 import { ShareButton } from "@/components/ShareButton";
 import { StickyBuyBar } from "@/components/StickyBuyBar";
 import { productImagePath } from "@/lib/card";
-import { getAllProducts, getCategory, getFranchise, getFranchises, getProduct, getRelatedProducts } from "@/lib/catalog";
+import { getAllProducts, getCategory, getCompleteTheSet, getFranchise, getFranchises, getProduct, getRelatedProducts } from "@/lib/catalog";
 import { breadcrumbLd, buildMetadata, clip, productImageUrl, productLd } from "@/lib/seo";
 import { formatPrice } from "@/lib/site";
 import { worldStyle } from "@/lib/theme";
@@ -39,14 +39,19 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
   const product = await getProduct(slug);
   if (!product) notFound();
 
-  const [franchise, category, related, franchises, allProducts] = await Promise.all([
+  const [franchise, category, relatedAll, completeSet, franchises, allProducts] = await Promise.all([
     getFranchise(product.franchiseSlug),
     getCategory(product.categorySlug),
-    getRelatedProducts(product),
+    getRelatedProducts(product, 8),
+    getCompleteTheSet(product),
     getFranchises(),
     getAllProducts(),
   ]);
+  const inSet = new Set(completeSet.map((p) => p.slug));
+  const related = relatedAll.filter((p) => !inSet.has(p.slug)).slice(0, 4);
   const nameBySlug = Object.fromEntries(franchises.map((f) => [f.slug, f.name]));
+  const total = product.trackStock ? (product.variants?.length ? product.variants.reduce((n, v) => n + v.stockQty, 0) : product.stockQty ?? 0) : null;
+  const lowCount = product.inStock && total !== null && total > 0 && total <= (product.lowStockThreshold ?? 3) ? total : null;
   const path = `/products/${product.slug}`;
   const cartItem = { slug: product.slug, name: product.name, pricePence: product.pricePence, image: productImagePath(product) };
   const gallery = product.images.length ? product.images : [productImagePath(product)];
@@ -86,7 +91,9 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
             <span className="display text-3xl">{formatPrice(product.pricePence)}</span>
             {product.comparePricePence && <s className="text-lg text-muted">{formatPrice(product.comparePricePence)}</s>}
           </p>
-          <p className="mt-1 text-sm text-muted">{product.inStock ? "In stock" : "Currently sold out"} · SKU {product.sku}</p>
+          <p className="mt-1 text-sm text-muted">
+            {!product.inStock ? "Currently sold out" : lowCount !== null ? <b className="text-amber-600">Only {lowCount} left</b> : "In stock"} · SKU {product.sku}
+          </p>
 
           <div id="buy-box" className="mt-8"><BuyBox product={toQuick(product, franchise?.name)} /></div>
           <p className="mt-4"><ShareButton title={product.name} path={path} /></p>
@@ -106,6 +113,16 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
 
       <RecentTracker slug={product.slug} />
       <StickyBuyBar targetId="buy-box" item={cartItem} inStock={product.inStock} hasOptions={(product.variants ?? []).length > 0} />
+
+      {completeSet.length > 0 && (
+        <section className="mt-24" aria-labelledby="set-h">
+          <h2 id="set-h" className="display text-2xl sm:text-3xl">Complete the set</h2>
+          <p className="mt-2 text-muted">More official {franchise?.name ?? ""} merch to go with it.</p>
+          <div className={`mt-8 ${GRID}`}>
+            {completeSet.map((p) => <ProductCard key={p.slug} product={p} franchiseName={nameBySlug[p.franchiseSlug]} />)}
+          </div>
+        </section>
+      )}
 
       {related.length > 0 && (
         <section className="mt-24" aria-labelledby="related-h">

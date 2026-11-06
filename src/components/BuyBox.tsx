@@ -5,6 +5,7 @@ import { useCart } from "@/components/CartProvider";
 import type { QuickProduct } from "@/lib/card";
 import { findVariant, optionGroups } from "@/lib/variants";
 import { formatPrice } from "@/lib/site";
+import { SizeGuide } from "@/components/SizeGuide";
 
 /** Option pickers (size, colour...), quantity and add-to-basket for one product. Used by quick view and the product page. */
 export function BuyBox({ product, onAdded }: { product: QuickProduct; onAdded?: () => void }) {
@@ -45,7 +46,7 @@ export function BuyBox({ product, onAdded }: { product: QuickProduct; onAdded?: 
     <div>
       {vs.length > 0 ? og.groups.map((g, gi) => (
         <fieldset key={og.labels[gi]} className="mb-5">
-          <legend className="mb-2 flex gap-2 font-bold">{og.labels[gi]}{picked[gi] ? <span className="font-normal text-muted">{picked[gi]}</span> : null}</legend>
+          <legend className="mb-2 flex w-full items-center gap-2 font-bold">{og.labels[gi]}{picked[gi] ? <span className="font-normal text-muted">{picked[gi]}</span> : null}{og.labels[gi] === "Size" && product.categorySlug === "apparel" ? <span className="ml-auto font-normal"><SizeGuide /></span> : null}</legend>
           <div className="flex flex-wrap gap-2">
             {g.map((value) => {
               const ok = optionAvailable(gi, value), on = picked[gi] === value;
@@ -59,7 +60,7 @@ export function BuyBox({ product, onAdded }: { product: QuickProduct; onAdded?: 
       )) : null}
       {chosen?.pricePence !== undefined && chosen.pricePence !== product.pricePence ? <p className="mb-3 text-sm text-muted">Price for this option: <b className="text-ink">{formatPrice(chosen.pricePence)}</b></p> : null}
       {warn ? <p role="alert" className="mb-3 font-bold text-red-600">Please choose {og.labels.map((l) => l.toLowerCase()).join(" and ")} first.</p> : null}
-      {chosen && !avail(chosen) ? <p className="mb-3 font-bold text-red-600">That option is sold out.</p> : chosen && product.trackStock && chosen.stockQty <= 3 ? <p className="mb-3 text-sm font-bold text-amber-500">Only {chosen.stockQty} left</p> : null}
+      {chosen && !avail(chosen) ? <p className="mb-3 font-bold text-red-600">That option is sold out.</p> : chosen && product.trackStock && chosen.stockQty <= product.lowStockThreshold ? <p className="mb-3 text-sm font-bold text-amber-500">Only {chosen.stockQty} left</p> : null}
       <div className="flex gap-3">
         <label className="sr-only" htmlFor={`${id}-q`}>Quantity</label>
         <select id={`${id}-q`} value={qty} onChange={(e) => setQty(Number(e.target.value))} className="w-20 border border-ink/20 bg-paper px-3 font-bold">
