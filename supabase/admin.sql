@@ -420,6 +420,8 @@ end $$;
 -- Slugs, SKUs and the like only need to be unique inside one store (two stores can both sell a "tee" or have a /sale redirect).
 alter table public.products drop constraint if exists products_franchise_slug_fkey;
 alter table public.products drop constraint if exists products_category_slug_fkey;
+alter table public.products drop constraint if exists products_franchise_fkey;
+alter table public.products drop constraint if exists products_category_fkey;
 alter table public.products drop constraint if exists products_pkey;
 alter table public.products drop constraint if exists products_sku_key;
 alter table public.franchises drop constraint if exists franchises_pkey;
@@ -519,14 +521,18 @@ begin
   end loop;
 end $$;
 drop policy if exists "admin all stores" on public.stores;
+drop policy if exists "owners manage stores" on public.stores;
 create policy "owners manage stores" on public.stores for all using (public.is_admin()) with check (public.is_admin());
 
 -- Uploads live under <store id>/..., and only that store's staff can write there.
 drop policy if exists "admins write product images" on storage.objects;
+drop policy if exists "store staff write product images" on storage.objects;
 create policy "store staff write product images" on storage.objects for insert with check (bucket_id = 'product-images' and public.can_admin_store((storage.foldername(name))[1]));
 drop policy if exists "admins update product images" on storage.objects;
+drop policy if exists "store staff update product images" on storage.objects;
 create policy "store staff update product images" on storage.objects for update using (bucket_id = 'product-images' and public.can_admin_store((storage.foldername(name))[1]));
 drop policy if exists "admins delete product images" on storage.objects;
+drop policy if exists "store staff delete product images" on storage.objects;
 create policy "store staff delete product images" on storage.objects for delete using (bucket_id = 'product-images' and public.can_admin_store((storage.foldername(name))[1]));
 
 -- Gift card balance lookups are per store: a card from one store cannot be probed from another.
