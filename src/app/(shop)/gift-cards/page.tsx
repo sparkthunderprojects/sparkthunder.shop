@@ -3,14 +3,17 @@ import Link from "next/link";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { GiftCardDesigner } from "@/components/GiftCardDesigner";
 import { JsonLd } from "@/components/JsonLd";
-import { breadcrumbLd, buildMetadata } from "@/lib/seo";
+import { breadcrumbLd } from "@/lib/seo";
+import { buildMetadata } from "@/lib/seo-metadata";
 import { absoluteUrl } from "@/lib/site";
 
-export const metadata: Metadata = buildMetadata({
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata({
   title: "Sparkthunder Gift Cards - Digital Gift Cards for Fans",
   description: "Give the gift of choice with a Sparkthunder digital gift card. Pick an amount from £5 to £250, add a message and email it straight to a Knightverge or Occult Inc fan.",
   path: "/gift-cards",
 });
+}
 
 const FAQ = [
   { q: "How is the gift card delivered?", a: "By email, as a unique code. You choose who it goes to, so you can send it straight to the recipient or to yourself to forward on the day." },

@@ -10,6 +10,8 @@ export type StoreSettings = {
   name: string;            // shown in the browser tab and structured data
   legalName: string;
   tagline: string;
+  /** Main heading on the home page (an H1, so make it say what the store sells). */
+  heroHeading: string;
   description: string;     // longer blurb: footer text and default search description
   logoUrl: string;         // logo for dark backgrounds (white or light artwork)
   logoWidth: number;
@@ -36,6 +38,7 @@ export const DEFAULT_STORE: StoreSettings = {
   name: SITE.name,
   legalName: SITE.legalName,
   tagline: SITE.tagline,
+  heroHeading: "Official merchandise from every Sparkthunder universe",
   description: SITE.description,
   logoUrl: "/sparkthunder-logo.png",
   logoWidth: 1200,
@@ -69,8 +72,9 @@ export function normaliseStore(raw: Partial<StoreSettings> | null | undefined): 
     name: str(r.name, d.name, 60) || d.name,
     legalName: str(r.legalName, d.legalName, 80) || d.legalName,
     tagline: str(r.tagline, d.tagline, 160),
+    heroHeading: str(r.heroHeading, d.heroHeading, 120),
     description: str(r.description, d.description, 320),
-    logoUrl: /^(\/|https:\/\/)/.test(logoUrl) ? logoUrl : d.logoUrl,
+    logoUrl: r.logoUrl === "" ? "" : /^(\/|https:\/\/)/.test(logoUrl) ? logoUrl : d.logoUrl,
     logoWidth: Math.min(4000, Math.max(20, Math.round(Number(r.logoWidth) || d.logoWidth))),
     logoHeight: Math.min(4000, Math.max(20, Math.round(Number(r.logoHeight) || d.logoHeight))),
     logoLabel: str(r.logoLabel, d.logoLabel, 14),

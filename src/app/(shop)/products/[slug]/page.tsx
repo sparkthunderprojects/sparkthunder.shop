@@ -22,7 +22,8 @@ import { QuestionsSection } from "@/components/QuestionsSection";
 import { getQuestions } from "@/lib/questions";
 import { ReviewsSection } from "@/components/ReviewsSection";
 import { getReviews } from "@/lib/reviews";
-import { breadcrumbLd, buildMetadata, clip, productImageUrl, productLd } from "@/lib/seo";
+import { breadcrumbLd, clip, productImageUrl, productLd } from "@/lib/seo";
+import { buildMetadata } from "@/lib/seo-metadata";
 import { formatPrice } from "@/lib/site";
 import { worldStyle } from "@/lib/theme";
 

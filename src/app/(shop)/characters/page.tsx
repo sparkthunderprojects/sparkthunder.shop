@@ -3,10 +3,13 @@ import type { Metadata } from "next";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { JsonLd } from "@/components/JsonLd";
 import { getCharacters } from "@/lib/characters";
-import { breadcrumbLd, buildMetadata } from "@/lib/seo";
+import { breadcrumbLd } from "@/lib/seo";
+import { buildMetadata } from "@/lib/seo-metadata";
 
 export const revalidate = 300;
-export const metadata: Metadata = buildMetadata({ title: "Shop by character", description: "Find official Sparkthunder merchandise for your favourite Knightverge and Occult Inc characters.", path: "/characters" });
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata({ title: "Shop by character", description: "Find official Sparkthunder merchandise for your favourite Knightverge and Occult Inc characters.", path: "/characters" });
+}
 
 export default async function CharactersPage() {
   const list = await getCharacters();

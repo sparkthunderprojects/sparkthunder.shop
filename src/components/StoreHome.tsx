@@ -1,0 +1,73 @@
+import Image from "next/image";
+import Link from "next/link";
+import { ProductCard } from "@/components/ProductCard";
+import { productImagePath, isPlaceholderArt } from "@/lib/card";
+import type { StoreSettings } from "@/lib/store-config";
+import type { Category, Product } from "@/lib/types";
+
+const FLUSH = "-mx-(--gutter) grid grid-cols-2 border-l border-t border-ink/15 md:grid-cols-3 xl:grid-cols-5";
+const H2 = "display text-2xl sm:text-3xl";
+
+/** The home page for any store other than the original Sparkthunder one: built entirely from the store's own settings, categories and products. */
+export function StoreHome({ store, products, categories }: { store: StoreSettings; products: Product[]; categories: Category[] }) {
+  const featured = products.filter((p) => p.isFeatured).concat(products.filter((p) => !p.isFeatured)).slice(0, 3);
+  const fresh = products.filter((p) => p.isNew).slice(0, 5);
+  return (
+    <div className="-mx-(--gutter) -mb-24 pb-24">
+      <section className="theme-dark px-(--gutter)">
+        <div className="grid min-h-[min(70vh,40rem)] items-center gap-12 pb-16 pt-14 md:grid-cols-[0.9fr_1.1fr]">
+          <div>
+            <h1 className="display text-[clamp(2.5rem,5.2vw,4.5rem)]">{store.heroHeading}</h1>
+            <p className="mt-6 max-w-lg text-lg leading-relaxed text-ink/75">{store.description}</p>
+            <div className="mt-9 flex flex-wrap gap-3">
+              <Link href="/new" className="btn">Shop new arrivals</Link>
+              <Link href="/shop" className="btn btn-ink">Browse everything</Link>
+            </div>
+          </div>
+          {featured.length > 0 && (
+            <ul className="hidden grid-cols-3 gap-3 md:grid" aria-label="Featured products">
+              {featured.map((p, i) => (
+                <li key={p.slug} className={i === 1 ? "mt-14" : i === 2 ? "mt-6" : ""}>
+                  <Link href={`/products/${p.slug}`} className="block overflow-hidden bg-paper-2">
+                    <Image src={productImagePath(p)} alt={p.name} width={900} height={1200} priority sizes="22vw" unoptimized={isPlaceholderArt(productImagePath(p))} className="aspect-[3/4] w-full object-cover transition-transform duration-500 hover:scale-[1.03]" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </section>
+
+      <div className="px-(--gutter)">
+        {categories.length > 0 && (
+          <section aria-labelledby="types-h" className="mt-14">
+            <h2 id="types-h" className={H2}>Shop by category</h2>
+            <ul className="mt-5 grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-5">
+              {categories.map((c) => {
+                const first = products.find((p) => p.categorySlug === c.slug);
+                return (
+                  <li key={c.slug}>
+                    <Link href={`/categories/${c.slug}`} className="group relative block overflow-hidden bg-paper-2">
+                      {first && <Image src={productImagePath(first)} alt="" width={600} height={750} sizes="(min-width:1280px) 20vw, 50vw" unoptimized={isPlaceholderArt(productImagePath(first))} className="aspect-[4/5] w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]" />}
+                      <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent px-4 pb-4 pt-12 text-sm font-semibold text-white">{c.name}</span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
+        {fresh.length > 0 && (
+          <section aria-labelledby="new-h" className="mt-16">
+            <div className="flex items-baseline justify-between gap-4">
+              <h2 id="new-h" className={H2}>New arrivals</h2>
+              <Link href="/new" className="link-line text-sm font-semibold">View all</Link>
+            </div>
+            <div className={`mt-5 ${FLUSH}`}>{fresh.map((p) => <ProductCard key={p.slug} variant="flush" product={p} franchiseName="" />)}</div>
+          </section>
+        )}
+        {products.length === 0 && <p className="mt-16 text-muted">This store has no products yet. Add some in the admin and they will appear here.</p>}
+      </div>
+    </div>
+  );
+}

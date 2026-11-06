@@ -3,16 +3,19 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { JsonLd } from "@/components/JsonLd";
 import { ProductCard } from "@/components/ProductCard";
 import { getAllProducts, getFranchises } from "@/lib/catalog";
-import { breadcrumbLd, buildMetadata, itemListLd } from "@/lib/seo";
+import { breadcrumbLd, itemListLd } from "@/lib/seo";
+import { buildMetadata } from "@/lib/seo-metadata";
 import { GRID } from "@/lib/ui";
 
 export const revalidate = 300;
 
-export const metadata: Metadata = buildMetadata({
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata({
   title: "Gifts for Fans - Official Merchandise by Price",
   description: "Find the right gift from the Sparkthunder universe. Official Knightverge and Occult Inc merchandise for readers, players and collectors, sorted by price.",
   path: "/gifts",
 });
+}
 
 const BANDS = [
   { id: "under-15", label: "Under £15", min: 0, max: 1500, blurb: "Small, easy gifts: pins, pads and stocking fillers that still feel like the real thing." },

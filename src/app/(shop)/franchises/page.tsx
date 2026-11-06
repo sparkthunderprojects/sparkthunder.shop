@@ -4,16 +4,19 @@ import type { Metadata } from "next";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { JsonLd } from "@/components/JsonLd";
 import { getFranchises } from "@/lib/catalog";
-import { breadcrumbLd, buildMetadata } from "@/lib/seo";
+import { breadcrumbLd } from "@/lib/seo";
+import { buildMetadata } from "@/lib/seo-metadata";
 import { worldStyle } from "@/lib/theme";
 
 export const revalidate = 300;
 
-export const metadata: Metadata = buildMetadata({
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata({
   title: "All Franchises",
   description: "Browse official merchandise by franchise: Knightverge, Occult Inc and every universe in the Sparkthunder family.",
   path: "/franchises",
 });
+}
 
 export default async function FranchisesPage() {
   const franchises = await getFranchises();

@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import { Contact, LegalPage } from "@/components/LegalPage";
-import { buildMetadata } from "@/lib/seo";
+import { buildMetadata } from "@/lib/seo-metadata";
 
-export const metadata: Metadata = buildMetadata({
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata({
   title: "Accessibility Statement",
   description: "How the Sparkthunder Shop aims to be usable by everyone: our accessibility approach, known limitations and how to report a problem.",
   path: "/accessibility",
 });
+}
 
 export default function AccessibilityPage() {
   return (

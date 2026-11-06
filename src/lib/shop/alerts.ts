@@ -3,7 +3,7 @@ import type { Db } from "@/lib/db/clients";
 import { productFromRow, type ProductRow } from "@/lib/db/mappers";
 import { backInStockEmail } from "@/lib/email/templates";
 import { sendEmail } from "@/lib/email/send";
-import { SITE } from "@/lib/site";
+import { ORIGIN_TOKEN } from "@/lib/site";
 import type { Product } from "@/lib/types";
 
 export type AlertRow = { id: string; product_slug: string; variant: string; email: string; created_at: string; notified_at: string | null };
@@ -36,7 +36,7 @@ export async function notifyBackInStock(db: Db): Promise<{ sent: number; failed:
     if (!p || p.published === false) continue;
     for (const a of pending.filter((x) => x.product_slug === slug)) {
       if (!isAvailable(p, a.variant)) continue;
-      const res = await sendEmail({ to: a.email, ...backInStockEmail({ name: p.name, variant: a.variant, url: `${SITE.url}/products/${p.slug}?utm_source=back-in-stock&utm_medium=email` }) });
+      const res = await sendEmail({ to: a.email, ...backInStockEmail({ name: p.name, variant: a.variant, url: `${ORIGIN_TOKEN}/products/${p.slug}?utm_source=back-in-stock&utm_medium=email` }) });
       if (res.ok) { sent++; await db.from("stock_alerts").update({ notified_at: new Date().toISOString() }).eq("id", a.id); }
       else { failed++; firstError ??= res.error; }
     }

@@ -3,14 +3,17 @@ import { getCharacters } from "@/lib/characters";
 import { getAllProducts, getCategories, getCollections, getFranchises } from "@/lib/catalog";
 import { franchiseSeo, categorySeo, productSeo } from "@/lib/seo/effective";
 import { LEGAL_PAGES, absoluteUrl } from "@/lib/site";
+import { fillForRequest } from "@/lib/site-info";
+import { currentStoreId, DEFAULT_STORE_ID } from "@/lib/db/stores";
 
 export const revalidate = 3600;
 const LEGAL_UPDATED = "2026-11-04";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [franchises, categories, products, collections, characters] = await Promise.all([getFranchises(), getCategories(), getAllProducts(), getCollections(), getCharacters()]);
+  const isMain = (await currentStoreId()) === DEFAULT_STORE_ID;
+  const [franchises, categories, products, collections, characters] = await Promise.all([getFranchises(), getCategories(), getAllProducts(), getCollections(), isMain ? getCharacters() : Promise.resolve([])]);
   const latest = products.reduce((m, p) => (p.createdAt > m ? p.createdAt : m), "2026-01-01");
-  return [
+  return fillForRequest([
     { url: absoluteUrl("/"), lastModified: latest, changeFrequency: "daily", priority: 1 },
     { url: absoluteUrl("/franchises"), lastModified: latest, changeFrequency: "weekly", priority: 0.8 },
     { url: absoluteUrl("/new"), lastModified: latest, changeFrequency: "daily", priority: 0.8 },
@@ -31,5 +34,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
       images: p.images.length ? p.images.map((src) => (src.startsWith("http") ? src : absoluteUrl(src))) : [absoluteUrl(`/art/${p.slug}`)],
     })),
-  ];
+  ]);
 }

@@ -41,7 +41,7 @@ export async function Header() {
           <div className="hidden md:block"><SearchTrigger /></div>
         </div>
         <Link href="/" className="mx-auto flex flex-col items-center gap-1.5" aria-label={`${store.name} home`}>
-          <Image src={store.logoUrl} alt={store.legalName} width={store.logoWidth} height={store.logoHeight} priority unoptimized className="h-6 w-auto sm:h-8" />
+          {store.logoUrl ? <Image src={store.logoUrl} alt={store.legalName} width={store.logoWidth} height={store.logoHeight} priority unoptimized className="h-6 w-auto sm:h-8" /> : <span className="display text-2xl sm:text-3xl">{store.name}</span>}
           {store.logoLabel ? (
             <span aria-hidden className="flex w-full items-center gap-2.5 text-bolt">
               <span className="h-px flex-1 bg-bolt/50" />

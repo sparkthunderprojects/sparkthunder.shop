@@ -1,10 +1,11 @@
 import type { MetadataRoute } from "next";
-import { SITE, absoluteUrl } from "@/lib/site";
+import { absoluteUrl } from "@/lib/site";
+import { fillForRequest, siteOrigin } from "@/lib/site-info";
 
-export default function robots(): MetadataRoute.Robots {
+export default async function robots(): Promise<MetadataRoute.Robots> {
   return {
     rules: [{ userAgent: "*", allow: "/", disallow: ["/cart", "/wishlist", "/compare", "/search", "/api/", "/admin", "/account", "/auth", "/checkout"] }],
-    sitemap: absoluteUrl("/sitemap.xml"),
-    host: SITE.url,
+    sitemap: await fillForRequest(absoluteUrl("/sitemap.xml")),
+    host: await siteOrigin(),
   };
 }

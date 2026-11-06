@@ -8,7 +8,8 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { JsonLd } from "@/components/JsonLd";
 import { Listing } from "@/components/Listing";
 import { getCategories, getFranchise, getFranchises, getProducts } from "@/lib/catalog";
-import { breadcrumbLd, buildMetadata, clip, itemListLd } from "@/lib/seo";
+import { breadcrumbLd, clip, itemListLd } from "@/lib/seo";
+import { buildMetadata } from "@/lib/seo-metadata";
 import { worldStyle } from "@/lib/theme";
 
 export const revalidate = 300;

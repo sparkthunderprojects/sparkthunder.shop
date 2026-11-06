@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import { Contact, LegalPage } from "@/components/LegalPage";
-import { buildMetadata } from "@/lib/seo";
+import { buildMetadata } from "@/lib/seo-metadata";
 
-export const metadata: Metadata = buildMetadata({
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata({
   title: "Terms of Use",
   description: "The terms for using the Sparkthunder Shop website, including product information, intellectual property and limits of liability.",
   path: "/terms",
 });
+}
 
 export default function TermsPage() {
   return (

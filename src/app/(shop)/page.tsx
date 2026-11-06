@@ -6,17 +6,18 @@ import type { Metadata } from "next";
 import { ProductCard } from "@/components/ProductCard";
 import { getAllProducts, getCategories, getFranchises } from "@/lib/catalog";
 import { productImagePath, isPlaceholderArt } from "@/lib/card";
-import { buildMetadata } from "@/lib/seo";
-import { SITE } from "@/lib/site";
+import { buildMetadata } from "@/lib/seo-metadata";
+import { StoreHome } from "@/components/StoreHome";
+import { currentStoreId, DEFAULT_STORE_ID } from "@/lib/db/stores";
+import { getStore } from "@/lib/store";
 import { worldStyle } from "@/lib/theme";
 
 export const revalidate = 300;
 
-export const metadata: Metadata = buildMetadata({
-  title: `${SITE.name} | Official Knightverge, Occult Inc & Sparkthunder Merchandise`,
-  description: "Shop official Sparkthunder merchandise: apparel, collectibles, drinkware, posters and tabletop gear from Knightverge, Occult Inc and more.",
-  path: "/",
-});
+export async function generateMetadata(): Promise<Metadata> {
+  const store = await getStore();
+  return buildMetadata({ title: { absolute: `${store.name} | ${store.tagline}` }, description: store.description, path: "/" });
+}
 
 /** Edge-to-edge product grid with hairline dividers. */
 const FLUSH = "-mx-(--gutter) grid grid-cols-2 border-l border-t border-ink/15 md:grid-cols-3 xl:grid-cols-5";
@@ -29,7 +30,8 @@ const HERO_TILES = [
 ] as const;
 
 export default async function HomePage() {
-  const [franchises, categories, products] = await Promise.all([getFranchises(), getCategories(), getAllProducts()]);
+  const [franchises, categories, products, store, storeId] = await Promise.all([getFranchises(), getCategories(), getAllProducts(), getStore(), currentStoreId()]);
+  if (storeId !== DEFAULT_STORE_ID) return <StoreHome store={store} products={products} categories={categories} />;
   const nameBySlug = Object.fromEntries(franchises.map((f) => [f.slug, f.name]));
   const fresh = products.filter((p) => p.isNew).slice(0, 5);
   const drop = products.find((p) => p.isNew && p.isFeatured && p.inStock) ?? products[0];
@@ -41,14 +43,14 @@ export default async function HomePage() {
       <HeroSlider slides={[
         {
           id: "universe",
-          label: "Official merchandise from every Sparkthunder universe",
+          label: store.heroHeading,
           background: "#000",
           children: (
             <>
         <div className="grid min-h-[min(80vh,44rem)] items-center gap-12 pb-20 pt-14 md:grid-cols-[0.85fr_1.15fr]">
           <div>
-            <h1 className="display text-[clamp(2.5rem,5.2vw,4.5rem)]">Official merchandise from every Sparkthunder universe</h1>
-            <p className="mt-6 max-w-lg text-lg leading-relaxed text-ink/75">{SITE.description}</p>
+            <h1 className="display text-[clamp(2.5rem,5.2vw,4.5rem)]">{store.heroHeading}</h1>
+            <p className="mt-6 max-w-lg text-lg leading-relaxed text-ink/75">{store.description}</p>
             <div className="mt-9 flex flex-wrap gap-3">
               <Link href="/new" className="btn">Shop new arrivals</Link>
               <Link href="/shop" className="btn btn-ink">Browse everything</Link>

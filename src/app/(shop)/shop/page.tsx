@@ -5,16 +5,19 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { JsonLd } from "@/components/JsonLd";
 import { Listing } from "@/components/Listing";
 import { getAllProducts, getCategories, getFranchises } from "@/lib/catalog";
-import { breadcrumbLd, buildMetadata, itemListLd } from "@/lib/seo";
+import { breadcrumbLd, itemListLd } from "@/lib/seo";
+import { buildMetadata } from "@/lib/seo-metadata";
 import { worldStyle } from "@/lib/theme";
 
 export const revalidate = 300;
 
-export const metadata: Metadata = buildMetadata({
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata({
   title: "All Official Merchandise",
   description: "Browse every official Sparkthunder product in one place: apparel, collectibles, drinkware, prints and tabletop gear from Knightverge, Occult Inc and more.",
   path: "/shop",
 });
+}
 
 export default async function ShopPage() {
   const [products, categories, franchises] = await Promise.all([getAllProducts(), getCategories(), getFranchises()]);

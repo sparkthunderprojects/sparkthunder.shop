@@ -3,15 +3,18 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { JsonLd } from "@/components/JsonLd";
 import { Listing } from "@/components/Listing";
 import { getFranchises, getProducts } from "@/lib/catalog";
-import { breadcrumbLd, buildMetadata, itemListLd } from "@/lib/seo";
+import { breadcrumbLd, itemListLd } from "@/lib/seo";
+import { buildMetadata } from "@/lib/seo-metadata";
 
 export const revalidate = 300;
 
-export const metadata: Metadata = buildMetadata({
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata({
   title: "New Arrivals - Latest Official Merchandise",
   description: "The newest official Sparkthunder merchandise: fresh apparel, collectibles, prints and tabletop gear from Knightverge, Occult Inc and more.",
   path: "/new",
 });
+}
 
 export default async function NewPage() {
   const [products, franchises] = await Promise.all([getProducts({ onlyNew: true }), getFranchises()]);

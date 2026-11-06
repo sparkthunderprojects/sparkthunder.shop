@@ -5,7 +5,7 @@ import { isDemo } from "@/lib/db/env";
 import { buildPlan, SHIPPING_COUNTRIES, SHIPPING_FLAT_PENCE } from "@/lib/shop/plan";
 import { getStripe, hasStripe } from "@/lib/shop/stripe";
 import type { CartInput, GiftOptionsInput } from "@/lib/shop/types";
-import { SITE } from "@/lib/site";
+import { siteOrigin } from "@/lib/site-info";
 
 export type CheckoutResult = { ok: true; url: string } | { ok: false; error: string };
 
@@ -42,6 +42,7 @@ export async function startCheckoutAction(cart: CartInput, giftCode: string | nu
       const coupon = await stripe.coupons.create({ amount_off: off, currency: "gbp", duration: "once", max_redemptions: 1, name });
       discounts = [{ coupon: coupon.id }];
     }
+    const origin = await siteOrigin();
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items,
@@ -52,8 +53,8 @@ export async function startCheckoutAction(cart: CartInput, giftCode: string | nu
         phone_number_collection: { enabled: true },
         shipping_options: [{ shipping_rate_data: { type: "fixed_amount" as const, display_name: snap.shippingPence ? "Standard delivery" : "Free delivery", fixed_amount: { amount: snap.shippingPence, currency: "gbp" } } }],
       } : {}),
-      success_url: `${SITE.url}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${SITE.url}/cart`,
+      success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/cart`,
     });
     const saved = await db.from("checkout_snapshots").insert({ id: session.id, payload: snap });
     if (saved.error || !session.url) {

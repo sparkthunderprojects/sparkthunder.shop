@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 import { LegalPage } from "@/components/LegalPage";
 import { CookieSettingsLink } from "@/components/CookieSettingsLink";
-import { buildMetadata } from "@/lib/seo";
+import { buildMetadata } from "@/lib/seo-metadata";
 
-export const metadata: Metadata = buildMetadata({
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata({
   title: "Cookie Policy",
   description: "What the Sparkthunder Shop stores in your browser: no tracking cookies, only local storage that powers your basket, favourites and preferences.",
   path: "/cookies",
 });
+}
 
 const items: [string, string, string][] = [
   ["sparkthunder-cart-v1", "Remembers the items in your basket", "Until you clear it"],

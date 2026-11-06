@@ -1,9 +1,13 @@
+import { fillForRequest } from "@/lib/site-info";
+
 /** Transactional email through Resend's HTTP API. Never throws: callers record the outcome. */
 export async function sendEmail(msg: { to: string; subject: string; html: string; text: string }): Promise<{ ok: true } | { ok: false; error: string }> {
   const key = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM;
   if (!key || !from) return { ok: false, error: "Email is not configured (set RESEND_API_KEY and EMAIL_FROM)." };
   try {
+    // The templates carry store stand-ins (brand, domain, colours); fill them for the store this request belongs to.
+    msg = await fillForRequest(msg);
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },

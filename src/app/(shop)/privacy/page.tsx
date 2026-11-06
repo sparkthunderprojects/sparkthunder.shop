@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import { Contact, LegalPage } from "@/components/LegalPage";
-import { buildMetadata } from "@/lib/seo";
+import { buildMetadata } from "@/lib/seo-metadata";
 
-export const metadata: Metadata = buildMetadata({
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata({
   title: "Privacy Policy",
   description: "How the Sparkthunder Shop handles personal data: what we collect, why, how long we keep it and your rights under UK GDPR.",
   path: "/privacy",
 });
+}
 
 export default function PrivacyPage() {
   return (

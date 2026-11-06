@@ -1,7 +1,7 @@
 import { getAllProducts, getFranchises } from "@/lib/catalog";
 import { characterName, characterSlugs } from "@/lib/characters";
 import { productImagePath } from "@/lib/card";
-import { SITE, absoluteUrl } from "@/lib/site";
+import { BRAND_TOKEN, ORIGIN_TOKEN, absoluteUrl } from "@/lib/site";
 
 export type FeedProduct = {
   slug: string; name: string; url: string; image: string; pricePence: number; price: string; comparePricePence: number | null;
@@ -32,7 +32,7 @@ export async function buildFeed(q: { character?: string | null; franchise?: stri
 
   const utm = `utm_source=${ref}&utm_medium=universe-site&utm_campaign=latest-products`;
   return {
-    shop: { name: SITE.name, url: SITE.url },
+    shop: { name: BRAND_TOKEN, url: ORIGIN_TOKEN },
     franchise: franchise ? { slug: franchise.slug, name: franchise.name, accent: franchise.accent, url: `${absoluteUrl(`/franchises/${franchise.slug}`)}?${utm}` } : null,
     character: char ? { slug: char, name: characterName(char), url: `${absoluteUrl(`/characters/${char}`)}?${utm}` } : null,
     products: list.slice(0, limit).map((p) => {

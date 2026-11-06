@@ -53,6 +53,7 @@ export function StoreForm({ initial, defaults, media }: { initial: StoreSettings
           <Field label="Legal / brand name" hint="Used in structured data and as the logo's text alternative."><input className="adm-in" value={s.legalName} onChange={(e) => set("legalName", e.target.value)} maxLength={80} /></Field>
         </div>
         <div className="adm-grid" style={{ marginTop: 12 }}>
+          <Field label="Home page heading"><input className="adm-in" value={s.heroHeading} onChange={(e) => set("heroHeading", e.target.value)} maxLength={120} /></Field>
           <Field label="Tagline"><input className="adm-in" value={s.tagline} onChange={(e) => set("tagline", e.target.value)} maxLength={160} /></Field>
           <Field label="Description" hint="Footer blurb and the default search-result description."><textarea className="adm-ta" style={{ minHeight: 70 }} value={s.description} onChange={(e) => set("description", e.target.value)} maxLength={320} /></Field>
         </div>

@@ -41,9 +41,25 @@ export const LEGAL_PAGES = [
   { href: "/accessibility", label: "Accessibility statement" },
 ] as const;
 
+/**
+ * Stand-ins for values that depend on which store is being served. `absoluteUrl` and the SEO builders are synchronous,
+ * so they emit these and each output (JSON-LD, sitemap, robots, feeds, metadata) swaps in the real store origin and brand.
+ */
+export const ORIGIN_TOKEN = "https://origin.spark-merchant.invalid";
+export const BRAND_TOKEN = "{{brand}}";
+export type SiteFill = { origin: string; brand: string; accent?: string; dark?: string; onAccent?: string };
+
 export function absoluteUrl(path = "/"): string {
-  return `${SITE.url}${path.startsWith("/") ? path : `/${path}`}`;
+  return `${ORIGIN_TOKEN}${path.startsWith("/") ? path : `/${path}`}`;
 }
+
+/** Fill the store-specific stand-ins in a string (or JSON text). */
+export function fillSite(text: string, site: SiteFill): string {
+  return text.split(ORIGIN_TOKEN).join(site.origin).split(BRAND_TOKEN).join(site.brand)
+    .split("{{accent}}").join(site.accent ?? "#ffd400").split("{{dark}}").join(site.dark ?? "#000000").split("{{onAccent}}").join(site.onAccent ?? "#000000");
+}
+/** Make an absolute (token) URL relative, so Next resolves it against the store's metadataBase. */
+export const toRelative = (u: string) => (u.startsWith(ORIGIN_TOKEN) ? u.slice(ORIGIN_TOKEN.length) || "/" : u);
 
 export function formatPrice(pence: number, currency: string = SITE.currency): string {
   return new Intl.NumberFormat("en-GB", { style: "currency", currency }).format(pence / 100);

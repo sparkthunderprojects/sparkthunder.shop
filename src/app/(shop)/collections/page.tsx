@@ -4,10 +4,13 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { JsonLd } from "@/components/JsonLd";
 import { getCollections } from "@/lib/catalog";
 import { isUpcoming } from "@/lib/launch";
-import { breadcrumbLd, buildMetadata } from "@/lib/seo";
+import { breadcrumbLd } from "@/lib/seo";
+import { buildMetadata } from "@/lib/seo-metadata";
 
 export const revalidate = 300;
-export const metadata: Metadata = buildMetadata({ title: "Collections and drops", description: "Themed Sparkthunder merchandise collections and upcoming drops, from Knightverge and beyond.", path: "/collections" });
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata({ title: "Collections and drops", description: "Themed Sparkthunder merchandise collections and upcoming drops, from Knightverge and beyond.", path: "/collections" });
+}
 
 export default async function CollectionsPage() {
   const collections = await getCollections();

@@ -1,4 +1,5 @@
 import { buildFeed } from "@/lib/feed";
+import { fillForRequest } from "@/lib/site-info";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*", // public catalogue data, read-only
@@ -16,6 +17,6 @@ export async function OPTIONS() {
  */
 export async function GET(req: Request) {
   const sp = new URL(req.url).searchParams;
-  const feed = await buildFeed({ character: sp.get("character"), franchise: sp.get("franchise"), category: sp.get("category"), limit: Number(sp.get("limit")) || 8, sort: sp.get("sort"), inStockOnly: sp.get("instock") === "1", ref: sp.get("ref") });
+  const feed = await fillForRequest(await buildFeed({ character: sp.get("character"), franchise: sp.get("franchise"), category: sp.get("category"), limit: Number(sp.get("limit")) || 8, sort: sp.get("sort"), inStockOnly: sp.get("instock") === "1", ref: sp.get("ref") }));
   return Response.json(feed, { headers: { ...CORS, "Cache-Control": "public, s-maxage=300, stale-while-revalidate=3600" } });
 }

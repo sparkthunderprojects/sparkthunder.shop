@@ -6,7 +6,8 @@ import { JsonLd } from "@/components/JsonLd";
 import { Listing } from "@/components/Listing";
 import { getAllProducts, getCategories, getCollection, getCollections, getFranchises } from "@/lib/catalog";
 import { isUpcoming } from "@/lib/launch";
-import { breadcrumbLd, buildMetadata, clip, itemListLd } from "@/lib/seo";
+import { breadcrumbLd, clip, itemListLd } from "@/lib/seo";
+import { buildMetadata } from "@/lib/seo-metadata";
 
 export const revalidate = 300;
 export const dynamicParams = true;

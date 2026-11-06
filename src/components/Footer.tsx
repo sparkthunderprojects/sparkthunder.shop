@@ -14,7 +14,7 @@ export async function Footer() {
     <footer className="theme-dark border-t border-ink/15">
       <div className="px-(--gutter) pb-10 pt-14">
         <div className="flex w-[min(34rem,100%)] flex-col items-center gap-3">
-          <Image src={store.logoUrl} alt={store.legalName} width={store.logoWidth} height={store.logoHeight} unoptimized className="h-auto w-full" />
+          {store.logoUrl ? <Image src={store.logoUrl} alt={store.legalName} width={store.logoWidth} height={store.logoHeight} unoptimized className="h-auto w-full" /> : <span className="display text-4xl">{store.name}</span>}
           {store.logoLabel ? (
             <span aria-label={store.logoLabel} className="flex w-full items-center gap-4 text-bolt">
               <span className="h-px flex-1 bg-bolt/50" />
@@ -53,7 +53,7 @@ export async function Footer() {
           </div>
         </div>
         <div className="mt-14 flex flex-col gap-5 border-t border-ink/15 pt-6 text-sm text-ink/60 md:flex-row md:items-center md:justify-between">
-          <p>© {new Date().getFullYear()} {SITE.legalName}. Official merchandise.</p>
+          <p>© {new Date().getFullYear()} {store.legalName}. Official merchandise.</p>
           <nav aria-label="Legal">
             <ul className="flex flex-wrap gap-x-7 gap-y-2 font-semibold text-ink/75">
               {LEGAL_PAGES.map((l) => <li key={l.href}><Link className={lnk} href={l.href}>{l.label}</Link></li>)}
