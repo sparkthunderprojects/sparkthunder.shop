@@ -2,7 +2,7 @@ import { SubscribeForm } from "@/components/SubscribeForm";
 
 export function Newsletter() {
   return (
-    <section id="newsletter" aria-labelledby="nl-h" className="bg-bolt text-black">
+    <section id="newsletter" aria-labelledby="nl-h" className="bg-bolt text-(--color-on-accent)">
       <div className="grid gap-8 px-(--gutter) py-14 md:grid-cols-2 md:items-center">
         <div>
           <h2 id="nl-h" className="display text-[clamp(2rem,4vw,3.5rem)]">First access to every drop</h2>

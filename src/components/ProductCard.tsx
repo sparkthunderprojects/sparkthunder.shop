@@ -14,7 +14,7 @@ export function ProductCard({ product, franchiseName, priority = false, variant 
   const pct = discountPercent(product);
   const badge = isUpcoming(product.launchAt) ? "Coming soon" : !product.inStock ? "Sold out" : pct ? `-${pct}%` : product.bestSeller ? "Best seller" : product.isNew ? "New" : null;
   const sizes = "(min-width:1536px) 16vw, (min-width:1280px) 20vw, (min-width:768px) 33vw, 50vw";
-  const badgeEl = badge && <span className={`absolute left-0 top-0 z-[1] px-3 py-1 text-sm font-bold ${badge === "New" || badge === "Best seller" ? "bg-bolt text-black" : "bg-ink text-paper"}`}>{badge}</span>;
+  const badgeEl = badge && <span className={`absolute left-0 top-0 z-[1] px-3 py-1 text-sm font-bold ${badge === "New" || badge === "Best seller" ? "bg-bolt text-(--color-on-accent)" : "bg-ink text-paper"}`}>{badge}</span>;
   const quick = toQuick(product, franchiseName);
 
   if (variant === "flush") {

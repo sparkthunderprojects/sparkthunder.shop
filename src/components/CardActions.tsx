@@ -24,7 +24,7 @@ export function CardActions({ quick, hideQuick = false }: { quick: QuickProduct;
           aria-pressed={compared}
           aria-label={compared ? `Remove ${quick.name} from compare` : `Compare ${quick.name}`}
           title={compared ? "Remove from compare" : "Compare"}
-          className={`${ICON_BTN} ${compared ? "!bg-bolt !text-black" : ""}`}
+          className={`${ICON_BTN} ${compared ? "!bg-bolt !text-(--color-on-accent)" : ""}`}
         >
           <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square">
             <path d="M4 8h14m-4-4 4 4-4 4M20 16H6m4-4-4 4 4 4" />

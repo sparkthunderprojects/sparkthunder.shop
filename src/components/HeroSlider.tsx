@@ -29,7 +29,7 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
     return () => clearTimeout(t);
   }, [i, paused, reduced, n]);
 
-  const arrow = "grid h-11 w-11 place-items-center border border-ink/30 bg-black/40 text-ink backdrop-blur hover:bg-bolt hover:text-black hover:border-bolt";
+  const arrow = "grid h-11 w-11 place-items-center border border-ink/30 bg-black/40 text-ink backdrop-blur hover:bg-bolt hover:text-(--color-on-accent) hover:border-bolt";
 
   return (
     <section

@@ -2,26 +2,29 @@ import Link from "next/link";
 import Image from "next/image";
 import { PaymentBadges } from "@/components/PaymentBadges";
 import { getCategories, getFranchises } from "@/lib/catalog";
+import { getStore } from "@/lib/store";
 import { LEGAL_PAGES, SITE, outbound } from "@/lib/site";
 import { CookieSettingsLink } from "@/components/CookieSettingsLink";
 
 export async function Footer() {
-  const [franchises, categories] = await Promise.all([getFranchises(), getCategories()]);
+  const [franchises, categories, store] = await Promise.all([getFranchises(), getCategories(), getStore()]);
   const col = "mt-4 space-y-2.5 text-[0.95rem] text-ink/75";
   const lnk = "hover:text-bolt hover:underline hover:underline-offset-4";
   return (
     <footer className="theme-dark border-t border-ink/15">
       <div className="px-(--gutter) pb-10 pt-14">
         <div className="flex w-[min(34rem,100%)] flex-col items-center gap-3">
-          <Image src="/sparkthunder-logo.png" alt="Sparkthunder" width={1200} height={186} className="h-auto w-full" />
-          <span aria-label="Shop" className="flex w-full items-center gap-4 text-bolt">
-            <span className="h-px flex-1 bg-bolt/50" />
-            <span aria-hidden className="logo-shop pl-[0.6em] text-[clamp(0.9rem,2.6vw,1.4rem)] tracking-[0.6em]">SHOP</span>
-            <span className="h-px flex-1 bg-bolt/50" />
-          </span>
+          <Image src={store.logoUrl} alt={store.legalName} width={store.logoWidth} height={store.logoHeight} unoptimized className="h-auto w-full" />
+          {store.logoLabel ? (
+            <span aria-label={store.logoLabel} className="flex w-full items-center gap-4 text-bolt">
+              <span className="h-px flex-1 bg-bolt/50" />
+              <span aria-hidden className="logo-shop pl-[0.6em] text-[clamp(0.9rem,2.6vw,1.4rem)] tracking-[0.6em]">{store.logoLabel}</span>
+              <span className="h-px flex-1 bg-bolt/50" />
+            </span>
+          ) : null}
         </div>
         <div className="mt-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_1fr]">
-          <p className="serif max-w-sm text-lg leading-relaxed text-ink/80">{SITE.description}</p>
+          <p className="serif max-w-sm text-lg leading-relaxed text-ink/80">{store.description}</p>
           <div>
             <h2 className="font-bold">Franchises</h2>
             <ul className={col}>

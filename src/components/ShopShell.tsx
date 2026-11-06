@@ -20,10 +20,11 @@ import { getAllProducts, getCategories, getFranchises, getSiteSettings } from "@
 import { toQuick } from "@/lib/card";
 import { organizationLd, websiteLd } from "@/lib/seo";
 import { SITE } from "@/lib/site";
+import { getStore } from "@/lib/store";
 
 /** Storefront chrome: providers, header, footer and the slide-over panels. Used by the (shop) layout and the global 404. */
 export async function ShopShell({ children }: { children: React.ReactNode }) {
-  const [products, franchises, categories, settings] = await Promise.all([getAllProducts(), getFranchises(), getCategories(), getSiteSettings()]);
+  const [products, franchises, categories, settings, store] = await Promise.all([getAllProducts(), getFranchises(), getCategories(), getSiteSettings(), getStore()]);
   const names = Object.fromEntries(franchises.map((f) => [f.slug, f.name]));
   const popular = [
     ...franchises.map((f) => ({ label: f.name, href: `/franchises/${f.slug}` })),
@@ -33,11 +34,11 @@ export async function ShopShell({ children }: { children: React.ReactNode }) {
   const suggestions = [...products].sort((a, b) => Number(b.isFeatured) - Number(a.isFeatured) || b.createdAt.localeCompare(a.createdAt)).slice(0, 8).map((p) => toQuick(p, names[p.franchiseSlug]));
   return (
     <>
-      <JsonLd data={[organizationLd([...SITE.sameAs, ...settings.sameAs]), websiteLd()]} />
+      <JsonLd data={[organizationLd([...SITE.sameAs, ...settings.sameAs], { name: store.legalName, logo: store.logoUrl }), websiteLd({ name: store.name, description: store.description })]} />
       <CartProvider>
         <WishlistProvider>
           <ShopUiProvider>
-            <AnnouncementBar />
+            <AnnouncementBar items={store.announcements} />
             <Header />
             <main id="main" className="w-full flex-1 px-(--gutter) pb-24">{children}</main>
             <Newsletter />
@@ -52,7 +53,7 @@ export async function ShopShell({ children }: { children: React.ReactNode }) {
             <MobileBottomBar />
             <BackToTop />
             <NewsletterPopup />
-            <ConsentManager />
+            <ConsentManager logo={{ src: store.logoUrl, width: store.logoWidth, height: store.logoHeight, alt: store.legalName }} />
           </ShopUiProvider>
         </WishlistProvider>
       </CartProvider>

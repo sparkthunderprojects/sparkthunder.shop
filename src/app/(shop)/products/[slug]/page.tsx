@@ -113,7 +113,7 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
             {product.comparePricePence && <s className="text-lg text-muted">{formatPrice(product.comparePricePence)}</s>}
           </p>
           <p className="mt-1 text-sm text-muted">
-            {product.bestSeller ? <b className="mr-2 bg-bolt px-2 py-0.5 text-black">Best seller</b> : null}{!product.inStock ? "Currently sold out" : lowCount !== null ? <b className="text-amber-600">Only {lowCount} left</b> : "In stock"} · SKU {product.sku}
+            {product.bestSeller ? <b className="mr-2 bg-bolt px-2 py-0.5 text-(--color-on-accent)">Best seller</b> : null}{!product.inStock ? "Currently sold out" : lowCount !== null ? <b className="text-amber-600">Only {lowCount} left</b> : "In stock"} · SKU {product.sku}
           </p>
           {characterSlugs(product).length > 0 && (
             <p className="mt-2 text-sm">Featuring {characterSlugs(product).map((c, i) => <span key={c}>{i > 0 ? ", " : ""}<Link href={`/characters/${c}`} className="font-bold underline underline-offset-4">{characterName(c)}</Link></span>)}</p>

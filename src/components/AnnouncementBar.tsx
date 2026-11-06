@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ANNOUNCEMENTS } from "@/lib/site";
 
-export function AnnouncementBar() {
+export function AnnouncementBar({ items }: { items: { text: string; href?: string }[] }) {
+  const ANNOUNCEMENTS = items;
   const [i, setI] = useState(0);
   const [hidden, setHidden] = useState(false);
 
@@ -19,10 +19,10 @@ export function AnnouncementBar() {
     return () => clearInterval(t);
   }, [hidden]);
 
-  if (hidden) return null;
+  if (hidden || ANNOUNCEMENTS.length === 0) return null;
   const msg = ANNOUNCEMENTS[i];
   return (
-    <div className="relative bg-bolt text-black" role="region" aria-label="Announcements">
+    <div className="relative bg-bolt text-(--color-on-accent)" role="region" aria-label="Announcements">
       <p className="px-12 py-2 text-center text-sm font-semibold">
         {msg.href ? <Link href={msg.href} className="hover:underline hover:underline-offset-4">{msg.text}</Link> : msg.text}
       </p>

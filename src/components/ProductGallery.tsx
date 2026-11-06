@@ -67,7 +67,7 @@ export function ProductGallery({ images, name, sizes, alts = [] }: { images: str
 
       {light && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-ink/95 p-4" role="dialog" aria-modal="true" aria-label={`${name} images`}>
-          <button ref={closeRef} onClick={() => setLight(false)} className="absolute right-4 top-4 z-10 bg-bolt px-4 py-2 font-bold text-black">Close</button>
+          <button ref={closeRef} onClick={() => setLight(false)} className="absolute right-4 top-4 z-10 bg-bolt px-4 py-2 font-bold text-(--color-on-accent)">Close</button>
           {many && <button onClick={() => step(-1)} aria-label="Previous photo" className="absolute left-3 top-1/2 z-10 -translate-y-1/2 bg-paper px-3 py-4 text-xl font-bold">‹</button>}
           <Image src={images[idx]} alt={alt(idx)} width={1600} height={1600} unoptimized={isPlaceholderArt(images[idx])} className="max-h-full w-auto max-w-full object-contain" />
           {many && <button onClick={() => step(1)} aria-label="Next photo" className="absolute right-3 top-1/2 z-10 -translate-y-1/2 bg-paper px-3 py-4 text-xl font-bold">›</button>}

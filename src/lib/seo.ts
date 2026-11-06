@@ -63,26 +63,26 @@ export function breadcrumbLd(items: { name: string; path: string }[]) {
   };
 }
 
-export function organizationLd(sameAs: string[] = SITE.sameAs) {
+export function organizationLd(sameAs: string[] = SITE.sameAs, brand?: { name: string; logo: string }) {
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
     "@id": absoluteUrl("/#organization"),
-    name: SITE.legalName,
+    name: brand?.name ?? SITE.legalName,
     url: SITE.url,
-    logo: absoluteUrl("/sparkthunder-logo.png"),
+    logo: /^https?:/.test(brand?.logo ?? "") ? brand!.logo : absoluteUrl(brand?.logo ?? "/sparkthunder-logo.png"),
     ...(sameAs.length ? { sameAs } : {}),
   };
 }
 
-export function websiteLd() {
+export function websiteLd(brand?: { name: string; description: string }) {
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
     "@id": absoluteUrl("/#website"),
     url: SITE.url,
-    name: SITE.name,
-    description: SITE.description,
+    name: brand?.name ?? SITE.name,
+    description: brand?.description ?? SITE.description,
     publisher: { "@id": absoluteUrl("/#organization") },
     inLanguage: "en-GB",
     potentialAction: {

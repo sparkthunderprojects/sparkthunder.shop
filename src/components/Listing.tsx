@@ -156,7 +156,7 @@ export function Listing({ products, franchiseNames, categoryNames = {}, priority
       <div className="sticky top-[5.05rem] lg:top-[8.05rem] z-20 -mx-(--gutter) flex flex-wrap items-center gap-x-4 gap-y-3 border-y border-ink/15 bg-paper px-(--gutter) py-3">
         <button type="button" onClick={() => setFiltersOpen(true)} aria-haspopup="dialog" className="btn btn-ink btn-sm">
           <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="square" aria-hidden="true"><path d="M3 6h18M6 12h12M10 18h4" /></svg>
-          Filters{activeCount > 0 && <span className="bg-bolt px-1.5 py-0.5 text-xs font-extrabold text-black">{activeCount}</span>}
+          Filters{activeCount > 0 && <span className="bg-bolt px-1.5 py-0.5 text-xs font-extrabold text-(--color-on-accent)">{activeCount}</span>}
         </button>
         <p className="text-sm text-muted" role="status" aria-live="polite">
           {shown.length === products.length ? `${products.length} product${products.length === 1 ? "" : "s"}` : `Showing ${shown.length} of ${products.length}`}

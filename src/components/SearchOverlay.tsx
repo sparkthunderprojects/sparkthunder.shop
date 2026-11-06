@@ -84,7 +84,7 @@ export function SearchOverlay({ popular }: { popular: { label: string; href: str
     }
   }
 
-  const chip = (i: number) => `inline-flex items-center gap-2 border px-3.5 py-2 text-sm font-bold ${active === i ? "border-bolt bg-bolt text-black" : "border-white/25 hover:border-white/60"}`;
+  const chip = (i: number) => `inline-flex items-center gap-2 border px-3.5 py-2 text-sm font-bold ${active === i ? "border-bolt bg-bolt text-(--color-on-accent)" : "border-white/25 hover:border-white/60"}`;
 
   if (!mounted) return null;
   let idx = -1;
@@ -138,7 +138,7 @@ export function SearchOverlay({ popular }: { popular: { label: string; href: str
                         {data.suggest.map((s) => { idx++; const i = idx; return (
                           <li key={s} id={optId(i)} role="option" aria-selected={active === i}>
                             <Link href={searchHref(s)} tabIndex={-1} onClick={closePanel}
-                              className={`block px-2 py-1.5 font-bold lg:-mx-2 ${active === i ? "bg-bolt text-black" : "hover:bg-white/10"}`}>
+                              className={`block px-2 py-1.5 font-bold lg:-mx-2 ${active === i ? "bg-bolt text-(--color-on-accent)" : "hover:bg-white/10"}`}>
                               <span className="text-muted">{s.slice(0, s.toLowerCase().indexOf(term.toLowerCase()))}</span>
                               {s.toLowerCase().includes(term.toLowerCase()) ? <>{s.slice(s.toLowerCase().indexOf(term.toLowerCase()), s.toLowerCase().indexOf(term.toLowerCase()) + term.length)}<span className="text-muted">{s.slice(s.toLowerCase().indexOf(term.toLowerCase()) + term.length)}</span></> : s}
                             </Link>
@@ -154,7 +154,7 @@ export function SearchOverlay({ popular }: { popular: { label: string; href: str
                         {data.links.map((l) => { idx++; const i = idx; return (
                           <li key={l.href} id={optId(i)} role="option" aria-selected={active === i}>
                             <Link href={l.href} tabIndex={-1} onClick={closePanel}
-                              className={`flex items-center justify-between gap-3 px-2 py-1.5 font-bold lg:-mx-2 ${active === i ? "bg-bolt text-black" : "hover:bg-white/10"}`}>
+                              className={`flex items-center justify-between gap-3 px-2 py-1.5 font-bold lg:-mx-2 ${active === i ? "bg-bolt text-(--color-on-accent)" : "hover:bg-white/10"}`}>
                               {l.label}<span className="text-xs font-normal text-muted">{l.kind}</span>
                             </Link>
                           </li>

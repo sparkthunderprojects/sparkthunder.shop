@@ -8,6 +8,7 @@ import { RecentButton } from "@/components/RecentButton";
 import { SearchTrigger } from "@/components/SearchTrigger";
 import { WishlistLink } from "@/components/WishlistLink";
 import { getAllProducts, getCategories, getFranchises } from "@/lib/catalog";
+import { getStore } from "@/lib/store";
 import { SITE, formatPrice } from "@/lib/site";
 import type { Product } from "@/lib/types";
 
@@ -28,7 +29,7 @@ function MiniProduct({ p }: { p: Product }) {
 }
 
 export async function Header() {
-  const [franchises, categories, products] = await Promise.all([getFranchises(), getCategories(), getAllProducts()]);
+  const [franchises, categories, products, store] = await Promise.all([getFranchises(), getCategories(), getAllProducts(), getStore()]);
   const newest = [...products].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 3);
 
   return (
@@ -39,13 +40,15 @@ export async function Header() {
           <MobileMenu franchises={franchises.map(({ slug, name }) => ({ slug, name }))} categories={categories.map(({ slug, name }) => ({ slug, name }))} />
           <div className="hidden md:block"><SearchTrigger /></div>
         </div>
-        <Link href="/" className="mx-auto flex flex-col items-center gap-1.5" aria-label={`${SITE.name} Shop home`}>
-          <Image src="/sparkthunder-logo.png" alt="Sparkthunder" width={1200} height={186} priority className="h-6 w-auto sm:h-8" />
-          <span aria-hidden className="flex w-full items-center gap-2.5 text-bolt">
-            <span className="h-px flex-1 bg-bolt/50" />
-            <span className="logo-shop pl-[0.5em] text-[0.7rem] tracking-[0.5em] sm:text-[0.8rem]">SHOP</span>
-            <span className="h-px flex-1 bg-bolt/50" />
-          </span>
+        <Link href="/" className="mx-auto flex flex-col items-center gap-1.5" aria-label={`${store.name} home`}>
+          <Image src={store.logoUrl} alt={store.legalName} width={store.logoWidth} height={store.logoHeight} priority unoptimized className="h-6 w-auto sm:h-8" />
+          {store.logoLabel ? (
+            <span aria-hidden className="flex w-full items-center gap-2.5 text-bolt">
+              <span className="h-px flex-1 bg-bolt/50" />
+              <span className="logo-shop pl-[0.5em] text-[0.7rem] tracking-[0.5em] sm:text-[0.8rem]">{store.logoLabel}</span>
+              <span className="h-px flex-1 bg-bolt/50" />
+            </span>
+          ) : null}
         </Link>
         <div className="flex items-center justify-end gap-2"><RecentButton /><AccountLink /><WishlistLink /><CartLink /></div>
       </div>

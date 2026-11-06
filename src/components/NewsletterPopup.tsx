@@ -60,7 +60,7 @@ export function NewsletterPopup() {
   return (
     <div className="fixed inset-0 z-[75] flex items-center justify-center p-6" role="dialog" aria-modal="true" aria-labelledby="nlp-h">
       <button aria-label="Close" tabIndex={-1} onClick={() => setOpen(false)} className="absolute inset-0 bg-ink/70" />
-      <div className="theme-light relative w-full max-w-xl bg-bolt p-10 text-black shadow-2xl shadow-black/40">
+      <div className="theme-light relative w-full max-w-xl bg-bolt p-10 text-(--color-on-accent) shadow-2xl shadow-black/40">
         <button ref={closeRef} onClick={() => setOpen(false)} className="absolute right-4 top-4 border border-ink/20 bg-paper px-3 py-1 text-sm font-bold hover:bg-ink hover:text-paper">Close</button>
         <Bolt className="h-9 w-6 text-ink" />
         <h2 id="nlp-h" className="display mt-4 text-4xl">Don’t miss the next drop</h2>
