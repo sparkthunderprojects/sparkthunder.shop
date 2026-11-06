@@ -7,6 +7,11 @@ import { getAdmin } from "@/lib/admin/auth";
 import { sessionClient } from "@/lib/db/clients";
 import type { OrderRow } from "@/lib/shop/fulfil";
 import { formatPrice } from "@/lib/site";
+import { OrderTimeline } from "@/components/OrderTimeline";
+import { BuyAgain, type AgainLine } from "@/components/BuyAgain";
+import { getAllProducts } from "@/lib/catalog";
+import { isUpcoming } from "@/lib/launch";
+import { productImagePath } from "@/lib/card";
 import { RedeemPoints } from "@/components/RedeemPoints";
 import { balanceOf, ledgerFor, REDEEM_OPTIONS, REVIEW_BONUS, POINTS_PER_POUND } from "@/lib/rewards";
 
@@ -22,6 +27,19 @@ export default async function AccountPage() {
   const name = (user.user_metadata?.full_name as string | undefined) || (user.user_metadata?.name as string | undefined) || "";
   const { data: rows } = await db.from("orders").select("*").eq("email", user.email ?? "").order("created_at", { ascending: false });
   const orders = (rows ?? []) as OrderRow[];
+  const catalogue = new Map((await getAllProducts()).map((x) => [x.slug, x]));
+  const again = (o: OrderRow) => {
+    const lines: AgainLine[] = []; let missing = 0;
+    for (const l of o.items) {
+      if (l.type !== "product") continue;
+      const pr = catalogue.get(l.slug);
+      const v = l.variant ? pr?.variants?.find((x) => x.name === l.variant) : undefined;
+      const ok = pr && pr.inStock && !isUpcoming(pr.launchAt) && (!l.variant || (v && (!pr.trackStock || v.stockQty > 0)));
+      if (!ok || !pr) { missing++; continue; }
+      lines.push({ slug: l.slug, variant: l.variant, name: l.name, pricePence: v?.pricePence ?? pr.pricePence, image: productImagePath(pr), qty: l.qty });
+    }
+    return { lines, missing };
+  };
   const ledger = await ledgerFor(db, user.email ?? "");
   const balance = balanceOf(ledger);
   const admin = await getAdmin();
@@ -50,8 +68,10 @@ export default async function AccountPage() {
             {orders.map((o) => (
               <li key={o.id} className="py-4">
                 <p className="flex flex-wrap justify-between gap-2"><b>{o.number}</b><span>{formatPrice(o.total_pence + o.gift_card_pence)}</span></p>
-                <p className="text-sm text-muted">{new Date(o.created_at).toLocaleDateString("en-GB")} · {STATUS[o.status]}{o.tracking_number ? ` · ${o.tracking_carrier} ${o.tracking_number}` : ""}</p>
-                <p className="mt-1 text-sm">{o.items.map((l) => `${l.name} × ${l.qty}`).join(", ")}</p>
+                <p className="text-sm text-muted">{new Date(o.created_at).toLocaleDateString("en-GB")} · {STATUS[o.status]}</p>
+                <OrderTimeline order={o} />
+                <p className="mt-3 text-sm">{o.items.map((l) => `${l.name} × ${l.qty}`).join(", ")}</p>
+                {o.status !== "cancelled" && o.items.some((l) => l.type === "product") ? (() => { const a = again(o); return <BuyAgain lines={a.lines} missing={a.missing} />; })() : null}
               </li>
             ))}
           </ul>

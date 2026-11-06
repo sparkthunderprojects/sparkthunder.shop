@@ -1,3 +1,4 @@
+import { trackingUrl } from "@/lib/tracking";
 import { formatCode } from "@/lib/giftcards/format";
 import type { GiftCard } from "@/lib/giftcards/ledger";
 import type { SnapshotLine } from "@/lib/shop/types";
@@ -46,8 +47,8 @@ ${addr ? `<p style="margin:16px 0 4px;font-weight:700">Shipping to</p><p style="
 }
 
 export function shippedEmail(o: { number: string; name: string; carrier: string; tracking: string }) {
-  const html = shell("Your order is on its way", `<p style="margin:0 0 12px">Order <b>${esc(o.number)}</b> has shipped${o.carrier ? ` with ${esc(o.carrier)}` : ""}.</p>${o.tracking ? `<p style="margin:0">Tracking number: <b>${esc(o.tracking)}</b></p>` : ""}`);
-  return { subject: `Your Sparkthunder order ${o.number} has shipped`, html, text: `Order ${o.number} has shipped${o.carrier ? ` with ${o.carrier}` : ""}.${o.tracking ? ` Tracking: ${o.tracking}` : ""}\n` };
+  const html = shell("Your order is on its way", `<p style="margin:0 0 12px">Order <b>${esc(o.number)}</b> has shipped${o.carrier ? ` with ${esc(o.carrier)}` : ""}.</p>${o.tracking ? `<p style="margin:0">Tracking number: <b>${esc(o.tracking)}</b>${trackingUrl(o.carrier, o.tracking) ? ` · <a href="${esc(trackingUrl(o.carrier, o.tracking)!)}">Track your parcel</a>` : ""}</p>` : ""}`);
+  return { subject: `Your Sparkthunder order ${o.number} has shipped`, html, text: `Order ${o.number} has shipped${o.carrier ? ` with ${o.carrier}` : ""}.${o.tracking ? ` Tracking: ${o.tracking}${trackingUrl(o.carrier, o.tracking) ? ` (${trackingUrl(o.carrier, o.tracking)})` : ""}` : ""}\n` };
 }
 
 export function backInStockEmail(o: { name: string; variant: string; url: string }) {
