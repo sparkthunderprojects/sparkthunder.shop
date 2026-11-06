@@ -9,6 +9,7 @@ const NAV: { href: string; label: string; exact?: boolean }[] = [
   { href: "/admin/franchises", label: "Franchises" },
   { href: "/admin/categories", label: "Categories" },
   { href: "/admin/orders", label: "Orders" },
+  { href: "/admin/sales", label: "Sales" },
   { href: "/admin/media", label: "Media library" },
   { href: "/admin/gift-cards", label: "Gift cards" },
   { href: "/admin/discounts", label: "Discount codes" },
