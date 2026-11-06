@@ -7,6 +7,8 @@ import { getAdmin } from "@/lib/admin/auth";
 import { sessionClient } from "@/lib/db/clients";
 import type { OrderRow } from "@/lib/shop/fulfil";
 import { formatPrice } from "@/lib/site";
+import { RedeemPoints } from "@/components/RedeemPoints";
+import { balanceOf, ledgerFor, REDEEM_OPTIONS, REVIEW_BONUS, POINTS_PER_POUND } from "@/lib/rewards";
 
 export const metadata: Metadata = { title: "My Sparkthunder ID", robots: { index: false, follow: false } };
 const STATUS = { paid: "Being prepared", shipped: "Shipped", cancelled: "Cancelled", attention: "Being prepared" } as const;
@@ -20,12 +22,26 @@ export default async function AccountPage() {
   const name = (user.user_metadata?.full_name as string | undefined) || (user.user_metadata?.name as string | undefined) || "";
   const { data: rows } = await db.from("orders").select("*").eq("email", user.email ?? "").order("created_at", { ascending: false });
   const orders = (rows ?? []) as OrderRow[];
+  const ledger = await ledgerFor(db, user.email ?? "");
+  const balance = balanceOf(ledger);
   const admin = await getAdmin();
   return (
     <div className="pt-12">
       <h1 className="display text-[clamp(2rem,4.2vw,3.25rem)]">{name ? `Hello, ${name.split(" ")[0]}` : "My Sparkthunder ID"}</h1>
       <p className="mt-2 text-muted">{user.email}</p>
       <div className="mt-6 flex flex-wrap gap-3"><SignOutButton />{admin ? <Link href="/admin" className="btn btn-ink">Open the admin</Link> : null}</div>
+
+      <section className="mt-12" aria-labelledby="points-h">
+        <h2 id="points-h" className="display text-2xl sm:text-3xl">Spark points</h2>
+        <p className="mt-3 flex items-baseline gap-3"><span className="display text-5xl">{balance}</span><span className="text-muted">points</span></p>
+        <p className="mt-2 max-w-xl text-sm text-muted">Earn {POINTS_PER_POUND} point for every £1 you spend on products, plus {REVIEW_BONUS} for each approved review. Spend them on money off your next order.</p>
+        <div className="mt-5"><RedeemPoints balance={balance} options={[...REDEEM_OPTIONS]} /></div>
+        {ledger.length > 0 ? (
+          <ul className="mt-6 max-w-xl divide-y divide-ink/15 border-y border-ink/15 text-sm">
+            {ledger.slice(0, 8).map((r) => <li key={r.id} className="flex justify-between gap-3 py-2"><span>{r.note || r.reason} <span className="text-muted">· {new Date(r.created_at).toLocaleDateString("en-GB")}</span></span><b>{r.points > 0 ? `+${r.points}` : r.points}</b></li>)}
+          </ul>
+        ) : null}
+      </section>
 
       <section className="mt-12" aria-labelledby="orders-h">
         <h2 id="orders-h" className="display text-2xl sm:text-3xl">Your orders</h2>

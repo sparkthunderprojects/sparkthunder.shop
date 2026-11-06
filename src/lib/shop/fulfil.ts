@@ -1,3 +1,4 @@
+import { awardPoints, pointsForOrder } from "@/lib/rewards";
 import type { Db } from "@/lib/db/clients";
 import { giftCardEmail, orderEmail } from "@/lib/email/templates";
 import { sendEmail } from "@/lib/email/send";
@@ -103,6 +104,8 @@ export async function fulfilOrder(db: Db, s: PaidSession): Promise<{ order: Orde
       if (items.length) { for (const it of items) await takeStock(db, it.slug, undefined, it.qty * line.qty, `${line.name} (contains ${it.slug})`, problems); }
       else await takeStock(db, line.slug, line.variant, line.qty, line.name, problems);
     }
+    // 3b. Spark points for signed-up customers (matched by email, so it works whether or not they were logged in at checkout).
+    if (s.email) { try { await awardPoints(db, { email: s.email, points: pointsForOrder(payload), reason: "order", ref: order.number, note: `Order ${order.number}` }); } catch { problems.push("Spark points could not be added for this order."); } }
     // 4. Confirmation email.
     const mail = orderEmail({ number: order.number, name: s.name, lines: payload.lines, subtotalPence: payload.subtotalPence, shippingPence: payload.shippingPence, discountPence: payload.discount?.appliedPence ?? 0, discountCode: payload.discount?.code ?? "", giftCardPence: payload.giftCard?.appliedPence ?? 0, totalPence: payload.totalPence, address: s.address, giftCardsIssued });
     const sent = s.email ? await sendEmail({ to: s.email, ...mail }) : { ok: false as const, error: "no email address" };

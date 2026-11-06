@@ -2,6 +2,8 @@
 
 import { revalidatePath, updateTag } from "next/cache";
 import { requireAdminAction } from "@/lib/admin/auth";
+import { serviceClient } from "@/lib/db/clients";
+import { awardPoints, REVIEW_BONUS } from "@/lib/rewards";
 import { REVIEWS_TAG } from "@/lib/reviews";
 
 type Result = { ok: true } | { ok: false; error: string };
@@ -18,6 +20,13 @@ export async function moderateReviewAction(id: string, slug: string, status: "ap
     const { db } = await requireAdminAction();
     const { error } = await db.from("reviews").update({ status }).eq("id", id);
     if (error) return { ok: false, error: error.message };
+    if (status === "approved") {
+      // Thank the buyer with points (once per review). Their email is only readable with the server key.
+      const svc = serviceClient();
+      const row = svc ? await svc.from("reviews").select("email").eq("id", id).maybeSingle() : null;
+      const email = (row?.data as { email: string } | null)?.email;
+      if (svc && email) await awardPoints(svc, { email, points: REVIEW_BONUS, reason: "review", ref: id, note: "Thanks for your review" }).catch(() => false);
+    }
     bust(slug);
     return { ok: true };
   } catch (e) { return { ok: false, error: message(e) }; }

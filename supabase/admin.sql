@@ -344,3 +344,21 @@ insert into storage.buckets (id, name, public) values ('review-photos', 'review-
 drop policy if exists "public read review photos" on storage.objects;
 create policy "public read review photos" on storage.objects for select using (bucket_id = 'review-photos');
 -- Uploads happen only through the server (service role), so no public write policy is created.
+
+-- ---------------------------------------------------------------- Round 3: Spark points (fan rewards)
+create table if not exists public.reward_points (
+  id uuid primary key default gen_random_uuid(),
+  email text not null,
+  points integer not null,                    -- positive = earned, negative = spent
+  reason text not null check (reason in ('order','review','redeem','adjust')),
+  ref text not null default '',               -- order number, review id or code (makes awards happen once)
+  note text not null default '',
+  created_at timestamptz not null default now()
+);
+create index if not exists reward_points_email_idx on public.reward_points (lower(email));
+create unique index if not exists reward_points_once on public.reward_points (reason, ref) where reason <> 'adjust';
+alter table public.reward_points enable row level security;
+drop policy if exists "customers read own points" on public.reward_points;
+create policy "customers read own points" on public.reward_points for select using (lower(email) = lower(coalesce(auth.jwt() ->> 'email', '')));
+drop policy if exists "admin all reward points" on public.reward_points;
+create policy "admin all reward points" on public.reward_points for all using (public.is_admin()) with check (public.is_admin());
