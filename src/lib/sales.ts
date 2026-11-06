@@ -1,5 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { serviceClient } from "@/lib/db/clients";
+import { currentStoreId } from "@/lib/db/stores";
 import type { OrderRow } from "@/lib/shop/fulfil";
 import type { Product } from "@/lib/types";
 
@@ -15,9 +16,10 @@ export const BEST_SELLER_COUNT = 3;
 export const BEST_SELLER_MIN_UNITS = 3;
 
 /** Real sales, read with the server key (orders are private) and cached for an hour. Nothing here is invented: no sales, no badge. */
-export const getSalesStats = unstable_cache(
+export const getSalesStats = async (): Promise<SalesStats> => getSalesStatsFor(await currentStoreId());
+const getSalesStatsFor = (storeId: string) => unstable_cache(
   async (): Promise<SalesStats> => {
-    const db = serviceClient();
+    const db = serviceClient(storeId);
     if (!db) return EMPTY;
     const { data, error } = await db.from("orders").select("*");
     if (error || !data) return EMPTY;
@@ -34,9 +36,9 @@ export const getSalesStats = unstable_cache(
     for (const [a, m] of Object.entries(pairs)) together[a] = Object.entries(m).sort((x, y) => y[1] - x[1]).map(([s]) => s).slice(0, 6);
     return { units, together };
   },
-  ["sales-stats-v1"],
+  ["sales-stats-v2", storeId],
   { tags: ["catalog", "sales"], revalidate: 3600 },
-);
+)();
 
 export function withBestSellers(products: Product[], stats: SalesStats): Product[] {
   const top = new Set(

@@ -385,3 +385,73 @@ drop policy if exists "public read answered questions" on public.product_questio
 create policy "public read answered questions" on public.product_questions for select using (status = 'answered');
 drop policy if exists "admin all product questions" on public.product_questions;
 create policy "admin all product questions" on public.product_questions for all using (public.is_admin()) with check (public.is_admin());
+
+-- ============================================================================
+-- Multi-store (Spark Merchant): many stores on one database. Idempotent.
+-- Every store-owned row carries a store_id; the app scopes every query by it (src/lib/db/scope.ts).
+-- ============================================================================
+create table if not exists public.stores (
+  id text primary key check (id ~ '^[a-z0-9-]{2,40}$'),
+  name text not null,
+  domains text[] not null default '{}',        -- e.g. {sparkthunder.shop,www.sparkthunder.shop}
+  is_default boolean not null default false,   -- used for unknown hosts (previews, localhost)
+  created_at timestamptz not null default now()
+);
+create unique index if not exists stores_one_default on public.stores (is_default) where is_default;
+insert into public.stores (id, name, domains, is_default)
+values ('sparkthunder', 'Sparkthunder Shop', '{sparkthunder.shop,www.sparkthunder.shop}', true)
+on conflict (id) do nothing;
+alter table public.stores enable row level security;
+drop policy if exists "public read stores" on public.stores;
+create policy "public read stores" on public.stores for select using (true);
+drop policy if exists "admin all stores" on public.stores;
+create policy "admin all stores" on public.stores for all using (public.is_admin()) with check (public.is_admin());
+
+do $$
+declare t text;
+begin
+  foreach t in array array['franchises','categories','products','collections','orders','checkout_snapshots','discount_codes','gift_cards',
+                           'reviews','stock_alerts','reward_points','product_questions','media','redirects','settings','subscribers'] loop
+    execute format('alter table public.%I add column if not exists store_id text not null default %L references public.stores(id) on update cascade', t, 'sparkthunder');
+    execute format('create index if not exists %I on public.%I (store_id)', t || '_store_idx', t);
+  end loop;
+end $$;
+
+-- Slugs, SKUs and the like only need to be unique inside one store (two stores can both sell a "tee" or have a /sale redirect).
+alter table public.products drop constraint if exists products_franchise_slug_fkey;
+alter table public.products drop constraint if exists products_category_slug_fkey;
+alter table public.products drop constraint if exists products_pkey;
+alter table public.products drop constraint if exists products_sku_key;
+alter table public.franchises drop constraint if exists franchises_pkey;
+alter table public.categories drop constraint if exists categories_pkey;
+alter table public.collections drop constraint if exists collections_pkey;
+alter table public.settings drop constraint if exists settings_pkey;
+alter table public.subscribers drop constraint if exists subscribers_pkey;
+alter table public.media drop constraint if exists media_path_key;
+alter table public.redirects drop constraint if exists redirects_from_path_key;
+alter table public.orders drop constraint if exists orders_number_key;
+alter table public.stock_alerts drop constraint if exists stock_alerts_product_slug_variant_email_key;
+alter table public.reviews drop constraint if exists reviews_product_slug_email_key;
+drop index if exists public.reward_points_once;
+
+do $$ begin
+  alter table public.franchises add constraint franchises_pkey primary key (store_id, slug);
+  alter table public.categories add constraint categories_pkey primary key (store_id, slug);
+  alter table public.products add constraint products_pkey primary key (store_id, slug);
+  alter table public.products add constraint products_sku_key unique (store_id, sku);
+  alter table public.products add constraint products_franchise_fkey foreign key (store_id, franchise_slug) references public.franchises(store_id, slug) on update cascade;
+  alter table public.products add constraint products_category_fkey foreign key (store_id, category_slug) references public.categories(store_id, slug) on update cascade;
+  alter table public.collections add constraint collections_pkey primary key (store_id, slug);
+  alter table public.settings add constraint settings_pkey primary key (store_id, key);
+  alter table public.subscribers add constraint subscribers_pkey primary key (store_id, email);
+  alter table public.media add constraint media_path_key unique (store_id, path);
+  alter table public.redirects add constraint redirects_from_path_key unique (store_id, from_path);
+  alter table public.orders add constraint orders_number_key unique (store_id, number);
+  alter table public.stock_alerts add constraint stock_alerts_unique unique (store_id, product_slug, variant, email);
+  alter table public.reviews add constraint reviews_unique unique (store_id, product_slug, email);
+exception when duplicate_object or duplicate_table or invalid_table_definition then null;
+end $$;
+create unique index if not exists reward_points_once on public.reward_points (store_id, reason, ref) where reason <> 'adjust';
+
+-- Public reads of reviews keep hiding the buyer's email; store_id is safe to expose.
+grant select (store_id) on public.reviews to anon, authenticated;

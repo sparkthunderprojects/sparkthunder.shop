@@ -7,7 +7,9 @@ import path from "node:path";
 type Row = Record<string, unknown>;
 type Result = { data: unknown; error: { message: string } | null; count?: number | null };
 
-const PK: Record<string, string> = { products: "slug", franchises: "slug", categories: "slug", media: "id", redirects: "id", settings: "key", subscribers: "email", admin_users: "user_id", gift_cards: "id", gift_card_ledger: "id", orders: "id", checkout_snapshots: "id", collections: "slug", stock_alerts: "id", reviews: "id", reward_points: "id", product_questions: "id" };
+const PK: Record<string, string> = { products: "slug", franchises: "slug", categories: "slug", media: "id", redirects: "id", settings: "key", subscribers: "email", admin_users: "user_id", gift_cards: "id", gift_card_ledger: "id", orders: "id", checkout_snapshots: "id", collections: "slug", stock_alerts: "id", reviews: "id", reward_points: "id", product_questions: "id", stores: "id" };
+/** Rows created before multi-store (and the seed catalogue) belong to the default store. */
+const sid = (r: Row) => (r.store_id as string | undefined) ?? "sparkthunder";
 
 type Store = Record<string, Row[]>;
 const g = globalThis as unknown as { __sparkFake?: Store; __sparkSeq?: number };
@@ -22,7 +24,18 @@ function store(): Store {
       media: [], redirects: [], settings: [], subscribers: [], admin_users: [], gift_cards: [], gift_card_ledger: [], orders: [], checkout_snapshots: [],
       collections: (seedCatalog.collections ?? []).map((c) => ({ slug: c.slug, name: c.name, description: c.description, image: c.image, launch_at: c.launchAt ?? null, product_slugs: c.productSlugs, sort_order: c.sortOrder, published: c.published })),
       stock_alerts: [], discount_codes: [], reviews: [], reward_points: [], product_questions: [],
+      stores: [
+        { id: "sparkthunder", name: "Sparkthunder Shop", domains: ["localhost", "127.0.0.1", "sparkthunder.shop"], is_default: true, created_at: now },
+        { id: "misspetty", name: "Miss Petty", domains: ["petty.localhost", "misspetty.com"], is_default: false, created_at: now },
+      ],
     };
+    // A second, completely different store so multi-store behaviour can be exercised without a database.
+    const S = "misspetty";
+    g.__sparkFake.franchises.push({ store_id: S, slug: "face", name: "Face", tagline: "Skin that looks like skin", description: "Complexion makeup for every undertone.", accent: "#e58ba5", sort_order: 1, updated_at: now });
+    g.__sparkFake.categories.push({ store_id: S, slug: "lips", name: "Lips", description: "Balms, tints and lipsticks.", sort_order: 1, updated_at: now }, { store_id: S, slug: "cheeks", name: "Cheeks", description: "Blush and bronzer.", sort_order: 2, updated_at: now });
+    for (const [slug, name, cat, price] of [["velvet-tint", "Velvet Lip Tint", "lips", 1200], ["cloud-blush", "Cloud Blush", "cheeks", 1500], ["petal-balm", "Petal Lip Balm", "lips", 900]] as const) {
+      g.__sparkFake.products.push({ store_id: S, slug, sku: `MP-${slug}`.toUpperCase(), name, franchise_slug: "face", category_slug: cat, price_pence: price, compare_price_pence: null, short_description: `${name} from Miss Petty.`, description: `${name}: a soft, buildable finish that lasts all day.`, details: [], images: [], in_stock: true, is_new: true, is_featured: true, published: true, created_at: now, updated_at: now });
+    }
     g.__sparkSeq = 1;
   }
   return g.__sparkFake;
@@ -45,7 +58,7 @@ class Query implements PromiseLike<Result> {
   update(patch: Row) { this.op = "update"; this.payload = patch; return this; }
   upsert(rows: Row | Row[], opts?: { onConflict?: string }) { this.op = "upsert"; this.payload = rows; this.onConflict = opts?.onConflict ?? null; return this; }
   delete() { this.op = "delete"; return this; }
-  eq(col: string, val: unknown) { this.filters.push((r) => r[col] === val); return this; }
+  eq(col: string, val: unknown) { this.filters.push((r) => (col === "store_id" ? sid(r) === val : r[col] === val)); return this; }
   neq(col: string, val: unknown) { this.filters.push((r) => r[col] !== val); return this; }
   in(col: string, vals: unknown[]) { this.filters.push((r) => vals.includes(r[col])); return this; }
   ilike(col: string, pat: string) { const re = new RegExp("^" + pat.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/%/g, ".*") + "$", "i"); this.filters.push((r) => re.test(String(r[col] ?? ""))); return this; }
@@ -69,16 +82,16 @@ class Query implements PromiseLike<Result> {
     let result: Row[] = [];
     if (this.op === "insert") {
       for (const r of [this.payload].flat() as Row[]) {
-        if (rows.some((x) => x[pk] === r[pk] && r[pk] != null)) return { data: null, error: { message: `duplicate key value violates unique constraint on ${this.table}.${pk}` } };
-        if (this.table === "products" && rows.some((x) => x.sku === r.sku)) return { data: null, error: { message: "duplicate key value violates unique constraint \"products_sku_key\"" } };
-        if (this.table === "orders" && rows.some((x) => x.number === r.number)) return { data: null, error: { message: "duplicate key value violates unique constraint \"orders_number_key\"" } };
-        if (this.table === "redirects" && rows.some((x) => x.from_path === r.from_path)) return { data: null, error: { message: "duplicate key value violates unique constraint \"redirects_from_path_key\"" } };
+        if (rows.some((x) => x[pk] === r[pk] && r[pk] != null && sid(x) === sid(r))) return { data: null, error: { message: `duplicate key value violates unique constraint on ${this.table}.${pk}` } };
+        if (this.table === "products" && rows.some((x) => x.sku === r.sku && sid(x) === sid(r))) return { data: null, error: { message: "duplicate key value violates unique constraint \"products_sku_key\"" } };
+        if (this.table === "orders" && rows.some((x) => x.number === r.number && sid(x) === sid(r))) return { data: null, error: { message: "duplicate key value violates unique constraint \"orders_number_key\"" } };
+        if (this.table === "redirects" && rows.some((x) => x.from_path === r.from_path && sid(x) === sid(r))) return { data: null, error: { message: "duplicate key value violates unique constraint \"redirects_from_path_key\"" } };
         const row = withDefaults(r); rows.push(row); result.push(row);
       }
     } else if (this.op === "upsert") {
-      const key = this.onConflict ?? pk;
+      const keys = (this.onConflict ?? pk).split(",").map((k) => k.trim());
       for (const r of [this.payload].flat() as Row[]) {
-        const i = rows.findIndex((x) => x[key] === r[key]);
+        const i = rows.findIndex((x) => keys.every((k) => (k === "store_id" ? sid(x) === sid(r) : x[k] === r[k])) && (keys.includes("store_id") || sid(x) === sid(r)));
         if (i >= 0) { rows[i] = { ...rows[i], ...r, ...(["products", "franchises", "categories"].includes(this.table) ? { updated_at: now } : {}) }; result.push(rows[i]); }
         else { const row = withDefaults(r); rows.push(row); result.push(row); }
       }

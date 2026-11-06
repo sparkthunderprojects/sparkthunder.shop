@@ -2,6 +2,8 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { logoutAction } from "./actions";
+import { switchStoreAction } from "./stores-actions";
+import type { StoreRow } from "@/lib/db/stores";
 
 const NAV: { href: string; label: string; exact?: boolean }[] = [
   { href: "/admin", label: "Dashboard", exact: true },
@@ -24,10 +26,11 @@ const SEO: typeof NAV = [
   { href: "/admin/seo", label: "SEO audit" },
   { href: "/admin/redirects", label: "Redirects" },
   { href: "/admin/store", label: "Brand and design" },
+  { href: "/admin/stores", label: "Stores" },
   { href: "/admin/settings", label: "Settings" },
 ];
 
-export function Sidebar({ email, demo }: { email: string; demo: boolean }) {
+export function Sidebar({ email, demo, stores, current }: { email: string; demo: boolean; stores: StoreRow[]; current: string }) {
   const path = usePathname();
   const router = useRouter();
   const item = (n: (typeof NAV)[number]) => {
@@ -36,7 +39,14 @@ export function Sidebar({ email, demo }: { email: string; demo: boolean }) {
   };
   return (
     <aside className="adm-side">
-      <div className="adm-brand"><i /> Sparkthunder admin</div>
+      <div className="adm-brand"><i /> Spark Merchant</div>
+      <label style={{ display: "block", padding: "0 12px 10px", fontSize: 12 }}>
+        Store
+        <select value={current} aria-label="Store being edited" style={{ width: "100%", marginTop: 4 }}
+          onChange={async (e) => { await switchStoreAction(e.target.value); router.refresh(); }}>
+          {stores.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+        </select>
+      </label>
       <nav className="adm-nav" aria-label="Admin" style={{ display: "contents" }}>
         {NAV.map(item)}
         <div className="adm-sep">Search</div>

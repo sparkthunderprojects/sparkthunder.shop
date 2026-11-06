@@ -1,5 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { publicClient } from "@/lib/db/clients";
+import { currentStoreId, DEFAULT_STORE_ID } from "@/lib/db/stores";
 import { categoryFromRow, collectionFromRow, franchiseFromRow, productFromRow, type CategoryRow, type CollectionRow, type FranchiseRow, type ProductRow } from "@/lib/db/mappers";
 import { seedCatalog } from "@/data/seed";
 import { getSalesStats, withBestSellers } from "@/lib/sales";
@@ -38,8 +39,8 @@ export function withLaunchDates(products: Product[], collections: Collection[]):
 
 export const CATALOG_TAG = "catalog";
 
-async function loadFromSupabase(): Promise<Catalog | null> {
-  const supabase = publicClient();
+async function loadFromSupabase(storeId: string): Promise<Catalog | null> {
+  const supabase = publicClient(storeId);
   if (!supabase) return null;
   const [f, c, p, col] = await Promise.all([
     supabase.from("franchises").select("*").order("sort_order"),
@@ -61,15 +62,19 @@ async function loadFromSupabase(): Promise<Catalog | null> {
 }
 
 /** One cached read of the whole catalogue (revalidates every 5 min or via /api/revalidate). */
-const loadCatalog = unstable_cache(
-  async (): Promise<Catalog> => {
-    const c = (await loadFromSupabase()) ?? seedCatalog;
-    const collections = c.collections ?? [];
-    return { ...c, collections, products: withBestSellers(withLaunchDates(withBundleStock(c.products), collections), await getSalesStats()) };
-  },
-  ["catalog-v4"],
-  { tags: [CATALOG_TAG], revalidate: 300 },
-);
+const loadCatalogFor = (storeId: string) =>
+  unstable_cache(
+    async (): Promise<Catalog> => {
+      // Only the original store falls back to the built-in sample catalogue; a new store starts empty.
+      const empty: Catalog = { franchises: [], categories: [], products: [], collections: [] };
+      const c = (await loadFromSupabase(storeId)) ?? (storeId === DEFAULT_STORE_ID ? seedCatalog : empty);
+      const collections = c.collections ?? [];
+      return { ...c, collections, products: withBestSellers(withLaunchDates(withBundleStock(c.products), collections), await getSalesStats()) };
+    },
+    ["catalog-v5", storeId],
+    { tags: [CATALOG_TAG], revalidate: 300 },
+  )();
+const loadCatalog = async () => loadCatalogFor(await currentStoreId());
 
 export async function getFranchises() {
   return (await loadCatalog()).franchises;
@@ -139,13 +144,16 @@ export type PublicSettings = { defaultDescription: string; defaultOgImage: strin
 const EMPTY_SETTINGS: PublicSettings = { defaultDescription: "", defaultOgImage: "", twitterHandle: "", sameAs: [], googleVerification: "", bingVerification: "" };
 
 /** Admin-managed site settings (verification tokens, sameAs profiles, defaults). Cached; busted by the "settings" tag. */
-export const getSiteSettings = unstable_cache(
-  async (): Promise<PublicSettings> => {
-    const db = publicClient();
-    if (!db) return EMPTY_SETTINGS;
-    const { data } = await db.from("settings").select("value").eq("key", "site").maybeSingle();
-    return { ...EMPTY_SETTINGS, ...((data as { value?: Partial<PublicSettings> } | null)?.value ?? {}) };
-  },
-  ["site-settings-v1"],
-  { tags: ["settings"], revalidate: 600 },
-);
+export const getSiteSettings = async (): Promise<PublicSettings> => {
+  const storeId = await currentStoreId();
+  return unstable_cache(
+    async (): Promise<PublicSettings> => {
+      const db = publicClient(storeId);
+      if (!db) return EMPTY_SETTINGS;
+      const { data } = await db.from("settings").select("value").eq("key", "site").maybeSingle();
+      return { ...EMPTY_SETTINGS, ...((data as { value?: Partial<PublicSettings> } | null)?.value ?? {}) };
+    },
+    ["site-settings-v2", storeId],
+    { tags: ["settings"], revalidate: 600 },
+  )();
+};
