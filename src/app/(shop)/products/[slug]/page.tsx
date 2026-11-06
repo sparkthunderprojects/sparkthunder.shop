@@ -18,6 +18,8 @@ import { characterName, characterSlugs } from "@/lib/characters";
 import { FrequentlyBought } from "@/components/FrequentlyBought";
 import { getSalesStats } from "@/lib/sales";
 import { isUpcoming } from "@/lib/launch";
+import { QuestionsSection } from "@/components/QuestionsSection";
+import { getQuestions } from "@/lib/questions";
 import { ReviewsSection } from "@/components/ReviewsSection";
 import { getReviews } from "@/lib/reviews";
 import { breadcrumbLd, buildMetadata, clip, productImageUrl, productLd } from "@/lib/seo";
@@ -45,7 +47,7 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
   const product = await getProduct(slug);
   if (!product) notFound();
 
-  const [franchise, category, relatedAll, completeSet, franchises, allProducts, reviews] = await Promise.all([
+  const [franchise, category, relatedAll, completeSet, franchises, allProducts, reviews, questions] = await Promise.all([
     getFranchise(product.franchiseSlug),
     getCategory(product.categorySlug),
     getRelatedProducts(product, 8),
@@ -53,6 +55,7 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
     getFranchises(),
     getAllProducts(),
     getReviews(slug),
+    getQuestions(slug),
   ]);
   const stats = await getSalesStats();
   const partners = (stats.together[product.slug] ?? [])
@@ -77,6 +80,7 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
     <div style={worldStyle(franchise?.accent)}>
       <JsonLd data={[
         productLd(product, franchise, category, reviews),
+        ...(questions.length ? [{ "@context": "https://schema.org", "@type": "FAQPage", mainEntity: questions.slice(0, 10).map((q) => ({ "@type": "Question", name: q.question, acceptedAnswer: { "@type": "Answer", text: q.answer } })) }] : []),
         breadcrumbLd([
           { name: "Home", path: "/" },
           ...(franchise ? [{ name: franchise.name, path: `/franchises/${franchise.slug}` }] : []),
@@ -156,6 +160,8 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
       {canGroup ? <FrequentlyBought main={{ slug: product.slug, name: product.name, pricePence: product.pricePence, image: productImagePath(product) }} partners={partners} /> : null}
 
       <ReviewsSection slug={product.slug} summary={reviews} />
+
+      <QuestionsSection slug={product.slug} questions={questions} />
 
       {completeSet.length > 0 && (
         <section className="mt-24" aria-labelledby="set-h">

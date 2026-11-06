@@ -1,14 +1,21 @@
 import { getAllProducts, getCategories, getFranchises, getProducts } from "@/lib/catalog";
 import { productImagePath } from "@/lib/card";
+import { correctQuery } from "@/lib/search-fuzzy";
 
 /** Instant-search data for the search drop-down: matching products, quick links and type-ahead phrases. Small, cacheable JSON. */
 export async function GET(req: Request) {
   const q = (new URL(req.url).searchParams.get("q") ?? "").trim().slice(0, 60);
-  const empty = { products: [], links: [], suggest: [], total: 0 };
+  const empty = { products: [], links: [], suggest: [], total: 0, corrected: null };
   if (q.length < 2) return Response.json(empty);
 
   const needle = q.toLowerCase();
-  const [matches, all, franchises, categories] = await Promise.all([getProducts({ q }), getAllProducts(), getFranchises(), getCategories()]);
+  let [matches, all, franchises, categories] = await Promise.all([getProducts({ q }), getAllProducts(), getFranchises(), getCategories()]);
+  // Nothing matched? Try fixing small typos against the shop's own words.
+  let corrected: string | null = null;
+  if (matches.length === 0) {
+    corrected = correctQuery(q, all, franchises, categories);
+    if (corrected) { matches = await getProducts({ q: corrected }); if (matches.length === 0) corrected = null; }
+  }
   const nameBySlug = Object.fromEntries(franchises.map((f) => [f.slug, f.name]));
 
   const rank = (name: string) => {
@@ -38,5 +45,5 @@ export async function GET(req: Request) {
     .slice(0, 6)
     .map((x) => x.s);
 
-  return Response.json({ products, links, suggest, total: matches.length }, { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" } });
+  return Response.json({ products, links, suggest, total: matches.length, corrected }, { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" } });
 }

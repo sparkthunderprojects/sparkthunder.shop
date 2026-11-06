@@ -7,7 +7,7 @@ import path from "node:path";
 type Row = Record<string, unknown>;
 type Result = { data: unknown; error: { message: string } | null; count?: number | null };
 
-const PK: Record<string, string> = { products: "slug", franchises: "slug", categories: "slug", media: "id", redirects: "id", settings: "key", subscribers: "email", admin_users: "user_id", gift_cards: "id", gift_card_ledger: "id", orders: "id", checkout_snapshots: "id", collections: "slug", stock_alerts: "id", reviews: "id", reward_points: "id" };
+const PK: Record<string, string> = { products: "slug", franchises: "slug", categories: "slug", media: "id", redirects: "id", settings: "key", subscribers: "email", admin_users: "user_id", gift_cards: "id", gift_card_ledger: "id", orders: "id", checkout_snapshots: "id", collections: "slug", stock_alerts: "id", reviews: "id", reward_points: "id", product_questions: "id" };
 
 type Store = Record<string, Row[]>;
 const g = globalThis as unknown as { __sparkFake?: Store; __sparkSeq?: number };
@@ -21,7 +21,7 @@ function store(): Store {
       products: seedCatalog.products.map((p) => ({ ...productToRow(p), updated_at: `${p.createdAt}T00:00:00.000Z` })),
       media: [], redirects: [], settings: [], subscribers: [], admin_users: [], gift_cards: [], gift_card_ledger: [], orders: [], checkout_snapshots: [],
       collections: (seedCatalog.collections ?? []).map((c) => ({ slug: c.slug, name: c.name, description: c.description, image: c.image, launch_at: c.launchAt ?? null, product_slugs: c.productSlugs, sort_order: c.sortOrder, published: c.published })),
-      stock_alerts: [], discount_codes: [], reviews: [], reward_points: [],
+      stock_alerts: [], discount_codes: [], reviews: [], reward_points: [], product_questions: [],
     };
     g.__sparkSeq = 1;
   }

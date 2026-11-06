@@ -367,3 +367,21 @@ create policy "admin all reward points" on public.reward_points for all using (p
 alter table public.orders add column if not exists gift_message text not null default '';
 alter table public.orders add column if not exists gift_wrap boolean not null default false;
 alter table public.orders add column if not exists gift_wrap_pence integer not null default 0;
+
+create table if not exists public.product_questions (
+  id uuid primary key default gen_random_uuid(),
+  product_slug text not null,
+  name text not null default '',
+  question text not null,
+  answer text not null default '',
+  status text not null default 'pending' check (status in ('pending','answered','rejected')),
+  created_at timestamptz not null default now(),
+  answered_at timestamptz
+);
+create index if not exists product_questions_idx on public.product_questions (product_slug, status);
+alter table public.product_questions enable row level security;
+-- The public reads only questions you have answered. Asking goes through the server (service role).
+drop policy if exists "public read answered questions" on public.product_questions;
+create policy "public read answered questions" on public.product_questions for select using (status = 'answered');
+drop policy if exists "admin all product questions" on public.product_questions;
+create policy "admin all product questions" on public.product_questions for all using (public.is_admin()) with check (public.is_admin());

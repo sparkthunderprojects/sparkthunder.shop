@@ -10,10 +10,10 @@ import { formatPrice } from "@/lib/site";
 
 type Hit = { slug: string; name: string; pricePence: number; image: string; franchise: string; inStock: boolean };
 type LinkHit = { label: string; href: string; kind: string };
-type Data = { products: Hit[]; links: LinkHit[]; suggest: string[]; total: number };
+type Data = { products: Hit[]; links: LinkHit[]; suggest: string[]; total: number; corrected?: string | null };
 type Option = { key: string; href: string };
 
-const EMPTY: Data = { products: [], links: [], suggest: [], total: 0 };
+const EMPTY: Data = { products: [], links: [], suggest: [], total: 0, corrected: null };
 
 /** Full-width search drop-down: predictive text in the field, with matching products and their images beneath as you type. */
 export function SearchOverlay({ popular }: { popular: { label: string; href: string }[] }) {
@@ -165,6 +165,7 @@ export function SearchOverlay({ popular }: { popular: { label: string; href: str
                 </div>
 
                 <div>
+                  {data.corrected ? <p className="mb-3 text-sm">Showing results for <Link href={searchHref(data.corrected)} onClick={closePanel} className="font-bold underline underline-offset-4">{data.corrected}</Link> <span className="text-muted">(no matches for “{term}”)</span></p> : null}
                   <p className="text-xs font-bold uppercase tracking-wide text-muted">Products</p>
                   {data.products.length > 0 ? (
                     <ul className="mt-3 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 xl:grid-cols-4">
