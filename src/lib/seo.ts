@@ -93,7 +93,7 @@ export function websiteLd() {
   };
 }
 
-export function productLd(p: Product, franchise: Franchise | null, category: Category | null) {
+export function productLd(p: Product, franchise: Franchise | null, category: Category | null, reviews?: { count: number; average: number; reviews: { name: string; rating: number; title: string; body: string; createdAt: string }[] }) {
   return {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -107,13 +107,17 @@ export function productLd(p: Product, franchise: Franchise | null, category: Cat
     brand: { "@type": "Brand", name: franchise?.name ?? SITE.legalName },
     ...(category ? { category: category.name } : {}),
     manufacturer: { "@id": absoluteUrl("/#organization") },
+    ...(reviews && reviews.count > 0 ? {
+      aggregateRating: { "@type": "AggregateRating", ratingValue: reviews.average, reviewCount: reviews.count, bestRating: 5, worstRating: 1 },
+      review: reviews.reviews.slice(0, 5).map((r) => ({ "@type": "Review", author: { "@type": "Person", name: r.name }, datePublished: r.createdAt.slice(0, 10), reviewRating: { "@type": "Rating", ratingValue: r.rating, bestRating: 5, worstRating: 1 }, ...(r.title ? { name: r.title } : {}), reviewBody: r.body })),
+    } : {}),
     offers: {
       "@type": "Offer",
       url: absoluteUrl(`/products/${p.slug}`),
       priceCurrency: SITE.currency,
       price: (p.pricePence / 100).toFixed(2),
       itemCondition: "https://schema.org/NewCondition",
-      availability: p.inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      availability: p.launchAt && Date.parse(p.launchAt) > Date.now() ? "https://schema.org/PreOrder" : p.inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
       seller: { "@id": absoluteUrl("/#organization") },
     },
   };

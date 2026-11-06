@@ -9,6 +9,6 @@ export async function GET(req: Request) {
   if (!isDemo || hasStripe()) return new NextResponse("Not found", { status: 404 });
   const id = new URL(req.url).searchParams.get("id") ?? "";
   const db = serviceClient()!;
-  await fulfilOrder(db, { sessionId: id, paymentIntent: "pi_demo", email: "buyer@example.com", name: "Demo Buyer", phone: "", address: { name: "Demo Buyer", line1: "1 Test Street", line2: "", city: "London", postcode: "N1 1AA", country: "GB" } });
+  await fulfilOrder(db, { sessionId: id, paymentIntent: "pi_demo", email: "demo@sparkthunder.shop", name: "Demo Buyer", phone: "", address: { name: "Demo Buyer", line1: "1 Test Street", line2: "", city: "London", postcode: "N1 1AA", country: "GB" } });
   return NextResponse.redirect(new URL(`/checkout/success?session_id=${id}`, req.url));
 }

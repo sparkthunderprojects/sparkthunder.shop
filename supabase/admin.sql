@@ -314,3 +314,33 @@ drop policy if exists "public read collections" on public.collections;
 create policy "public read collections" on public.collections for select using (published);
 drop policy if exists "admin all collections" on public.collections;
 create policy "admin all collections" on public.collections for all using (public.is_admin()) with check (public.is_admin());
+
+-- ---------------------------------------------------------------- Round 3: verified-buyer reviews with photos
+create table if not exists public.reviews (
+  id uuid primary key default gen_random_uuid(),
+  product_slug text not null,
+  email text not null,                        -- the buyer (never shown publicly)
+  name text not null default 'Verified buyer',
+  rating integer not null check (rating between 1 and 5),
+  title text not null default '',
+  body text not null default '',
+  photos text[] not null default '{}',
+  verified boolean not null default true,
+  status text not null default 'pending' check (status in ('pending','approved','rejected')),
+  created_at timestamptz not null default now(),
+  unique (product_slug, email)
+);
+create index if not exists reviews_product_idx on public.reviews (product_slug, status);
+alter table public.reviews enable row level security;
+-- The public can read approved reviews only, and never the buyer's email (column-level privileges). Writes go through the server.
+revoke select on public.reviews from anon, authenticated;
+grant select (id, product_slug, name, rating, title, body, photos, verified, status, created_at) on public.reviews to anon, authenticated;
+drop policy if exists "public read approved reviews" on public.reviews;
+create policy "public read approved reviews" on public.reviews for select using (status = 'approved');
+drop policy if exists "admin all reviews" on public.reviews;
+create policy "admin all reviews" on public.reviews for all using (public.is_admin()) with check (public.is_admin());
+
+insert into storage.buckets (id, name, public) values ('review-photos', 'review-photos', true) on conflict (id) do nothing;
+drop policy if exists "public read review photos" on storage.objects;
+create policy "public read review photos" on storage.objects for select using (bucket_id = 'review-photos');
+-- Uploads happen only through the server (service role), so no public write policy is created.

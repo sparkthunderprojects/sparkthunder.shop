@@ -14,6 +14,8 @@ import { ShareButton } from "@/components/ShareButton";
 import { StickyBuyBar } from "@/components/StickyBuyBar";
 import { productImagePath } from "@/lib/card";
 import { getAllProducts, getCategory, getCompleteTheSet, getFranchise, getFranchises, getProduct, getRelatedProducts } from "@/lib/catalog";
+import { ReviewsSection } from "@/components/ReviewsSection";
+import { getReviews } from "@/lib/reviews";
 import { breadcrumbLd, buildMetadata, clip, productImageUrl, productLd } from "@/lib/seo";
 import { formatPrice } from "@/lib/site";
 import { worldStyle } from "@/lib/theme";
@@ -39,13 +41,14 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
   const product = await getProduct(slug);
   if (!product) notFound();
 
-  const [franchise, category, relatedAll, completeSet, franchises, allProducts] = await Promise.all([
+  const [franchise, category, relatedAll, completeSet, franchises, allProducts, reviews] = await Promise.all([
     getFranchise(product.franchiseSlug),
     getCategory(product.categorySlug),
     getRelatedProducts(product, 8),
     getCompleteTheSet(product),
     getFranchises(),
     getAllProducts(),
+    getReviews(slug),
   ]);
   const inSet = new Set(completeSet.map((p) => p.slug));
   const related = relatedAll.filter((p) => !inSet.has(p.slug)).slice(0, 4);
@@ -62,7 +65,7 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
   return (
     <div style={worldStyle(franchise?.accent)}>
       <JsonLd data={[
-        productLd(product, franchise, category),
+        productLd(product, franchise, category, reviews),
         breadcrumbLd([
           { name: "Home", path: "/" },
           ...(franchise ? [{ name: franchise.name, path: `/franchises/${franchise.slug}` }] : []),
@@ -135,6 +138,8 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
 
       <RecentTracker slug={product.slug} />
       <StickyBuyBar targetId="buy-box" item={cartItem} inStock={product.inStock} hasOptions={(product.variants ?? []).length > 0} />
+
+      <ReviewsSection slug={product.slug} summary={reviews} />
 
       {completeSet.length > 0 && (
         <section className="mt-24" aria-labelledby="set-h">
