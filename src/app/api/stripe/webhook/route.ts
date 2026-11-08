@@ -29,17 +29,20 @@ export async function POST(req: Request) {
         ?? (s as unknown as { shipping_details?: { name?: string; address?: Stripe.Address } }).shipping_details;
       const a = ship?.address;
       try {
-        await fulfilOrder(db, {
+        const result = await fulfilOrder(db, {
+          storeId: await currentStoreId(),
           sessionId: s.id,
           paymentIntent: typeof s.payment_intent === "string" ? s.payment_intent : s.payment_intent?.id ?? "",
           email: s.customer_details?.email ?? "", name: s.customer_details?.name ?? ship?.name ?? "", phone: s.customer_details?.phone ?? "",
           address: a ? { name: ship?.name ?? "", line1: a.line1 ?? "", line2: a.line2 ?? "", city: a.city ?? "", postcode: a.postal_code ?? "", country: a.country ?? "" } : null,
         });
+        // Another worker is finishing this order right now: ask Stripe to try again later rather than do it twice.
+        if (result.busy) return new Response("Order is being processed", { status: 503 });
         await revalidateStoreTag(CATALOG_TAG, await currentStoreId());
         revalidatePath("/admin", "layout");
       } catch (e) {
         console.error("[stripe webhook] fulfilment failed", e);
-        return new Response("Fulfilment failed", { status: 500 }); // Stripe will retry; fulfilOrder is idempotent
+        return new Response("Fulfilment failed", { status: 500 }); // Stripe will retry; fulfilOrder resumes from the last finished step
       }
     }
   }

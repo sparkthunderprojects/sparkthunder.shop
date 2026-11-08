@@ -10,22 +10,29 @@ export type LedgerEntry = { id: string; card_id: string; delta_pence: number; ba
 
 export type IssueInput = {
   amountPence: number; recipientName?: string; recipientEmail?: string; senderName?: string; message?: string; theme?: string;
-  source?: GiftCard["source"]; orderRef?: string; note?: string; expiresAt?: string | null; createdBy?: string;
+  source?: GiftCard["source"]; orderRef?: string; note?: string; expiresAt?: string | null; createdBy?: string; fulfilKey?: string;
 };
 
 export const GIFT_LIMITS = { min: 500, max: 25000 };
 
 /** Create a card and its opening ledger entry. Retries on the (astronomically unlikely) code collision. */
 export async function issueCard(db: Db, i: IssueInput): Promise<GiftCard> {
+  // A purchased card is issued once per (order, line, copy): asking again returns the card that already exists.
+  if (i.fulfilKey) {
+    const existing = await db.from("gift_cards").select("*").eq("fulfil_key", i.fulfilKey).maybeSingle();
+    if (existing.data) return existing.data as GiftCard;
+  }
   if (!Number.isInteger(i.amountPence) || i.amountPence < GIFT_LIMITS.min || i.amountPence > GIFT_LIMITS.max) throw new Error("The amount is outside the allowed range.");
   for (let attempt = 0; attempt < 4; attempt++) {
     const { data, error } = await db.from("gift_cards").insert({
       code: generateCode(), currency: "GBP", initial_pence: i.amountPence, balance_pence: i.amountPence, status: "active",
       recipient_name: i.recipientName?.trim() ?? "", recipient_email: i.recipientEmail?.trim().toLowerCase() ?? "", sender_name: i.senderName?.trim() ?? "",
       message: i.message?.trim() ?? "", theme: i.theme ?? "brand", source: i.source ?? "admin", order_ref: i.orderRef?.trim() ?? "", note: i.note?.trim() ?? "",
-      expires_at: i.expiresAt || null,
+      expires_at: i.expiresAt || null, ...(i.fulfilKey ? { fulfil_key: i.fulfilKey } : {}),
     }).select("*").single();
-    if (error) { if (/duplicate|unique/i.test(error.message)) continue; throw new Error(`Could not create the gift card: ${error.message}`); }
+    if (error) {
+      if (i.fulfilKey && /fulfil_key/i.test(error.message)) { const won = await db.from("gift_cards").select("*").eq("fulfil_key", i.fulfilKey).maybeSingle(); if (won.data) return won.data as GiftCard; }
+      if (/duplicate|unique/i.test(error.message)) continue; throw new Error(`Could not create the gift card: ${error.message}`); }
     const card = data as GiftCard;
     const led = await db.from("gift_card_ledger").insert({ card_id: card.id, delta_pence: card.initial_pence, balance_after: card.initial_pence, kind: "issue", order_ref: card.order_ref, note: i.note ?? "", created_by: i.createdBy ?? "" });
     if (led.error) throw new Error(`The card was created but its history entry failed: ${led.error.message}`);

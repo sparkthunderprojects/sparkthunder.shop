@@ -562,3 +562,98 @@ create index if not exists orders_store_created_idx on public.orders (store_id, 
 create index if not exists reviews_store_product_idx on public.reviews (store_id, product_slug, status);
 create index if not exists discount_codes_store_idx on public.discount_codes (store_id, code);
 create index if not exists gift_cards_store_idx on public.gift_cards (store_id, code);
+
+-- ============================================================================
+-- Reliable fulfilment (idempotent): resumable orders, exactly-once stock, atomic order numbers
+-- ============================================================================
+do $$ begin
+  -- Orders that existed before this was added are finished: never resume them.
+  if not exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'orders' and column_name = 'fulfilled_at') then
+    alter table public.orders add column fulfilled_at timestamptz;
+    update public.orders set fulfilled_at = created_at;
+  end if;
+end $$;
+alter table public.orders
+  add column if not exists fulfilment jsonb not null default '{}',          -- which steps are done (stock, gift cards, points, email...)
+  add column if not exists fulfil_attempts int not null default 0,
+  add column if not exists fulfilment_lock_until timestamptz;               -- one worker at a time finishes an order
+alter table public.gift_cards add column if not exists fulfil_key text;     -- makes "issue this purchased card" safe to repeat
+create unique index if not exists gift_cards_fulfil_key_idx on public.gift_cards (fulfil_key) where fulfil_key is not null;
+
+-- One row per product taken off stock by an order. The unique key is what makes taking stock safe to repeat.
+create table if not exists public.stock_movements (
+  id uuid primary key default gen_random_uuid(),
+  store_id text not null references public.stores(id) on update cascade,
+  order_id uuid not null references public.orders(id) on delete cascade,
+  product_slug text not null,
+  variant text not null default '',
+  qty int not null,
+  before_qty int,
+  oversold boolean not null default false,
+  created_at timestamptz not null default now(),
+  unique (order_id, product_slug, variant)
+);
+alter table public.stock_movements enable row level security;
+drop policy if exists "admin read stock movements" on public.stock_movements;
+create policy "admin read stock movements" on public.stock_movements for select using (public.can_admin_store(store_id));
+
+create table if not exists public.store_counters (
+  store_id text not null references public.stores(id) on update cascade,
+  name text not null,
+  value int not null,
+  primary key (store_id, name)
+);
+alter table public.store_counters enable row level security;
+revoke all on public.store_counters from anon, authenticated;
+
+-- Next order number for a store, safe when many orders arrive at once. Starts after any orders that already exist.
+create or replace function public.next_order_number(p_store text) returns int
+language plpgsql security definer set search_path = public as $$
+declare v int;
+begin
+  insert into public.store_counters (store_id, name, value)
+  values (p_store, 'order', 1001 + (select count(*) from public.orders where store_id = p_store))
+  on conflict (store_id, name) do update set value = public.store_counters.value + 1
+  returning value into v;
+  return v;
+end $$;
+
+-- Take stock off a product (or one variant) for an order. Locks the product row, so two orders can never overwrite each other,
+-- and records a movement, so calling it twice for the same order and product does nothing the second time.
+-- Returns the quantity in stock before this order (so a caller can spot overselling), -1 if already applied, -2 if stock is not tracked.
+create or replace function public.take_stock(p_store text, p_order uuid, p_slug text, p_variant text, p_qty int) returns int
+language plpgsql security definer set search_path = public as $$
+declare prod public.products%rowtype; v_before int; vs jsonb; total int;
+begin
+  insert into public.stock_movements (store_id, order_id, product_slug, variant, qty)
+  values (p_store, p_order, p_slug, coalesce(p_variant, ''), p_qty)
+  on conflict (order_id, product_slug, variant) do nothing;
+  if not found then return -1; end if;
+
+  select * into prod from public.products where store_id = p_store and slug = p_slug for update;
+  if not found or not prod.track_stock then return -2; end if;
+
+  if coalesce(p_variant, '') <> '' and jsonb_typeof(prod.variants) = 'array' and jsonb_array_length(prod.variants) > 0 then
+    select (v ->> 'stockQty')::int into v_before from jsonb_array_elements(prod.variants) v where v ->> 'name' = p_variant limit 1;
+    select coalesce(jsonb_agg(case when v ->> 'name' = p_variant
+                                   then jsonb_set(v, '{stockQty}', to_jsonb(greatest(0, (v ->> 'stockQty')::int - p_qty)))
+                                   else v end order by ord), '[]'::jsonb)
+      into vs from jsonb_array_elements(prod.variants) with ordinality as t(v, ord);
+    select coalesce(sum((v ->> 'stockQty')::int), 0) into total from jsonb_array_elements(vs) v;
+    update public.products set variants = vs, stock_qty = total, in_stock = total > 0 where store_id = p_store and slug = p_slug;
+  else
+    v_before := prod.stock_qty;
+    update public.products set stock_qty = greatest(0, prod.stock_qty - p_qty),
+                               in_stock = case when prod.stock_qty - p_qty <= 0 then false else prod.in_stock end
+      where store_id = p_store and slug = p_slug;
+  end if;
+  update public.stock_movements set before_qty = v_before, oversold = coalesce(v_before, 0) < p_qty
+    where order_id = p_order and product_slug = p_slug and variant = coalesce(p_variant, '');
+  return coalesce(v_before, 0);
+end $$;
+
+-- These run with the service key only (the server), never from a browser.
+revoke all on function public.next_order_number(text) from public, anon, authenticated;
+revoke all on function public.take_stock(text, uuid, text, text, int) from public, anon, authenticated;
+grant execute on function public.next_order_number(text) to service_role;
+grant execute on function public.take_stock(text, uuid, text, text, int) to service_role;

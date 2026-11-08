@@ -92,6 +92,8 @@ class Query implements PromiseLike<Result> {
       if (pk === "id" && out.id == null) out.id = ["media", "gift_cards", "gift_card_ledger", "orders"].includes(this.table) ? `${this.table[0]}-${g.__sparkSeq!++}-${Date.now().toString(36)}` : g.__sparkSeq!++;
       if (!out.created_at && this.table !== "settings") out.created_at = now;
       if (["products", "franchises", "categories"].includes(this.table)) out.updated_at = now;
+      // Column defaults the real schema applies.
+      if (this.table === "orders") { out.fulfilment ??= {}; out.fulfil_attempts ??= 0; out.fulfilment_lock_until ??= null; out.fulfilled_at ??= null; }
       return out;
     };
     let result: Row[] = [];
@@ -100,6 +102,7 @@ class Query implements PromiseLike<Result> {
         if (rows.some((x) => x[pk] === r[pk] && r[pk] != null && sid(x) === sid(r))) return { data: null, error: { message: `duplicate key value violates unique constraint on ${this.table}.${pk}` } };
         if (this.table === "products" && rows.some((x) => x.sku === r.sku && sid(x) === sid(r))) return { data: null, error: { message: "duplicate key value violates unique constraint \"products_sku_key\"" } };
         if (this.table === "orders" && rows.some((x) => x.number === r.number && sid(x) === sid(r))) return { data: null, error: { message: "duplicate key value violates unique constraint \"orders_number_key\"" } };
+        if (this.table === "orders" && r.stripe_session_id && rows.some((x) => x.stripe_session_id === r.stripe_session_id)) return { data: null, error: { message: "duplicate key value violates unique constraint \"orders_stripe_session_id_key\"" } };
         if (this.table === "redirects" && rows.some((x) => x.from_path === r.from_path && sid(x) === sid(r))) return { data: null, error: { message: "duplicate key value violates unique constraint \"redirects_from_path_key\"" } };
         const row = withDefaults(r); rows.push(row); result.push(row);
       }
@@ -138,6 +141,38 @@ export function createFakeClient() {
   return {
     from: (table: string) => new Query(table),
     rpc: async (name: string, args: Record<string, unknown>) => {
+      if (name === "next_order_number") {
+        const S = String(args.p_store ?? "sparkthunder"), t = store();
+        const counters = (t.store_counters ??= []);
+        let c = counters.find((r) => r.store_id === S && r.name === "order");
+        if (!c) { c = { store_id: S, name: "order", value: 1000 + (t.orders ?? []).filter((o) => sid(o) === S).length }; counters.push(c); }
+        c.value = (c.value as number) + 1;
+        return { data: c.value, error: null };
+      }
+      if (name === "take_stock") {
+        // Same behaviour as the SQL function: exactly once per (order, product, variant), applied under one lock.
+        const t = store(), S = String(args.p_store), slug = String(args.p_slug), variant = String(args.p_variant ?? ""), qty = Number(args.p_qty);
+        const moves = (t.stock_movements ??= []);
+        if (moves.some((m) => m.order_id === args.p_order && m.product_slug === slug && m.variant === variant)) return { data: -1, error: null };
+        const move: Row = { order_id: args.p_order, product_slug: slug, variant, qty, store_id: S, oversold: false };
+        moves.push(move);
+        const p = (t.products ?? []).find((r) => r.slug === slug && sid(r) === S);
+        if (!p || !p.track_stock) return { data: -2, error: null };
+        let before = 0;
+        const vs = p.variants as { name: string; stockQty: number }[] | null;
+        if (variant && vs?.length) {
+          before = vs.find((v) => v.name === variant)?.stockQty ?? 0;
+          p.variants = vs.map((v) => (v.name === variant ? { ...v, stockQty: Math.max(0, v.stockQty - qty) } : v));
+          const total = (p.variants as { stockQty: number }[]).reduce((n, v) => n + v.stockQty, 0);
+          p.stock_qty = total; p.in_stock = total > 0;
+        } else {
+          before = p.stock_qty as number;
+          p.stock_qty = Math.max(0, before - qty);
+          if (before - qty <= 0) p.in_stock = false;
+        }
+        move.before_qty = before; move.oversold = before < qty;
+        return { data: before, error: null };
+      }
       if (name !== "gift_card_lookup") return { data: null, error: { message: `Unknown function ${name}` } };
       const c = (store().gift_cards ?? []).find((r) => r.code === String(args.p_code).toUpperCase() && sid(r) === (args.p_store ?? "sparkthunder"));
       if (!c) return { data: [], error: null };
