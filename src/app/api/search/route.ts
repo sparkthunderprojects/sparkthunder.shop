@@ -9,7 +9,8 @@ export async function GET(req: Request) {
   if (q.length < 2) return Response.json(empty);
 
   const needle = q.toLowerCase();
-  let [matches, all, franchises, categories] = await Promise.all([getProducts({ q }), getAllProducts(), getFranchises(), getCategories()]);
+  const [firstMatches, all, franchises, categories] = await Promise.all([getProducts({ q }), getAllProducts(), getFranchises(), getCategories()]);
+  let matches = firstMatches;
   // Nothing matched? Try fixing small typos against the shop's own words.
   let corrected: string | null = null;
   if (matches.length === 0) {

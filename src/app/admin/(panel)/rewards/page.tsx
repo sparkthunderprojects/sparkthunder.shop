@@ -19,7 +19,7 @@ export default async function RewardsAdmin() {
   const outstanding = people.reduce((n, p) => n + Math.max(0, p.balance), 0);
   return (
     <>
-      <div className="adm-h"><div><h1>Spark points</h1><p>Fans earn {POINTS_PER_POUND} point per £1 on products and {REVIEW_BONUS} per approved review, and trade points for single-use codes ({REDEEM_OPTIONS.map((o) => `${o.points} = ${formatPrice(o.pence)}`).join(", ")}). Points follow the email on the order, so they appear in a fan's Sparkthunder ID account.</p></div></div>
+      <div className="adm-h"><div><h1>Spark points</h1><p>Fans earn {POINTS_PER_POUND} point per £1 on products and {REVIEW_BONUS} per approved review, and trade points for single-use codes ({REDEEM_OPTIONS.map((o) => `${o.points} = ${formatPrice(o.pence)}`).join(", ")}). Points follow the email on the order, so they appear in a fan&apos;s Sparkthunder ID account.</p></div></div>
       <div className="adm-grid adm-g3" style={{ marginBottom: 18 }}>
         {[[String(people.length), "Fans with points"], [String(outstanding), "Points outstanding"], [String(rows.filter((r) => r.reason === "redeem").length), "Rewards redeemed"]].map(([v, l]) => <div key={l} className="adm-card" style={{ margin: 0 }}><div className="adm-stat">{v}</div><div className="adm-stat-l">{l}</div></div>)}
       </div>
