@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { markShippedAction, updateOrderAction } from "../../../order-actions";
+import { finishOrderAction, markShippedAction, updateOrderAction } from "../../../order-actions";
 import { Field, useAction } from "../../../ui";
 import type { OrderRow } from "@/lib/shop/fulfil";
 import { formatPrice } from "@/lib/site";
@@ -21,6 +21,13 @@ export function OrderDetail({ order: o }: { order: OrderRow }) {
       <div className="adm-h"><div><h1>{o.number}</h1><p><Link href="/admin/orders">All orders</Link> · {new Date(o.created_at).toLocaleString("en-GB")}</p></div>
         <span className={`adm-badge ${o.status === "shipped" ? "adm-ok" : o.status === "attention" ? "adm-bad" : o.status === "paid" ? "adm-warn" : ""}`}>{o.status}</span></div>
 
+      {!o.fulfilled_at ? (
+        <section className="adm-card" style={{ borderColor: "#b7791f" }}>
+          <h2 style={{ color: "#b7791f" }}>This order has not finished processing</h2>
+          <p style={{ margin: 0 }}>The payment was received, but one or more steps (stock, gift cards, points, the confirmation email) have not completed. This normally fixes itself within minutes. If it does not, finish it now: only the steps that are not done will run, and nothing is repeated.</p>
+          <button className="adm-btn adm-pri" style={{ marginTop: 12 }} disabled={pending} onClick={() => run(() => finishOrderAction(o.id), "Done", () => router.refresh())}>Finish processing</button>
+        </section>
+      ) : null}
       {o.attention_reason ? <section className="adm-card" style={{ borderColor: "#c0392b" }}><h2 style={{ color: "#c0392b" }}>Needs your attention</h2><p style={{ whiteSpace: "pre-line", margin: 0 }}>{o.attention_reason}</p>
         <button className="adm-btn" style={{ marginTop: 12 }} disabled={pending} onClick={() => run(() => updateOrderAction(o.id, { status: o.status === "attention" ? "paid" : o.status, notes }), "Marked as handled", () => router.refresh())}>Mark as handled</button></section> : null}
 
