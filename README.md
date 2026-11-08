@@ -79,3 +79,10 @@ Each product can name up to three option axes (for example Shade, Size, Finish).
 ## Stock holds at checkout
 
 When a shopper starts checkout, the tracked items in their basket are held for 35 minutes (database functions `reserve_stock` and `release_stock`). Other shoppers see those units as unavailable, the Stripe payment page expires after 32 minutes, a paid order uses up its hold, and an abandoned checkout frees the stock on its own. Starting checkout again replaces the shopper's own earlier hold. Products without stock tracking are never held.
+
+## Security headers
+
+Every response carries `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `Cross-Origin-Opener-Policy`, HSTS (production) and a Content-Security-Policy (`src/lib/security-headers.ts`). The admin is never framed and never cached.
+The policy keeps inline scripts allowed (Next.js and JSON-LD need them) but restricts script hosts to the site and the consent-gated Google and Facebook tags, limits where data can be sent, and blocks plugins, base tags and foreign form posts.
+If a new third-party script is added, list its host there. Emergency switch: set `SPARK_CSP=report-only` (log, do not block) or `SPARK_CSP=off`.
+Visitor IP addresses used for rate limiting come from `x-forwarded-for`; run behind a host that sets it itself (Vercel, Netlify, Bolt do) so it cannot be spoofed by the visitor.

@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { securityHeaders } from "./src/lib/security-headers";
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
@@ -16,15 +17,10 @@ const nextConfig: NextConfig = {
     return [
       // The embeddable widget is loaded by other websites, so it must be cacheable, framable-safe (it is a script) and CORS-readable.
       { source: "/embed/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=3600, stale-while-revalidate=86400" }, { key: "Access-Control-Allow-Origin", value: "*" }] },
-      {
-        source: "/:path*",
-        headers: [
-          { key: "X-Content-Type-Options", value: "nosniff" },
-          { key: "X-Frame-Options", value: "SAMEORIGIN" },
-          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
-        ],
-      },
+      { source: "/((?!admin(?:/|$)).*)", headers: securityHeaders() },
+      // The admin and account pages are private: never framed, never cached by a shared cache.
+      { source: "/admin/:path*", headers: [...securityHeaders({ admin: true }), { key: "Cache-Control", value: "private, no-store" }] },
+      { source: "/account/:path*", headers: [{ key: "Cache-Control", value: "private, no-store" }] },
     ];
   },
   turbopack: {

@@ -20,6 +20,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Known vulnerabilities in what we ship (high and above)
+        run: npm audit --omit=dev --audit-level=high
       - name: Type check
         run: npm run typecheck
       - name: Lint
