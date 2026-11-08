@@ -727,3 +727,34 @@ revoke all on function public.reserve_stock(text, text, jsonb, int) from public,
 revoke all on function public.release_stock(text, text) from public, anon, authenticated;
 grant execute on function public.reserve_stock(text, text, jsonb, int) to service_role;
 grant execute on function public.release_stock(text, text) to service_role;
+
+-- ============================================================================
+-- Exactly-once discount code use (idempotent)
+-- ============================================================================
+create table if not exists public.discount_redemptions (
+  id uuid primary key default gen_random_uuid(),
+  store_id text not null references public.stores(id) on update cascade,
+  code_id uuid not null references public.discount_codes(id) on delete cascade,
+  order_id uuid not null references public.orders(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  unique (order_id, code_id)
+);
+alter table public.discount_redemptions enable row level security;
+drop policy if exists "admin read discount redemptions" on public.discount_redemptions;
+create policy "admin read discount redemptions" on public.discount_redemptions for select using (public.can_admin_store(store_id));
+
+-- Count one use of a code for an order. Repeating it for the same order does nothing. The count goes up in one statement,
+-- so two orders at the same moment can never lose a use. 'over' is true when a paid order pushed the code past its limit.
+create or replace function public.use_discount(p_store text, p_order uuid, p_code uuid) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare d public.discount_codes%rowtype;
+begin
+  insert into public.discount_redemptions (store_id, code_id, order_id) values (p_store, p_code, p_order)
+  on conflict (order_id, code_id) do nothing;
+  if not found then return jsonb_build_object('status', 'repeat'); end if;
+  update public.discount_codes set uses = uses + 1 where id = p_code and store_id = p_store returning * into d;
+  if not found then return jsonb_build_object('status', 'missing'); end if;
+  return jsonb_build_object('status', 'counted', 'uses', d.uses, 'over', d.max_uses is not null and d.uses > d.max_uses);
+end $$;
+revoke all on function public.use_discount(text, uuid, uuid) from public, anon, authenticated;
+grant execute on function public.use_discount(text, uuid, uuid) to service_role;

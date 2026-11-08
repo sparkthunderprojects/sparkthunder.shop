@@ -40,13 +40,11 @@ export async function checkDiscount(db: Db, rawCode: string, lines: { franchiseS
   return { ok: true, row: d, amountPence };
 }
 
-/** Count one use. Safe if two orders race: retries with the value it read. */
-export async function recordDiscountUse(db: Db, id: string): Promise<void> {
-  for (let i = 0; i < 4; i++) {
-    const { data } = await db.from("discount_codes").select("uses").eq("id", id).maybeSingle();
-    const uses = (data as { uses: number } | null)?.uses;
-    if (uses === undefined) return;
-    const { data: upd } = await db.from("discount_codes").update({ uses: uses + 1 }).eq("id", id).eq("uses", uses).select("id");
-    if (upd && (upd as unknown[]).length) return;
-  }
+export type DiscountUse = { status: "counted" | "repeat" | "missing"; over?: boolean };
+
+/** Count one use of a code for an order: exactly once per order, however often this is called (SQL `use_discount`). */
+export async function recordDiscountUse(db: Db, storeId: string, orderId: string, codeId: string): Promise<DiscountUse> {
+  const { data, error } = await db.rpc("use_discount", { p_store: storeId, p_order: orderId, p_code: codeId });
+  if (error) throw new Error(error.message);
+  return data as DiscountUse;
 }

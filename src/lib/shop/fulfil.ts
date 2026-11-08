@@ -106,10 +106,13 @@ export async function fulfilOrder(db: Db, s: PaidSession): Promise<{ order: Orde
     if (!payload) {
       problems.add("Payment received but the basket snapshot was missing. Check the Stripe payment and fulfil manually.");
     } else {
-      // 0. Count the discount code use (at most once: marked before it is counted).
+      // 0. Count the discount code use. The database counts it once per order, so repeating this step is safe.
       if (payload.discount && !state.discount) {
-        state.discount = true; await save();
-        try { await recordDiscountUse(db, payload.discount.id); } catch { problems.add(`Discount code ${payload.discount.code} use could not be counted.`); }
+        if (await attempt("Counting the discount code", async () => {
+          const r = await recordDiscountUse(db, storeId, orderId, payload.discount!.id);
+          if (r.status === "missing") throw new Business(`Discount code ${payload.discount!.code} no longer exists, so its use was not counted.`);
+          if (r.over) problems.add(`Discount code ${payload.discount!.code} went over its use limit (several customers used it at once). The order was honoured.`);
+        })) { state.discount = true; await save(); }
       }
 
       // 1. Charge the gift card the customer used. Repeating this checks the card's history first, so it is never charged twice.

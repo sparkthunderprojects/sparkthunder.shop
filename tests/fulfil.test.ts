@@ -189,4 +189,21 @@ describe("stock holds at checkout", () => {
     await db.from("products").update({ track_stock: false }).eq("slug", "tee");
     expect((await holdStock(db, "sparkthunder", "rsv_a", await items([line("tee", 99)]))).ok).toBe(true);
   });
+
+  it("counts a discount code once, even if the order is finished again after a crash", async () => {
+    await db.from("discount_codes").insert({ id: "d1", code: "SAVE", kind: "fixed", value: 100, max_uses: 1, uses: 0, active: true });
+    const s = await checkout("cs_disc", [line("tee", 1)], { discount: { id: "d1", code: "SAVE", appliedPence: 100 } as never });
+    const flakyDb = flaky((n) => n === "take_stock");
+    await expect(fulfilOrder(flakyDb, s)).rejects.toThrow();
+    await fulfilOrder(db, s);
+    await fulfilOrder(db, s);
+    expect(((await rows("discount_codes"))[0]).uses).toBe(1);
+  });
+
+  it("honours a paid order but flags a code that went over its limit", async () => {
+    await db.from("discount_codes").insert({ id: "d2", code: "ONCE", kind: "fixed", value: 100, max_uses: 1, uses: 1, active: true });
+    const r = await fulfilOrder(db, await checkout("cs_over", [line("tee", 1)], { discount: { id: "d2", code: "ONCE", appliedPence: 100 } as never }));
+    expect(r.order.fulfilled_at).toBeTruthy();
+    expect(JSON.stringify(r.order.fulfilment?.problems)).toContain("over its use limit");
+  });
 });

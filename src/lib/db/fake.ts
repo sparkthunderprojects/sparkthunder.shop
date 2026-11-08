@@ -175,6 +175,16 @@ export function createFakeClient() {
         t.stock_reservations.push(...keep);
         return { data: { ok: true }, error: null };
       }
+      if (name === "use_discount") {
+        const t = store(), S = String(args.p_store);
+        const reds = (t.discount_redemptions ??= []);
+        if (reds.some((r) => r.order_id === args.p_order && r.code_id === args.p_code)) return { data: { status: "repeat" }, error: null };
+        reds.push({ store_id: S, code_id: args.p_code, order_id: args.p_order });
+        const d = (t.discount_codes ?? []).find((r) => r.id === args.p_code && sid(r) === S);
+        if (!d) return { data: { status: "missing" }, error: null };
+        d.uses = (d.uses as number) + 1;
+        return { data: { status: "counted", uses: d.uses, over: d.max_uses != null && (d.uses as number) > (d.max_uses as number) }, error: null };
+      }
       if (name === "take_stock") {
         // Same behaviour as the SQL function: exactly once per (order, product, variant), applied under one lock.
         const t = store(), S = String(args.p_store), slug = String(args.p_slug), variant = String(args.p_variant ?? ""), qty = Number(args.p_qty);

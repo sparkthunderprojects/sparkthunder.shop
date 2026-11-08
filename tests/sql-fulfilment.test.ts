@@ -18,6 +18,7 @@ const PRELUDE = `
     primary key (store_id, slug));
   create table public.orders (id uuid primary key default gen_random_uuid(), store_id text not null references public.stores(id), number text not null, created_at timestamptz not null default now());
   create table public.gift_cards (id uuid primary key default gen_random_uuid());
+  create table public.discount_codes (id uuid primary key default gen_random_uuid(), store_id text not null references public.stores(id), code text not null, uses int not null default 0, max_uses int);
 `;
 
 let db: PGlite;
@@ -129,5 +130,36 @@ describe("stock holds (real SQL)", () => {
   });
   it("is not callable from a browser role", async () => {
     await expect(db.exec("set role anon; select reserve_stock('sparkthunder','x','[]'::jsonb,35)")).rejects.toThrow(/permission denied/i);
+  });
+});
+
+describe("use_discount (real SQL)", () => {
+  const code = async (max: number | null, store = "sparkthunder") => (await one<{ id: string }>("insert into discount_codes (store_id, code, max_uses) values ($1,'SAVE',$2) returning id", [store, max])).id;
+  const use = async (o: string, c: string, store = "sparkthunder") => (await one<{ use_discount: { status: string; uses?: number; over?: boolean } }>("select use_discount($1,$2,$3)", [store, o, c])).use_discount;
+  const uses = async (c: string) => (await one<{ uses: number }>("select uses from discount_codes where id = $1", [c])).uses;
+
+  it("counts once per order, however often it is repeated", async () => {
+    const c = await code(null), o = await order();
+    expect((await use(o, c)).status).toBe("counted");
+    expect((await use(o, c)).status).toBe("repeat");
+    expect((await use(o, c)).status).toBe("repeat");
+    expect(await uses(c)).toBe(1);
+  });
+  it("counts every order separately and flags going over the limit", async () => {
+    const c = await code(2);
+    expect((await use(await order(), c)).over).toBe(false);
+    expect((await use(await order(), c)).over).toBe(false);
+    expect((await use(await order(), c)).over).toBe(true);
+    expect(await uses(c)).toBe(3);
+  });
+  it("never loses a use when orders arrive at the same moment", async () => {
+    const c = await code(null), os = await Promise.all([order(), order(), order(), order(), order()]);
+    await Promise.all(os.map((o) => use(o, c)));
+    expect(await uses(c)).toBe(5);
+  });
+  it("does not touch another store's code and is not callable from a browser role", async () => {
+    const c = await code(null, "misspetty"), o = await order();
+    expect((await use(o, c)).status).toBe("missing");
+    await expect(db.exec("set role anon; select use_discount('sparkthunder', gen_random_uuid(), gen_random_uuid())")).rejects.toThrow(/permission denied/i);
   });
 });
