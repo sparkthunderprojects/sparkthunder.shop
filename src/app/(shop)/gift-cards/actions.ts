@@ -26,7 +26,7 @@ export async function lookupGiftCardAction(input: string): Promise<LookupResult>
   const ip = (h.get("x-forwarded-for") ?? "").split(",")[0].trim() || h.get("x-real-ip") || "unknown";
   if (limited(ip)) return { ok: false, error: "Too many attempts. Please wait a minute and try again." };
   const code = normaliseCode(input);
-  if (!code) return { ok: false, error: "That does not look like a gift card code. It starts with SPK and has 12 more characters." };
+  if (!code) return { ok: false, error: "That does not look like a gift card code. Check it against the email we sent you." };
   const db = publicClient();
   if (!db) return { ok: false, error: "Gift cards are not available yet." };
   const { data, error } = await db.rpc("gift_card_lookup", { p_code: code, p_store: await currentStoreId() });

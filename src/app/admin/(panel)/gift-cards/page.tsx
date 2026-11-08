@@ -1,3 +1,4 @@
+import { getCommerce } from "@/lib/commerce";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/admin/auth";
 import { listCards } from "@/lib/giftcards/ledger";
@@ -10,10 +11,11 @@ export const metadata = { title: "Gift cards" };
 export default async function GiftCardsAdmin() {
   const { db } = await requireAdmin();
   const cards = await listCards(db);
+  const prefix = (await getCommerce()).codePrefix;
   const active = cards.filter((c) => effectiveStatus(c) === "active");
   const outstanding = active.reduce((n, c) => n + c.balance_pence, 0);
   const issued = cards.reduce((n, c) => n + c.initial_pence, 0);
-  const rows: GRow[] = cards.map((c) => ({ id: c.id, code: formatCode(c.code), recipient: c.recipient_name || c.recipient_email || "-", email: c.recipient_email, initial: c.initial_pence, balance: c.balance_pence, status: effectiveStatus(c), source: c.source, created: c.created_at, expires: c.expires_at }));
+  const rows: GRow[] = cards.map((c) => ({ id: c.id, code: formatCode(c.code, prefix), recipient: c.recipient_name || c.recipient_email || "-", email: c.recipient_email, initial: c.initial_pence, balance: c.balance_pence, status: effectiveStatus(c), source: c.source, created: c.created_at, expires: c.expires_at }));
   return (
     <>
       <div className="adm-h"><div><h1>Gift cards</h1><p>Issue cards, check balances and keep a full history of every pound spent.</p></div><Link className="adm-btn adm-bolt" href="/admin/gift-cards/new">Issue a gift card</Link></div>

@@ -2,10 +2,10 @@
 import { createContext, useContext } from "react";
 import type { CommerceSettings } from "@/lib/commerce-config";
 
-const Ctx = createContext<Pick<CommerceSettings, "freeShippingPence" | "giftWrapPence">>({ freeShippingPence: null, giftWrapPence: 0 });
+const Ctx = createContext<Pick<CommerceSettings, "freeShippingPence" | "giftWrapPence" | "codePrefix">>({ freeShippingPence: null, giftWrapPence: 0, codePrefix: "SPK" });
 
 /** Hands the store's shipping and gift-wrap rules to client components (cart, free-shipping bar). */
-export function CommerceProvider({ value, children }: { value: Pick<CommerceSettings, "freeShippingPence" | "giftWrapPence">; children: React.ReactNode }) {
+export function CommerceProvider({ value, children }: { value: Pick<CommerceSettings, "freeShippingPence" | "giftWrapPence" | "codePrefix">; children: React.ReactNode }) {
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 export const useCommerce = () => useContext(Ctx);

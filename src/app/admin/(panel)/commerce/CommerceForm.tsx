@@ -17,12 +17,13 @@ export function CommerceForm({ commerce, status }: { commerce: CommerceSettings;
   const [wrap, setWrap] = useState(pounds(commerce.giftWrapPence));
   const [countries, setCountries] = useState(commerce.shippingCountries.join(", "));
   const [support, setSupport] = useState(commerce.supportEmail);
+  const [prefix, setPrefix] = useState(commerce.codePrefix);
   const [msg, setMsg] = useState("");
   const [sk, setSk] = useState(""), [wh, setWh] = useState(""), [rk, setRk] = useState(""), [from, setFrom] = useState(status.emailFrom);
   const [pmsg, setPmsg] = useState("");
 
   const saveCommerce = async () => {
-    const r = await saveCommerceAction({ shippingFlatPence: toPence(ship) ?? 0, freeShippingPence: toPence(free), giftWrapPence: toPence(wrap) ?? 0, shippingCountries: countries.split(/[\s,]+/).filter(Boolean), supportEmail: support });
+    const r = await saveCommerceAction({ shippingFlatPence: toPence(ship) ?? 0, freeShippingPence: toPence(free), giftWrapPence: toPence(wrap) ?? 0, shippingCountries: countries.split(/[\s,]+/).filter(Boolean), supportEmail: support, codePrefix: prefix });
     setMsg(r.ok ? "Saved." : r.error); if (r.ok) router.refresh();
   };
   const saveSecrets = async (clear = false) => {
@@ -40,6 +41,7 @@ export function CommerceForm({ commerce, status }: { commerce: CommerceSettings;
         <Field label="Gift wrap price (£)"><input className="adm-in" inputMode="decimal" value={wrap} onChange={(e) => setWrap(e.target.value)} /></Field>
         <Field label="Ships to (country codes)" hint="For example GB, IE, US."><input className="adm-in" value={countries} onChange={(e) => setCountries(e.target.value)} /></Field>
         <Field label="Support email"><input className="adm-in" type="email" value={support} onChange={(e) => setSupport(e.target.value)} /></Field>
+        <Field label="Order and gift card prefix" hint={`Letters at the start of order numbers and gift card codes, e.g. ${prefix || "SPK"}-1001. 2 to 5 letters or numbers.`}><input className="adm-in" maxLength={5} value={prefix} onChange={(e) => setPrefix(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))} /></Field>
         <div><button type="button" className="adm-btn" onClick={saveCommerce}>Save</button> <span role="status">{msg}</span></div>
       </div>
       <div className="adm-card" style={{ display: "grid", gap: 12 }}>

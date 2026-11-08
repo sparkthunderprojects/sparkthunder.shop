@@ -3,6 +3,7 @@ import { getAllProducts } from "@/lib/catalog";
 import type { Db } from "@/lib/db/clients";
 import { isGiftCardLine } from "@/lib/giftcards/format";
 import { GIFT_LIMITS, getCardByCode, effectiveStatus } from "@/lib/giftcards/ledger";
+import { isGiftThemeId } from "@/lib/giftcards/themes";
 import { checkDiscount } from "@/lib/discounts";
 import { absoluteUrl, formatPrice } from "@/lib/site";
 import { getCommerce } from "@/lib/commerce";
@@ -31,7 +32,7 @@ export async function buildPlan(db: Db, cart: CartInput, giftCode: string | null
       if (!/^\S+@\S+\.\S+$/.test(email)) return { ok: false, error: "A gift card in your basket has no valid email address." };
       lines.push({ type: "gift", name: `${(await getStore()).name} gift card ${formatPrice(amount)}`, unitPence: amount, qty, gift: {
         recipientName: String(item.gift.recipientName ?? "").slice(0, 40), recipientEmail: email.toLowerCase(), senderName: String(item.gift.senderName ?? "").slice(0, 40),
-        message: String(item.gift.message ?? "").slice(0, 200), theme: ["bolt", "knightverge", "occult"].includes(item.gift.theme) ? item.gift.theme : "bolt",
+        message: String(item.gift.message ?? "").slice(0, 200), theme: isGiftThemeId(item.gift.theme) ? item.gift.theme : "brand",
       } });
       continue;
     }

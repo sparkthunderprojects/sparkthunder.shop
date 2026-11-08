@@ -6,36 +6,41 @@ import { JsonLd } from "@/components/JsonLd";
 import { breadcrumbLd } from "@/lib/seo";
 import { buildMetadata } from "@/lib/seo-metadata";
 import { absoluteUrl } from "@/lib/site";
+import { getStore } from "@/lib/store";
+import { currentStoreId, DEFAULT_STORE_ID } from "@/lib/db/stores";
+import { giftThemes } from "@/lib/giftcards/themes";
 
 export async function generateMetadata(): Promise<Metadata> {
+  const store = await getStore(), original = (await currentStoreId()) === DEFAULT_STORE_ID;
   return buildMetadata({
-  title: "Sparkthunder Gift Cards - Digital Gift Cards for Fans",
-  description: "Give the gift of choice with a Sparkthunder digital gift card. Pick an amount from £5 to £250, add a message and email it straight to a Knightverge or Occult Inc fan.",
-  path: "/gift-cards",
-});
+    title: original ? "Digital Gift Cards for Fans" : "Digital Gift Cards",
+    description: `Give the gift of choice with a ${store.name} digital gift card. Pick an amount from £5 to £250, add a message and email it straight to the lucky person${original ? ", whether they are a Knightverge or Occult Inc fan or not" : ""}.`,
+    path: "/gift-cards",
+  });
 }
 
-const FAQ = [
+const faq = (name: string, original: boolean) => [
   { q: "How is the gift card delivered?", a: "By email, as a unique code. You choose who it goes to, so you can send it straight to the recipient or to yourself to forward on the day." },
   { q: "How do I spend a gift card?", a: "Enter the code at checkout and the balance is taken off your order. Any balance left over stays on the card for next time." },
-  { q: "What can it be used on?", a: "Anything in the Sparkthunder shop, across Knightverge, Occult Inc and every universe we add." },
+  { q: "What can it be used on?", a: original ? `Anything in the ${name} shop, across Knightverge, Occult Inc and every universe we add.` : `Anything in the ${name} shop.` },
   { q: "Can I choose any amount?", a: "Yes. Pick £10, £25, £50 or £100, or type any amount from £5 to £250." },
   { q: "Can I get a refund on a gift card?", a: "Gift cards are not refundable for cash once issued. If something goes wrong with delivery, contact us and we will resend it." },
 ];
 
-export default function GiftCardsPage() {
+export default async function GiftCardsPage() {
+  const store = await getStore(), original = (await currentStoreId()) === DEFAULT_STORE_ID, FAQ = faq(store.name, original);
   const faqLd = { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: FAQ.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })) };
-  const pageLd = { "@context": "https://schema.org", "@type": "WebPage", "@id": absoluteUrl("/gift-cards#page"), url: absoluteUrl("/gift-cards"), name: "Sparkthunder Gift Cards", isPartOf: { "@id": absoluteUrl("/#website") } };
+  const pageLd = { "@context": "https://schema.org", "@type": "WebPage", "@id": absoluteUrl("/gift-cards#page"), url: absoluteUrl("/gift-cards"), name: `${store.name} Gift Cards`, isPartOf: { "@id": absoluteUrl("/#website") } };
   return (
     <>
       <JsonLd data={[breadcrumbLd([{ name: "Home", path: "/" }, { name: "Gift cards", path: "/gift-cards" }]), pageLd, faqLd]} />
       <div className="pt-8"><Breadcrumbs items={[{ name: "Home", href: "/" }, { name: "Gift cards" }]} /></div>
-      <h1 className="display mt-6 text-[clamp(2rem,4.2vw,3.25rem)]">Sparkthunder gift cards</h1>
+      <h1 className="display mt-6 text-[clamp(2rem,4.2vw,3.25rem)]">{store.name} gift cards</h1>
       <div className="prose-lore mt-6 space-y-4 text-muted">
-        <p>Not sure which tee, mug or print they would love? Let them choose. A Sparkthunder gift card is delivered by email in minutes and works across the whole shop, from Knightverge to Occult Inc.</p>
+        <p>Not sure what they would love? Let them choose. A {store.name} gift card is delivered by email in minutes and works across the whole shop{original ? ", from Knightverge to Occult Inc" : ""}.</p>
       </div>
       <p className="mt-4"><Link href="/gift-cards/balance" className="font-bold underline underline-offset-4">Already have a gift card? Check your balance</Link></p>
-      <div className="mt-10"><GiftCardDesigner /></div>
+      <div className="mt-10"><GiftCardDesigner store={{ name: store.name, logoUrl: store.logoUrl, logoWidth: store.logoWidth, logoHeight: store.logoHeight, themes: giftThemes(store, original) }} /></div>
 
       <section className="mt-20" aria-labelledby="how-h">
         <h2 id="how-h" className="display text-2xl sm:text-3xl">How it works</h2>

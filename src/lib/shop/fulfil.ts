@@ -1,3 +1,4 @@
+import { getCommerce } from "@/lib/commerce";
 import { awardPoints, pointsForOrder } from "@/lib/rewards";
 import type { Db } from "@/lib/db/clients";
 import { giftCardEmail, orderEmail } from "@/lib/email/templates";
@@ -16,7 +17,7 @@ export type PaidSession = { sessionId: string; paymentIntent: string; email: str
 
 async function nextNumber(db: Db): Promise<string> {
   const { count } = await db.from("orders").select("*", { count: "exact", head: true });
-  return `SPK-${1001 + (count ?? 0)}`;
+  return `${(await getCommerce()).codePrefix}-${1001 + (count ?? 0)}`;
 }
 
 /** Take tracked stock off one product (or one variant of it) and record if it was oversold. */
@@ -90,7 +91,7 @@ export async function fulfilOrder(db: Db, s: PaidSession): Promise<{ order: Orde
         try {
           const card = await issueCard(db, { amountPence: line.unitPence, ...line.gift, source: "purchase", orderRef: order.number, note: `Bought by ${s.email}`, createdBy: "checkout" });
           giftCardsIssued++;
-          const mail = giftCardEmail(card);
+          const mail = giftCardEmail(card, (await getCommerce()).codePrefix);
           const sent = await sendEmail({ to: line.gift.recipientEmail, ...mail });
           if (sent.ok) await db.from("gift_cards").update({ emailed_at: new Date().toISOString() }).eq("id", card.id);
           else problems.push(`Gift card ${card.code} was created but the email to ${line.gift.recipientEmail} failed: ${sent.error}. Resend it from Admin > Gift cards.`);

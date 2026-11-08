@@ -5,18 +5,16 @@ import { useId, useState } from "react";
 import { useCart } from "@/components/CartProvider";
 import { GIFT_AMOUNTS, GIFT_MAX, GIFT_MESSAGE_MAX, GIFT_MIN, clampGift } from "@/lib/giftcards";
 import { formatPrice } from "@/lib/site";
+import type { GiftTheme } from "@/lib/giftcards/themes";
 
-const THEMES = [
-  { id: "bolt", label: "Bolt", bg: "linear-gradient(135deg,#0b0b0c 0%,#1a1a1f 60%,#2a2400 100%)", accent: "#ffd400" },
-  { id: "knightverge", label: "Knightverge", bg: "linear-gradient(135deg,#0b0b0c 0%,#10172e 100%)", accent: "#6ea8ff" },
-  { id: "occult", label: "Occult Inc", bg: "linear-gradient(135deg,#0b0b0c 0%,#2a1450 100%)", accent: "#b794f6" },
-] as const;
+export type DesignerStore = { name: string; logoUrl: string; logoWidth: number; logoHeight: number; themes: GiftTheme[] };
 
-export function GiftCardDesigner() {
+export function GiftCardDesigner({ store }: { store: DesignerStore }) {
+  const THEMES = store.themes;
   const { add } = useCart();
   const [amount, setAmount] = useState<number>(2500);
   const [custom, setCustom] = useState("");
-  const [theme, setTheme] = useState<(typeof THEMES)[number]>(THEMES[0]);
+  const [theme, setTheme] = useState<GiftTheme>(store.themes[0]);
   const [to, setTo] = useState("");
   const [email, setEmail] = useState("");
   const [from, setFrom] = useState("");
@@ -36,8 +34,8 @@ export function GiftCardDesigner() {
     setError("");
     const key = Math.abs([...`${email}|${to}|${from}|${msg}|${theme.id}`].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7)).toString(36);
     add({
-      slug: `gift-card-${value}-${key}`, name: `Sparkthunder gift card ${formatPrice(value)}`, pricePence: value, image: "/sparkthunder-logo.png",
-      href: "/gift-cards", gift: { recipientName: to.trim(), recipientEmail: email.trim(), senderName: from.trim(), message: msg.trim(), theme: theme.id === "occult" ? "occult" : theme.id },
+      slug: `gift-card-${value}-${key}`, name: `${store.name} gift card ${formatPrice(value)}`, pricePence: value, image: store.logoUrl,
+      href: "/gift-cards", gift: { recipientName: to.trim(), recipientEmail: email.trim(), senderName: from.trim(), message: msg.trim(), theme: theme.id },
       note: `For ${to.trim() || email}${from.trim() ? ` from ${from.trim()}` : ""} (${email})`,
     });
     setAdded(true);
@@ -50,12 +48,12 @@ export function GiftCardDesigner() {
       <div className="lg:sticky lg:top-40">
         <div
           role="img"
-          aria-label={`Preview of a ${formatPrice(value)} Sparkthunder gift card`}
+          aria-label={`Preview of a ${formatPrice(value)} ${store.name} gift card`}
           className="relative aspect-[1.586/1] w-full overflow-hidden p-6 text-white shadow-[0_24px_60px_-20px_rgba(0,0,0,.55)] sm:p-8"
           style={{ background: theme.bg, borderRadius: 20 }}
         >
           <div aria-hidden className="absolute -right-16 -top-16 h-64 w-64 rotate-12 opacity-25" style={{ background: `conic-gradient(from 200deg, ${theme.accent}, transparent 40%)`, borderRadius: "50%" }} />
-          <Image src="/sparkthunder-logo.png" alt="" width={600} height={200} className="relative h-9 w-auto sm:h-12" />
+          {store.logoUrl ? <Image src={store.logoUrl} alt="" width={store.logoWidth} height={store.logoHeight} unoptimized className="relative h-9 w-auto sm:h-12" /> : <p className="display relative text-2xl sm:text-3xl">{store.name}</p>}
           <p className="relative mt-1 text-xs font-bold uppercase tracking-[0.35em]" style={{ color: theme.accent }}>Gift card</p>
           <div className="absolute inset-x-6 bottom-6 flex items-end justify-between gap-4 sm:inset-x-8 sm:bottom-8">
             <div className="min-w-0">

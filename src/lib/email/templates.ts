@@ -1,12 +1,12 @@
 import { trackingUrl } from "@/lib/tracking";
 import { formatCode } from "@/lib/giftcards/format";
+import { emailAccent } from "@/lib/giftcards/themes";
 import type { GiftCard } from "@/lib/giftcards/ledger";
 import type { SnapshotLine } from "@/lib/shop/types";
 import { BRAND_TOKEN, ORIGIN_TOKEN, formatPrice } from "@/lib/site";
 const B = BRAND_TOKEN, ORIGIN = ORIGIN_TOKEN;
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
-const THEME: Record<string, string> = { bolt: "#ffd400", knightverge: "#6ea8ff", occult: "#b794f6" };
 
 function shell(title: string, body: string) {
   return `<!doctype html><html><body style="margin:0;background:#f4f4f5;font-family:Arial,Helvetica,sans-serif;color:#0b0b0c"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px">
@@ -15,12 +15,12 @@ function shell(title: string, body: string) {
 <tr><td style="padding:16px 28px;font-size:12px;color:#6a6a70;border-top:1px solid #e5e5e5">${B} · <a href="${ORIGIN}" style="color:#6a6a70">${ORIGIN.replace(/^https?:\/\//, "")}</a></td></tr></table></td></tr></table></body></html>`;
 }
 
-export function giftCardEmail(card: Pick<GiftCard, "code" | "initial_pence" | "recipient_name" | "sender_name" | "message" | "theme" | "expires_at">) {
-  const code = formatCode(card.code), accent = THEME[card.theme] ?? THEME.bolt, amount = formatPrice(card.initial_pence);
+export function giftCardEmail(card: Pick<GiftCard, "code" | "initial_pence" | "recipient_name" | "sender_name" | "message" | "theme" | "expires_at">, prefix = "SPK") {
+  const code = formatCode(card.code, prefix), accent = emailAccent(card.theme), amount = formatPrice(card.initial_pence);
   const from = card.sender_name || "Someone";
   const html = shell(`${esc(from)} sent you a gift card`, `
 <p style="margin:0 0 16px">${card.recipient_name ? `Hi ${esc(card.recipient_name)}, ` : ""}you have a ${amount} gift card at ${B}.</p>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0b0b0c;color:#fff"><tr><td style="padding:28px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:{{dark}};color:#fff"><tr><td style="padding:28px">
 <div style="color:${accent};font-size:12px;font-weight:700;letter-spacing:.3em">GIFT CARD</div>
 <div style="font-size:44px;font-weight:800;color:${accent};margin:8px 0">${amount}</div>
 ${card.message ? `<div style="font-style:italic;color:#ddd;margin:0 0 12px">&ldquo;${esc(card.message)}&rdquo;</div>` : ""}

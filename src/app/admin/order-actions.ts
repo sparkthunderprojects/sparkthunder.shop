@@ -1,5 +1,6 @@
 "use server";
 
+import { getCommerce } from "@/lib/commerce";
 import { revalidatePath } from "next/cache";
 import { requireAdminAction } from "@/lib/admin/auth";
 import { giftCardEmail, shippedEmail } from "@/lib/email/templates";
@@ -43,7 +44,7 @@ export async function emailGiftCardAction(id: string, toOverride?: string): Prom
     if (!card) return { ok: false, error: "Gift card not found." };
     const to = (toOverride || card.recipient_email).trim();
     if (!/^\S+@\S+\.\S+$/.test(to)) return { ok: false, error: "Add a valid recipient email first." };
-    const sent = await sendEmail({ to, ...giftCardEmail(card) });
+    const sent = await sendEmail({ to, ...giftCardEmail(card, (await getCommerce()).codePrefix) });
     if (!sent.ok) return { ok: false, error: sent.error };
     await db.from("gift_cards").update({ emailed_at: new Date().toISOString() }).eq("id", id);
     revalidatePath(`/admin/gift-cards/${id}`);

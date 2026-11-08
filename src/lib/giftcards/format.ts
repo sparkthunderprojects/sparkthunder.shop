@@ -1,10 +1,11 @@
 /** Shared (client-safe) helpers for gift card codes. */
-export const formatCode = (code: string) => `SPK-${code.slice(0, 4)}-${code.slice(4, 8)}-${code.slice(8, 12)}`;
+export const formatCode = (code: string, prefix = "SPK") => `${prefix}-${code.slice(0, 4)}-${code.slice(4, 8)}-${code.slice(8, 12)}`;
 
 /** Accepts "spk-abcd efgh-jklm", "ABCDEFGHJKLM" etc. Returns the 12-character code or null. */
 export function normaliseCode(input: string): string | null {
   let c = input.toUpperCase().replace(/[^A-Z0-9]/g, "");
-  if (c.length === 15 && c.startsWith("SPK")) c = c.slice(3);
+  // A store prefix of 2 to 5 letters or digits may come first (SPK-ABCD-EFGH-JKLM); the code itself is always 12 characters.
+  if (c.length > 12 && c.length <= 17) c = c.slice(c.length - 12);
   return /^[A-Z0-9]{12}$/.test(c) ? c : null;
 }
 

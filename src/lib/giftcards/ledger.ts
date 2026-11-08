@@ -22,7 +22,7 @@ export async function issueCard(db: Db, i: IssueInput): Promise<GiftCard> {
     const { data, error } = await db.from("gift_cards").insert({
       code: generateCode(), currency: "GBP", initial_pence: i.amountPence, balance_pence: i.amountPence, status: "active",
       recipient_name: i.recipientName?.trim() ?? "", recipient_email: i.recipientEmail?.trim().toLowerCase() ?? "", sender_name: i.senderName?.trim() ?? "",
-      message: i.message?.trim() ?? "", theme: i.theme ?? "bolt", source: i.source ?? "admin", order_ref: i.orderRef?.trim() ?? "", note: i.note?.trim() ?? "",
+      message: i.message?.trim() ?? "", theme: i.theme ?? "brand", source: i.source ?? "admin", order_ref: i.orderRef?.trim() ?? "", note: i.note?.trim() ?? "",
       expires_at: i.expiresAt || null,
     }).select("*").single();
     if (error) { if (/duplicate|unique/i.test(error.message)) continue; throw new Error(`Could not create the gift card: ${error.message}`); }
