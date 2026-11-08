@@ -7,7 +7,7 @@ import { fillForRequest } from "@/lib/site-info";
 import { currentStoreId, DEFAULT_STORE_ID } from "@/lib/db/stores";
 
 export const revalidate = 3600;
-const LEGAL_UPDATED = "2026-11-04";
+const LEGAL_UPDATED = "2026-11-08";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const isMain = (await currentStoreId()) === DEFAULT_STORE_ID;

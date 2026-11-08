@@ -1,18 +1,22 @@
 import type { Metadata } from "next";
+import { getLegal } from "@/lib/legal";
+import { getStore } from "@/lib/store";
 import { Contact, LegalPage } from "@/components/LegalPage";
 import { buildMetadata } from "@/lib/seo-metadata";
 
 export async function generateMetadata(): Promise<Metadata> {
+  const store = await getStore();
   return buildMetadata({
-  title: "Accessibility Statement",
-  description: "How the Sparkthunder Shop aims to be usable by everyone: our accessibility approach, known limitations and how to report a problem.",
-  path: "/accessibility",
-});
+    title: "Accessibility Statement",
+    description: `How ${store.name} aims to be usable by everyone: our accessibility approach, known limitations and how to report a problem.`,
+    path: "/accessibility",
+  });
 }
 
-export default function AccessibilityPage() {
+export default async function AccessibilityPage() {
+  const { name } = await getLegal();
   return (
-    <LegalPage title="Accessibility statement" path="/accessibility" intro="We want everyone to be able to browse and shop at Sparkthunder Shop. We are building the site to meet the Web Content Accessibility Guidelines (WCAG) 2.2 level AA.">
+    <LegalPage title="Accessibility statement" path="/accessibility" intro={`We want everyone to be able to browse and shop at ${name}. We are building the site to meet the Web Content Accessibility Guidelines (WCAG) 2.2 level AA.`}>
       <h2>What we do</h2>
       <ul>
         <li>Every page works with a keyboard, including menus, search suggestions, filters, quick view and the basket.</li>

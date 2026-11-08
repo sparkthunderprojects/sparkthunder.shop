@@ -1,3 +1,4 @@
+import { currentStoreId, DEFAULT_STORE_ID } from "@/lib/db/stores";
 import Link from "next/link";
 import Image from "next/image";
 import { PaymentBadges } from "@/components/PaymentBadges";
@@ -7,7 +8,8 @@ import { LEGAL_PAGES, SITE, outbound } from "@/lib/site";
 import { CookieSettingsLink } from "@/components/CookieSettingsLink";
 
 export async function Footer() {
-  const [franchises, categories, store] = await Promise.all([getFranchises(), getCategories(), getStore()]);
+  const [franchises, categories, store, storeId] = await Promise.all([getFranchises(), getCategories(), getStore(), currentStoreId()]);
+  const original = storeId === DEFAULT_STORE_ID;
   const col = "mt-4 space-y-2.5 text-[0.95rem] text-ink/75";
   const lnk = "hover:text-bolt hover:underline hover:underline-offset-4";
   return (
@@ -53,7 +55,7 @@ export async function Footer() {
           </div>
         </div>
         <div className="mt-14 flex flex-col gap-5 border-t border-ink/15 pt-6 text-sm text-ink/60 md:flex-row md:items-center md:justify-between">
-          <p>© {new Date().getFullYear()} {store.legalName}. Official merchandise.</p>
+          <p>© {new Date().getFullYear()} {store.legalName}.{original ? " Official merchandise." : ""}</p>
           <nav aria-label="Legal">
             <ul className="flex flex-wrap gap-x-7 gap-y-2 font-semibold text-ink/75">
               {LEGAL_PAGES.map((l) => <li key={l.href}><Link className={lnk} href={l.href}>{l.label}</Link></li>)}

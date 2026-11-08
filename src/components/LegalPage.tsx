@@ -1,13 +1,14 @@
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { JsonLd } from "@/components/JsonLd";
 import { breadcrumbLd } from "@/lib/seo";
-import { CONTACT_EMAIL } from "@/lib/site";
+import { getLegal } from "@/lib/legal";
 
-export const LEGAL_UPDATED_LABEL = "4 November 2026";
+export const LEGAL_UPDATED_LABEL = "8 November 2026";
 
-export function Contact() {
-  return CONTACT_EMAIL
-    ? <a className="link-line font-bold" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
+export async function Contact() {
+  const { email } = await getLegal();
+  return email
+    ? <a className="link-line font-bold" href={`mailto:${email}`}>{email}</a>
     : <span>the contact details published on this site</span>;
 }
 

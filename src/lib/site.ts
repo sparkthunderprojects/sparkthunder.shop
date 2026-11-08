@@ -36,6 +36,7 @@ export const FRANCHISE_LOGOS: Record<string, { src: string; width: number; heigh
 
 export const LEGAL_PAGES = [
   { href: "/terms", label: "Terms of use" },
+  { href: "/delivery-returns", label: "Delivery and returns" },
   { href: "/privacy", label: "Privacy policy" },
   { href: "/cookies", label: "Cookie policy" },
   { href: "/accessibility", label: "Accessibility statement" },
