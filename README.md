@@ -43,7 +43,7 @@ The shop management system lives at `/admin` (products, variants and stock, fran
 
 1. Create a Supabase project; set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` on your host.
 2. In the SQL editor run `supabase/schema.sql`, then `supabase/admin.sql`.
-3. In Supabase Authentication, add a user (email + password). `thegmpfury@gmail.com` is made an admin automatically by `admin.sql`; add other admins to the `admin_users` table.
+3. In Supabase Authentication, add a user (email + password). `admin.sql` makes `thegmpfury@gmail.com` an admin if that user already exists when you run it, and automatically when it signs in with Google. Add other admins to the `admin_users` table. **Turn "Confirm email" ON** (Authentication > Providers > Email): customer order and points access is matched on email address.
 4. Optional: set `INDEXNOW_KEY` for instant indexing pings.
 
 Local trial without Supabase: `SPARKTHUNDER_DEMO=1 npm run dev` (in-memory fake DB; disabled on Netlify/Vercel/CI).

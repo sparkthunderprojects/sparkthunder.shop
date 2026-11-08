@@ -17,7 +17,7 @@ export default async function LoginPage() {
           <ol style={{ paddingLeft: 18, display: "grid", gap: 6 }}>
             <li>Create a Supabase project and add <code>NEXT_PUBLIC_SUPABASE_URL</code> and <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> to your host.</li>
             <li>In the SQL editor run <code>supabase/schema.sql</code>, then <code>supabase/admin.sql</code>.</li>
-            <li>In Authentication, add a user with the email and password you will sign in with. The admin script makes thegmpfury@gmail.com an admin automatically.</li>
+            <li>In Authentication, add a user with the email and password you will sign in with. Run the admin script after creating the user, or sign in with Google as thegmpfury@gmail.com.</li>
             <li>Redeploy, then come back to this page.</li>
           </ol>
         </div>

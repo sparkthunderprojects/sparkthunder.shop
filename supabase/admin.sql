@@ -21,11 +21,14 @@ insert into public.admin_users (user_id)
 select id from auth.users where email = 'thegmpfury@gmail.com'
 on conflict do nothing;
 
--- ...and make that email an admin automatically whenever it signs up or signs in with a CONFIRMED address
--- (so signing in with Google as thegmpfury@gmail.com works without re-running this file).
+-- ...and make that email an admin automatically when it signs in with GOOGLE (Google verifies the address itself).
+-- Deliberately NOT for email/password sign-ups: if "Confirm email" is ever off in Supabase, anyone could register
+-- that address and become an admin. Email/password admins are added by the insert above or in admin_users.
 create or replace function public.auto_admin() returns trigger language plpgsql security definer set search_path = public as $$
 begin
-  if lower(new.email) = 'thegmpfury@gmail.com' and new.email_confirmed_at is not null then
+  if lower(new.email) = 'thegmpfury@gmail.com'
+     and new.email_confirmed_at is not null
+     and coalesce(new.raw_app_meta_data ->> 'provider', '') = 'google' then
     insert into public.admin_users (user_id) values (new.id) on conflict do nothing;
   end if;
   return new;
