@@ -10,6 +10,7 @@ import type { MediaItem } from "@/lib/admin/repo";
 import { productSeo } from "@/lib/seo/effective";
 import { productInput, scoreSeo } from "@/lib/seo/score";
 import { slugify } from "@/lib/seo/text";
+import { combinations, splitName } from "@/lib/variants";
 import type { Category, Franchise, Product, Variant } from "@/lib/types";
 
 export function ProductEditor({ initial, isNew, franchises, categories, media, bundleChoices }: { initial: Product; isNew: boolean; franchises: Franchise[]; categories: Category[]; media: MediaItem[]; bundleChoices: { slug: string; name: string; pricePence: number }[] }) {
@@ -31,6 +32,26 @@ export function ProductEditor({ initial, isNew, franchises, categories, media, b
   const originalSlug = isNew ? null : initial.slug;
   const slugChanged = !isNew && p.slug !== initial.slug;
   const variants = p.variants ?? [];
+  const optionNames = p.optionNames ?? [];
+  const swatches = p.swatches ?? {};
+  const setOptionName = (i: number, v: string) => { const n = [...optionNames]; while (n.length <= i) n.push(""); n[i] = v; set("optionNames", n); };
+  // Start the generator boxes from the existing variants so editing a product shows what is already there.
+  const [genValues, setGenValues] = useState<string[]>(() => {
+    const parts = (initial.variants ?? []).map((v) => splitName(v.name));
+    const n = Math.max(1, ...parts.map((x) => x.length));
+    return [0, 1, 2].map((i) => (i < n ? [...new Set(parts.map((x) => x[i]).filter(Boolean))].join(", ") : ""));
+  });
+  const swatchValues = useMemo(() => [...new Set(variants.flatMap((v) => splitName(v.name)).filter(Boolean))].slice(0, 60), [variants]);
+  function generate() {
+    const lists = genValues.map((g) => [...new Set(g.split(",").map((x) => x.trim()).filter(Boolean))]).filter((l) => l.length);
+    const names = combinations(lists);
+    if (!names.length) return;
+    const have = new Set(variants.map((v) => v.name.toLowerCase()));
+    const add = names.filter((n) => !have.has(n.toLowerCase())).map((name, i): Variant => ({ name, sku: p.sku ? `${p.sku}-${variants.length + i + 1}` : "", stockQty: 0 }));
+    set("variants", [...variants, ...add]);
+    // Keep the option names in step with the number of lists, trimming blanks.
+    set("optionNames", optionNames.slice(0, lists.length));
+  }
   const bundle = p.bundleItems ?? [];
   const bundleTotal = bundle.reduce((n, b) => n + (bundleChoices.find((c) => c.slug === b.slug)?.pricePence ?? 0) * (Number(b.qty) || 0), 0);
   const setBundle = (i: number, v: Partial<{ slug: string; qty: number }>) => set("bundleItems", bundle.map((x, n) => (n === i ? { ...x, ...v } : x)));
@@ -122,19 +143,48 @@ export function ProductEditor({ initial, isNew, franchises, categories, media, b
         </div>
       </section>
 
-      <section className="adm-card"><h2>Variants</h2>
-        <p className="adm-hint" style={{ marginTop: -8, marginBottom: 12 }}>Sizes, colours or editions, each with its own SKU, stock and optional price. Name them like <b>Black / L</b> (colour / size) to get separate Colour and Size pickers on the site, or just <b>S</b>, <b>M</b>, <b>L</b> for one Size picker. With stock tracking on, set stock per variant: the product total is worked out for you.</p>
+      <section className="adm-card"><h2>Options and variants</h2>
+        <p className="adm-hint" style={{ marginTop: -8, marginBottom: 12 }}>For products that come in sizes, shades or editions. Name the options (e.g. <b>Shade</b>, <b>Size</b>), list their values and press Generate: every combination becomes a variant with its own SKU, stock, price and photo. Variant names are the values joined with &quot; / &quot;, like <b>Rose / 30ml</b>. With stock tracking on, set stock per variant: the product total is worked out for you.</p>
+        <div className="adm-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)", marginBottom: 8 }}>
+          {[0, 1, 2].map((i) => (
+            <div key={i}>
+              <Field label={`Option ${i + 1} name`}><input className="adm-in" value={optionNames[i] ?? ""} placeholder={["Shade", "Size", "Finish"][i]} onChange={(e) => setOptionName(i, e.target.value)} /></Field>
+              <Field label="Values (comma separated)"><input className="adm-in" value={genValues[i]} placeholder={["Rose, Nude, Berry", "15ml, 30ml", "Matte, Satin"][i]} onChange={(e) => setGenValues((g) => g.map((x, n) => (n === i ? e.target.value : x)))} /></Field>
+            </div>
+          ))}
+        </div>
+        <p style={{ marginBottom: 14 }}>
+          <button type="button" className="adm-btn" onClick={generate}>Generate variants</button>
+          <span className="adm-hint" style={{ marginLeft: 10 }}>Adds any missing combinations. Existing variants are never changed or removed.</span>
+        </p>
+        {swatchValues.length > 0 ? (
+          <div style={{ marginBottom: 14 }}>
+            <p className="adm-hint" style={{ marginBottom: 6 }}>Colour swatches (optional). A value with a colour is shown as a round swatch instead of a text button.</p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+              {swatchValues.map((val) => (
+                <label key={val} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <input type="color" aria-label={`Swatch colour for ${val}`} value={swatches[val] ?? "#cccccc"} onChange={(e) => set("swatches", { ...swatches, [val]: e.target.value })} />
+                  <span>{val}</span>
+                  {swatches[val] ? <button type="button" className="adm-btn" aria-label={`Remove swatch for ${val}`} onClick={() => { const n = { ...swatches }; delete n[val]; set("swatches", n); }}>×</button> : null}
+                </label>
+              ))}
+            </div>
+          </div>
+        ) : null}
         {variants.map((v, i) => (
-          <div key={i} className="adm-grid" style={{ gridTemplateColumns: "2fr 2fr 1fr 1fr auto", marginBottom: 8, alignItems: "end" }}>
-            <Field label="Name"><input className="adm-in" value={v.name} placeholder="e.g. Large" onChange={(e) => setVariant(i, { name: e.target.value })} /></Field>
+          <div key={i} className="adm-grid" style={{ gridTemplateColumns: "2fr 2fr 1fr 1fr 1fr 2fr auto", marginBottom: 8, alignItems: "end" }}>
+            <Field label="Name"><input className="adm-in" value={v.name} placeholder="e.g. Rose / 30ml" onChange={(e) => setVariant(i, { name: e.target.value })} /></Field>
             <Field label="SKU"><input className="adm-in" value={v.sku} onChange={(e) => setVariant(i, { sku: e.target.value.toUpperCase() })} /></Field>
             <Field label="Stock"><input className="adm-in" type="number" min={0} value={v.stockQty} onChange={(e) => setVariant(i, { stockQty: Math.max(0, Number(e.target.value) || 0) })} /></Field>
             <Field label="Price (£)"><input className="adm-in" inputMode="decimal" placeholder="same" value={penceToPounds(v.pricePence)} onChange={(e) => setVariant(i, { pricePence: e.target.value ? poundsToPence(e.target.value) : undefined })} /></Field>
+            <Field label="Was (£)"><input className="adm-in" inputMode="decimal" placeholder="none" value={penceToPounds(v.comparePricePence)} onChange={(e) => setVariant(i, { comparePricePence: e.target.value ? poundsToPence(e.target.value) : undefined })} /></Field>
+            <Field label="Photo (optional)"><input className="adm-in" list="variant-images" value={v.image ?? ""} placeholder="Pick or paste a URL" onChange={(e) => setVariant(i, { image: e.target.value })} /></Field>
             <button type="button" className="adm-btn adm-danger" aria-label="Remove variant" onClick={() => set("variants", variants.filter((_, n) => n !== i))}>×</button>
           </div>
         ))}
+        <datalist id="variant-images">{p.images.map((src) => <option key={src} value={src} />)}</datalist>
         {err("variants")}
-        <button type="button" className="adm-btn" onClick={() => set("variants", [...variants, { name: "", sku: p.sku ? `${p.sku}-${variants.length + 1}` : "", stockQty: 0 }])}>Add variant</button>
+        <button type="button" className="adm-btn" onClick={() => set("variants", [...variants, { name: "", sku: p.sku ? `${p.sku}-${variants.length + 1}` : "", stockQty: 0 }])}>Add one variant</button>
       </section>
 
       <section className="adm-card"><h2>Bundle contents</h2>

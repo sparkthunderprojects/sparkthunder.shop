@@ -46,6 +46,11 @@ function store(): Store {
     for (const [slug, name, cat, price] of [["velvet-tint", "Velvet Lip Tint", "lips", 1200], ["cloud-blush", "Cloud Blush", "cheeks", 1500], ["petal-balm", "Petal Lip Balm", "lips", 900]] as const) {
       g.__sparkFake.products.push({ store_id: S, slug, sku: `MP-${slug}`.toUpperCase(), name, franchise_slug: "face", category_slug: cat, price_pence: price, compare_price_pence: null, short_description: `${name} from Miss Petty.`, description: `${name}: a soft, buildable finish that lasts all day.`, details: [], images: [], in_stock: true, is_new: true, is_featured: true, published: true, created_at: now, updated_at: now });
     }
+    // Demo of options: shades with swatches, a size, per-variant price and a sale price.
+    const shade = (name: string, stock: number, extra: Row = {}) => ({ name, sku: `MP-SILK-${name.replace(/[^A-Z0-9]/gi, "").toUpperCase()}`, stockQty: stock, ...extra });
+    g.__sparkFake.products.push({ store_id: S, slug: "silk-foundation", sku: "MP-SILK", name: "Silk Skin Foundation", franchise_slug: "face", category_slug: "cheeks", price_pence: 2400, compare_price_pence: null, short_description: "Buildable, skin-like coverage.", description: "A lightweight serum foundation in six shades.", details: [], images: [], in_stock: true, is_new: true, is_featured: true, published: true, created_at: now, track_stock: true, stock_qty: 70, low_stock_threshold: 5, bundle_items: [], tags: [], image_alts: [], updated_at: now,
+      option_names: ["Shade", "Size"], option_swatches: { Porcelain: "#f1d6c3", Honey: "#d9a77b", Mocha: "#7a4b32" },
+      variants: [shade("Porcelain / 30ml", 10), shade("Porcelain / 50ml", 8, { pricePence: 3400 }), shade("Honey / 30ml", 12), shade("Honey / 50ml", 0, { pricePence: 3400 }), shade("Mocha / 30ml", 5, { comparePricePence: 2800, pricePence: 2400 }), shade("Mocha / 50ml", 7, { pricePence: 3400 })] });
     g.__sparkSeq = 1;
   }
   return g.__sparkFake;

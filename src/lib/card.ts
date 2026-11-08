@@ -17,7 +17,9 @@ export type QuickProduct = {
   lowStockThreshold: number;
   categorySlug: string;
   launchAt?: string;
-  variants: { name: string; stockQty: number; pricePence?: number }[];
+  variants: { name: string; stockQty: number; pricePence?: number; comparePricePence?: number; image?: string }[];
+  optionNames: string[];
+  swatches: Record<string, string>;
 };
 
 export const productImagePath = (p: Pick<Product, "slug" | "images">) => p.images[0] ?? `/art/${p.slug}`;
@@ -41,7 +43,9 @@ export function toQuick(p: Product, franchiseName?: string): QuickProduct {
     lowStockThreshold: p.lowStockThreshold ?? 3,
     categorySlug: p.categorySlug,
     launchAt: p.launchAt,
-    variants: (p.variants ?? []).map((v) => ({ name: v.name, stockQty: v.stockQty, pricePence: v.pricePence })),
+    variants: (p.variants ?? []).map((v) => ({ name: v.name, stockQty: v.stockQty, pricePence: v.pricePence, comparePricePence: v.comparePricePence, image: v.image || undefined })),
+    optionNames: p.optionNames ?? [],
+    swatches: p.swatches ?? {},
   };
 }
 

@@ -1,5 +1,6 @@
 "use server";
 
+import { HEX } from "@/lib/variants";
 import { revalidatePath } from "next/cache";
 import { bustTag } from "@/lib/tags";
 import { currentStoreId } from "@/lib/db/stores";
@@ -63,7 +64,15 @@ export async function saveProductAction(p: Product, originalSlug: string | null)
     if (p.seoTitle && p.seoTitle.length > 120) fields.seoTitle = "Keep the SEO title under 120 characters.";
     if (p.seoDescription && p.seoDescription.length > 320) fields.seoDescription = "Keep the meta description under 320 characters.";
     if (p.canonicalUrl && !/^https?:\/\//.test(p.canonicalUrl)) fields.canonical = "The canonical URL must start with https://";
-    if ((p.variants ?? []).some((v) => !v.name.trim())) fields.variants = "Every variant needs a name.";
+    const vnames = (p.variants ?? []).map((v) => v.name.trim());
+    const optNames = (p.optionNames ?? []).map((n) => n.trim()).filter(Boolean);
+    if (vnames.some((n) => !n)) fields.variants = "Every variant needs a name.";
+    else if (new Set(vnames.map((n) => n.toLowerCase())).size !== vnames.length) fields.variants = "Two variants have the same name. Each combination can only be listed once.";
+    else if (vnames.some((n) => n.includes("::"))) fields.variants = 'Variant names cannot contain "::".';
+    else if (new Set((p.variants ?? []).map((v) => v.sku.trim()).filter(Boolean)).size !== (p.variants ?? []).filter((v) => v.sku.trim()).length) fields.variants = "Two variants share a SKU. Each SKU must be unique.";
+    else if (vnames.length && new Set(vnames.map((n) => n.split("/").length)).size > 1) fields.variants = 'Variant names must all use the same number of options, e.g. "Rose / 30ml".';
+    else if (vnames.length && optNames.length > 1 && vnames.some((n) => n.split("/").length !== optNames.length)) fields.variants = `Each variant name needs ${optNames.length} values separated by " / " to match the option names.`;
+    else if ((p.variants ?? []).some((v) => v.comparePricePence != null && v.comparePricePence <= (v.pricePence ?? p.pricePence))) fields.variants = "A variant's compare-at price must be higher than its price.";
     const bundle = (p.bundleItems ?? []).map((i) => ({ slug: String(i.slug ?? "").trim(), qty: Math.floor(Number(i.qty)) })).filter((i) => i.slug);
     if (bundle.length) {
       if (bundle.length < 2) fields.bundle = "A bundle needs at least two products. Remove the bundle items to make this a normal product.";
@@ -87,7 +96,9 @@ export async function saveProductAction(p: Product, originalSlug: string | null)
     const clean: Product = {
       ...p, images, imageAlts: images.map((_, i) => (p.imageAlts?.[i] ?? "").trim()),
       details: p.details.map((d) => d.trim()).filter(Boolean), tags: (p.tags ?? []).map((t) => t.trim()).filter(Boolean),
-      variants: (p.variants ?? []).map((v) => ({ ...v, name: v.name.trim(), sku: v.sku.trim() })),
+      variants: (p.variants ?? []).map((v) => ({ ...v, name: v.name.split("/").map((x) => x.trim()).join(" / "), sku: v.sku.trim(), image: v.image?.trim() || undefined })),
+      optionNames: optNames.slice(0, 3),
+      swatches: Object.fromEntries(Object.entries(p.swatches ?? {}).filter(([k, v]) => k.trim() && HEX.test(v)).slice(0, 60)),
       bundleItems: bundle,
       createdAt: p.createdAt || new Date().toISOString().slice(0, 10),
     };

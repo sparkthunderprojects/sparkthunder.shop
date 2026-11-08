@@ -71,3 +71,7 @@ One deployment serves any number of stores. Each store has its own domains, prod
 - **Unknown domains** pointed at the platform get a 404 with `noindex`. Set `PLATFORM_HOSTS` (comma separated) for your own platform hostnames, such as a preview URL.
 - **Safety net:** every query on store-owned tables is scoped to the current store by `src/lib/db/scope.ts`, caches and their tags are per store, and uploads are stored under the store's id.
 - **Test it:** `SPARKTHUNDER_DEMO=1 SPARKTHUNDER_DEMO_STORES=100 npx next start -p 3460`, then `node scripts/isolation-test.mjs 3460 100`. It checks that each of 100 stores shows only its own products, canonicals and sitemap, and that unknown domains are refused.
+
+## Product options and variants
+
+Each product can name up to three option axes (for example Shade, Size, Finish). In the admin, list the values and press **Generate variants** to create every combination, each with its own SKU, stock, price, sale price and photo. Values with a colour swatch show as round swatches. Sold-out combinations are greyed out, cards show "From £x" when prices differ, and the structured data lists one offer per variant. Variant names are the values joined with " / " and are the basket key, so renaming a variant empties it from existing baskets.

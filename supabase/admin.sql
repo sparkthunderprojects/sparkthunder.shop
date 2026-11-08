@@ -50,6 +50,8 @@ alter table public.products
   add column if not exists stock_qty int not null default 0 check (stock_qty >= 0),
   add column if not exists low_stock_threshold int not null default 5,
   add column if not exists variants jsonb not null default '[]',
+  add column if not exists option_names text[] not null default '{}',
+  add column if not exists option_swatches jsonb not null default '{}',
   add column if not exists updated_at timestamptz not null default now();
 
 alter table public.franchises

@@ -59,6 +59,21 @@ export function websiteLd(brand?: { name: string; description: string }) {
   };
 }
 
+function productOffers(p: Product) {
+  const url = absoluteUrl(`/products/${p.slug}`);
+  const upcoming = Boolean(p.launchAt && Date.parse(p.launchAt) > Date.now());
+  const avail = (inStock: boolean) => (upcoming ? "https://schema.org/PreOrder" : inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock");
+  const offer = (price: number, inStock: boolean, extra: Record<string, unknown> = {}) => ({
+    "@type": "Offer", url, priceCurrency: SITE.currency, price: (price / 100).toFixed(2),
+    itemCondition: "https://schema.org/NewCondition", availability: avail(inStock), seller: { "@id": absoluteUrl("/#organization") }, ...extra,
+  });
+  const vs = p.variants ?? [];
+  if (!vs.length) return offer(p.pricePence, p.inStock);
+  const each = vs.map((v) => offer(v.pricePence ?? p.pricePence, p.trackStock ? v.stockQty > 0 : p.inStock, { sku: v.sku || p.sku, name: `${p.name} (${v.name})` }));
+  const prices = vs.map((v) => v.pricePence ?? p.pricePence);
+  return { "@type": "AggregateOffer", url, priceCurrency: SITE.currency, lowPrice: (Math.min(...prices) / 100).toFixed(2), highPrice: (Math.max(...prices) / 100).toFixed(2), offerCount: vs.length, offers: each };
+}
+
 export function productLd(p: Product, franchise: Franchise | null, category: Category | null, reviews?: { count: number; average: number; reviews: { name: string; rating: number; title: string; body: string; createdAt: string }[] }) {
   return {
     "@context": "https://schema.org",
@@ -77,15 +92,7 @@ export function productLd(p: Product, franchise: Franchise | null, category: Cat
       aggregateRating: { "@type": "AggregateRating", ratingValue: reviews.average, reviewCount: reviews.count, bestRating: 5, worstRating: 1 },
       review: reviews.reviews.slice(0, 5).map((r) => ({ "@type": "Review", author: { "@type": "Person", name: r.name }, datePublished: r.createdAt.slice(0, 10), reviewRating: { "@type": "Rating", ratingValue: r.rating, bestRating: 5, worstRating: 1 }, ...(r.title ? { name: r.title } : {}), reviewBody: r.body })),
     } : {}),
-    offers: {
-      "@type": "Offer",
-      url: absoluteUrl(`/products/${p.slug}`),
-      priceCurrency: SITE.currency,
-      price: (p.pricePence / 100).toFixed(2),
-      itemCondition: "https://schema.org/NewCondition",
-      availability: p.launchAt && Date.parse(p.launchAt) > Date.now() ? "https://schema.org/PreOrder" : p.inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-      seller: { "@id": absoluteUrl("/#organization") },
-    },
+    offers: productOffers(p),
   };
 }
 

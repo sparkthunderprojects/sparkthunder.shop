@@ -29,7 +29,8 @@ export type SeoFields = {
 };
 
 export type BundleItem = { slug: string; qty: number };
-export type Variant = { name: string; sku: string; stockQty: number; pricePence?: number };
+/** One purchasable combination. `name` joins the option values with " / " (e.g. "Rose / 30ml"); it is also the basket key. */
+export type Variant = { name: string; sku: string; stockQty: number; pricePence?: number; comparePricePence?: number; image?: string };
 
 export type Product = {
   slug: string;
@@ -58,6 +59,10 @@ export type Product = {
   stockQty?: number;
   lowStockThreshold?: number;
   variants?: Variant[];
+  /** Names of the option axes, in the order values appear in each variant name (e.g. ["Shade", "Size"]). Empty = guess from the names. */
+  optionNames?: string[];
+  /** Optional colour swatch (hex) per option value, e.g. { "Rose": "#c9737a" }. */
+  swatches?: Record<string, string>;
   /** A bundle contains these products (no variants) and sells at its own price. */
   bundleItems?: BundleItem[];
   /** Set from a collection with a launch date; the product cannot be bought before it. */

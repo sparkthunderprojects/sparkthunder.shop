@@ -50,7 +50,7 @@ export async function buildPlan(db: Db, cart: CartInput, giftCode: string | null
       if (left < qty) return { ok: false, error: left <= 0 ? `${label} is sold out.` : `Only ${left} of ${label} left in stock.` };
     }
     franchiseOf.set(p.slug, p.franchiseSlug);
-    lines.push({ type: "product", slug: p.slug, ...(variant ? { variant: variant.name } : {}), name: label, sku: variant?.sku || p.sku, unitPence: variant?.pricePence ?? p.pricePence, qty, image: p.images[0] ? (p.images[0].startsWith("http") ? p.images[0] : absoluteUrl(p.images[0])) : "" });
+    lines.push({ type: "product", slug: p.slug, ...(variant ? { variant: variant.name } : {}), name: label, sku: variant?.sku || p.sku, unitPence: variant?.pricePence ?? p.pricePence, qty, image: (variant?.image || p.images[0]) ? ((variant?.image || p.images[0]).startsWith("http") ? (variant?.image || p.images[0]) : absoluteUrl(variant?.image || p.images[0])) : "" });
   }
   const productSubtotal = lines.filter((l) => l.type === "product").reduce((n, l) => n + l.unitPence * l.qty, 0);
   const subtotalPence = lines.reduce((n, l) => n + l.unitPence * l.qty, 0);
