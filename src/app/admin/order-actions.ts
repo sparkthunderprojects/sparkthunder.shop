@@ -1,5 +1,6 @@
 "use server";
 
+import { log } from "@/lib/log";
 import { logActivity as audit } from "@/lib/admin/activity";
 import { getCommerce } from "@/lib/commerce";
 import { revalidatePath } from "next/cache";
@@ -96,7 +97,7 @@ export async function refundOrderAction(input: Omit<RefundInput, "by">): Promise
     if (!data) return { ok: false, error: "Order not found." };
     const r = await createRefund(svc, await refundStripe(), await currentStoreId(), { ...input, key: String(input.key).slice(0, 80), by: email });
     revalidatePath(`/admin/orders/${input.orderId}`); revalidatePath("/admin/orders");
-    if (!r.ok) { await audit("order.refund.failed", `Refund did not finish: ${r.error}`, { type: "order", id: input.orderId }); return { ok: false, error: r.error }; }
+    if (!r.ok) { await log.error("refund.failed", r.error, { order: input.orderId }); await audit("order.refund.failed", `Refund did not finish: ${r.error}`, { type: "order", id: input.orderId }); return { ok: false, error: r.error }; }
     await audit("order.refund", `Refunded ${(input.cardPence / 100).toFixed(2)} to card and ${(input.giftPence / 100).toFixed(2)} to gift card`, { type: "order", id: input.orderId, meta: { cardPence: input.cardPence, giftPence: input.giftPence, reason: input.reason } });
     return { ok: true, note: r.problems.length ? `Refunded, but: ${r.problems.join(" ")}` : "Refund done and the customer was emailed." };
   } catch (e) { return { ok: false, error: message(e) }; }

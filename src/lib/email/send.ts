@@ -1,4 +1,5 @@
 import { fillForRequest } from "@/lib/site-info";
+import { log } from "@/lib/log";
 import { currentStoreId } from "@/lib/db/stores";
 import { getStoreSecrets } from "@/lib/secrets";
 
@@ -16,9 +17,11 @@ export async function sendEmail(msg: { to: string; subject: string; html: string
       body: JSON.stringify({ from, to: [msg.to], subject: msg.subject, html: msg.html, text: msg.text }),
       signal: AbortSignal.timeout(10_000),
     });
-    if (!res.ok) return { ok: false, error: `Email provider said ${res.status}: ${(await res.text()).slice(0, 200)}` };
+    if (!res.ok) { const error = `Email provider said ${res.status}: ${(await res.text()).slice(0, 200)}`; await log.warn("email.failed", error, { subject: msg.subject }); return { ok: false, error }; }
     return { ok: true };
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Email failed." };
+    const error = e instanceof Error ? e.message : "Email failed.";
+    await log.warn("email.failed", error, { subject: msg.subject });
+    return { ok: false, error };
   }
 }

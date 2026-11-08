@@ -1,4 +1,6 @@
 import { revalidatePath } from "next/cache";
+import { notifyOwner } from "@/lib/alerts";
+import { log } from "@/lib/log";
 import { revalidateStoreTag } from "@/lib/tags";
 import { currentStoreId } from "@/lib/db/stores";
 import type Stripe from "stripe";
@@ -19,7 +21,7 @@ export async function POST(req: Request) {
 
   let event: Stripe.Event;
   try { event = (await getStripe()).webhooks.constructEvent(await req.text(), sig, secret); }
-  catch { return new Response("Invalid signature", { status: 400 }); }
+  catch { await log.warn("webhook.bad_signature", "A webhook with an invalid signature was rejected"); return new Response("Invalid signature", { status: 400 }); }
 
   if (event.type === "checkout.session.completed") {
     const s = event.data.object as Stripe.Checkout.Session;
@@ -42,7 +44,8 @@ export async function POST(req: Request) {
         await revalidateStoreTag(CATALOG_TAG, await currentStoreId());
         revalidatePath("/admin", "layout");
       } catch (e) {
-        console.error("[stripe webhook] fulfilment failed", e);
+        await log.error("webhook.fulfil_failed", "Fulfilment failed; Stripe will retry", { session: s.id, error: e });
+        await notifyOwner("An order payment could not be processed yet", "A payment came in but the order could not be finished. The system will retry automatically. If this keeps happening, open the order in the admin and press Finish processing.", `webhook:${s.id}`);
         return new Response("Fulfilment failed", { status: 500 }); // Stripe will retry; fulfilOrder resumes from the last finished step
       }
     }
@@ -58,7 +61,7 @@ export async function POST(req: Request) {
       await recordExternalRefunds(db, await currentStoreId(), pi, list.data.map((r) => ({ id: r.id, amount: r.amount, status: r.status, metadata: r.metadata })));
       revalidatePath("/admin", "layout");
     } catch (e) {
-      console.error("[stripe webhook] recording refund failed", e);
+      await log.error("webhook.refund_record_failed", "Could not record a Stripe-dashboard refund", { error: e });
       return new Response("Could not record the refund", { status: 500 });
     }
   }

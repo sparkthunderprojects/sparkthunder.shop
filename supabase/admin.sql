@@ -924,3 +924,21 @@ drop policy if exists "admin read audit log" on public.audit_log;
 create policy "admin read audit log" on public.audit_log for select using (public.can_admin_store(store_id));
 -- No insert, update or delete policy: nobody can edit history from a browser, only the server adds to it.
 revoke insert, update, delete on public.audit_log from anon, authenticated;
+
+-- ============================================================================
+-- System events (idempotent): problems the server noticed (failed webhooks, emails, refunds), for the admin health page
+-- ============================================================================
+create table if not exists public.system_events (
+  id uuid primary key default gen_random_uuid(),
+  store_id text not null references public.stores(id) on update cascade,
+  level text not null check (level in ('info','warn','error')),
+  event text not null,                    -- e.g. webhook.fulfil_failed, email.failed, order.attention
+  message text not null default '',
+  ctx jsonb not null default '{}',
+  created_at timestamptz not null default now()
+);
+create index if not exists system_events_store_idx on public.system_events (store_id, created_at desc);
+alter table public.system_events enable row level security;
+drop policy if exists "admin read system events" on public.system_events;
+create policy "admin read system events" on public.system_events for select using (public.can_admin_store(store_id));
+revoke insert, update, delete on public.system_events from anon, authenticated;

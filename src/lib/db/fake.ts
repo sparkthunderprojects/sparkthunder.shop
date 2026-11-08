@@ -24,7 +24,7 @@ function store(): Store {
       media: [], redirects: [], settings: [], subscribers: [], admin_users: [], gift_cards: [], gift_card_ledger: [], orders: [], checkout_snapshots: [],
       collections: (seedCatalog.collections ?? []).map((c) => ({ slug: c.slug, name: c.name, description: c.description, image: c.image, launch_at: c.launchAt ?? null, product_slugs: c.productSlugs, sort_order: c.sortOrder, published: c.published })),
       stock_alerts: [], discount_codes: [], reviews: [], reward_points: [], product_questions: [],
-      store_secrets: [], order_refunds: [], refund_restocks: [], audit_log: [],
+      store_secrets: [], order_refunds: [], refund_restocks: [], audit_log: [], system_events: [],
       stores: [
         { id: "sparkthunder", name: "Sparkthunder Shop", domains: ["localhost", "127.0.0.1", "sparkthunder.shop"], is_default: true, created_at: now },
         { id: "misspetty", name: "Miss Petty", domains: ["petty.localhost", "misspetty.com"], is_default: false, created_at: now },
@@ -88,6 +88,8 @@ class Query implements PromiseLike<Result> {
   in(col: string, vals: unknown[]) { this.filters.push((r) => vals.includes(r[col])); return this; }
   ilike(col: string, pat: string) { const re = new RegExp("^" + pat.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/%/g, ".*") + "$", "i"); this.filters.push((r) => re.test(String(r[col] ?? ""))); return this; }
   order(col: string, opts?: { ascending?: boolean }) { this.orders.push({ col, asc: opts?.ascending !== false }); return this; }
+  gte(col: string, val: unknown) { this.filters.push((r) => String(r[col] ?? "") >= String(val)); return this; }
+  lte(col: string, val: unknown) { this.filters.push((r) => String(r[col] ?? "") <= String(val)); return this; }
   limit(n: number) { this.lim = n; return this; }
   single() { this.one = "single"; return this; }
   maybeSingle() { this.one = "maybe"; return this; }

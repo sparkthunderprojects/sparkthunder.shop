@@ -1,4 +1,6 @@
 import { getCommerce } from "@/lib/commerce";
+import { notifyOwner } from "@/lib/alerts";
+import { log } from "@/lib/log";
 import { awardPoints, pointsForOrder } from "@/lib/rewards";
 import type { Db } from "@/lib/db/clients";
 import { giftCardEmail, orderEmail } from "@/lib/email/templates";
@@ -187,6 +189,10 @@ export async function fulfilOrder(db: Db, s: PaidSession): Promise<{ order: Orde
     const done = { fulfilled_at: new Date().toISOString(), fulfilment_lock_until: null, fulfilment: { ...state, problems: list }, ...(list.length ? { attention_reason: list.join("\n"), status } : {}) };
     const fin = await db.from("orders").update(done).eq("id", orderId);
     if (fin.error) throw new Error(`Could not finish the order: ${fin.error.message}`);
+    if (status === "attention") {
+      await log.warn("order.attention", `Order ${number} needs attention`, { order: number, problems: list }, { storeId });
+      await notifyOwner(`Order ${number} needs your attention`, `${list.join("\n")}`, `order:${orderId}`);
+    } else if (list.length) await log.warn("order.email_failed", `Order ${number}: ${list.join(" ")}`, { order: number }, { storeId });
     return { order: { ...order, ...done, fulfilment: done.fulfilment } as OrderRow, created };
   } catch (e) {
     await db.from("orders").update({ fulfilment_lock_until: null }).eq("id", orderId); // let the retry start straight away

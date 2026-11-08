@@ -3,7 +3,7 @@ import type { Db } from "@/lib/db/clients";
 
 const sent: { to: string; subject: string }[] = [];
 let emailFailsOnce = false;
-vi.mock("@/lib/commerce", () => ({ getCommerce: async () => ({ codePrefix: "SPK" }) }));
+vi.mock("@/lib/commerce", () => ({ getCommerce: async () => ({ codePrefix: "SPK", supportEmail: "owner@shop.test" }) }));
 vi.mock("@/lib/email/send", () => ({
   sendEmail: async (m: { to: string; subject: string }) => {
     if (emailFailsOnce) { emailFailsOnce = false; throw new Error("network down"); }
@@ -115,6 +115,8 @@ describe("fulfilOrder", () => {
     expect((await product("cap")).in_stock).toBe(false);
     expect(r.order.status).toBe("attention");
     expect(r.order.attention_reason).toMatch(/oversold/);
+    // The owner is emailed about it (once).
+    expect(sent.filter((m) => m.to === "owner@shop.test" && /needs your attention/.test(m.subject))).toHaveLength(1);
   });
 
   it("charges a gift card once even if the order has to be retried", async () => {

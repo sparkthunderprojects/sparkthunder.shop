@@ -1,4 +1,5 @@
 import { unstable_cache } from "next/cache";
+import { log } from "@/lib/log";
 import { publicClient } from "@/lib/db/clients";
 import { storeTag } from "@/lib/tags";
 import { currentStoreId, DEFAULT_STORE_ID } from "@/lib/db/stores";
@@ -50,7 +51,7 @@ async function loadFromSupabase(storeId: string): Promise<Catalog | null> {
     supabase.from("collections").select("*").eq("published", true).order("sort_order"),
   ]);
   if (f.error || c.error || p.error) {
-    console.error("[catalog] Supabase error, falling back to seed:", f.error ?? c.error ?? p.error);
+    void log.error("catalog.db_error", "Supabase error, falling back to seed data", { error: (f.error ?? c.error ?? p.error)?.message });
     return null;
   }
   return {

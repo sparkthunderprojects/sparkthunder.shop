@@ -1,5 +1,6 @@
 "use server";
 
+import { log } from "@/lib/log";
 import { rateLimit, LIMITS, wait } from "@/lib/ratelimit";
 import { serviceClient } from "@/lib/db/clients";
 import { isDemo } from "@/lib/db/env";
@@ -99,7 +100,7 @@ export async function startCheckoutAction(cart: CartInput, giftCode: string | nu
       throw e;
     }
   } catch (e) {
-    console.error("[checkout]", e);
+    await log.error("checkout.failed", "Could not start checkout", { error: e });
     return { ok: false, error: "We could not start checkout. Please try again in a moment." };
   }
 }
