@@ -876,3 +876,30 @@ revoke all on function public.restock_item(text, uuid, text, text, int) from pub
 grant execute on function public.begin_refund(text, uuid, text, int, int, text, jsonb, boolean, text, text, text) to service_role;
 grant execute on function public.fail_refund(text, uuid, text) to service_role;
 grant execute on function public.restock_item(text, uuid, text, text, int) to service_role;
+
+-- ============================================================================
+-- Rate limiting shared by every server (idempotent)
+-- ============================================================================
+create table if not exists public.rate_limits (
+  key text not null,                 -- a hash: raw IP addresses are never stored
+  window_start timestamptz not null,
+  hits int not null default 0,
+  primary key (key, window_start)
+);
+alter table public.rate_limits enable row level security;
+revoke all on public.rate_limits from anon, authenticated;
+
+-- Count one hit for a key in a fixed time window. Returns whether it is still allowed and, if not, how many seconds to wait.
+create or replace function public.rate_hit(p_key text, p_limit int, p_window int) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare ws timestamptz := to_timestamp(floor(extract(epoch from now()) / p_window) * p_window); h int;
+begin
+  insert into public.rate_limits (key, window_start, hits) values (p_key, ws, 1)
+  on conflict (key, window_start) do update set hits = public.rate_limits.hits + 1
+  returning hits into h;
+  if random() < 0.01 then delete from public.rate_limits where window_start < now() - interval '1 day'; end if;
+  return jsonb_build_object('ok', h <= p_limit, 'hits', h,
+    'retry_after', greatest(1, ceil(extract(epoch from (ws + make_interval(secs => p_window) - now())))::int));
+end $$;
+revoke all on function public.rate_hit(text, int, int) from public, anon, authenticated;
+grant execute on function public.rate_hit(text, int, int) to service_role;

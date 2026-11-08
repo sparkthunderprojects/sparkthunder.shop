@@ -1,5 +1,6 @@
 "use server";
 
+import { rateLimit, LIMITS } from "@/lib/ratelimit";
 import { currentStoreId } from "@/lib/db/stores";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
@@ -7,14 +8,6 @@ import { getProduct } from "@/lib/catalog";
 import { serviceClient, sessionClient } from "@/lib/db/clients";
 import type { OrderRow } from "@/lib/shop/fulfil";
 
-const hits = new Map<string, number[]>();
-function limited(key: string, max: number) {
-  const now = Date.now();
-  const list = (hits.get(key) ?? []).filter((t) => now - t < 3_600_000);
-  list.push(now); hits.set(key, list);
-  if (hits.size > 5000) hits.clear();
-  return list.length > max;
-}
 
 export type Eligibility = { state: "anon" | "not_buyer" | "already" | "ok" | "unavailable"; name?: string };
 
@@ -54,7 +47,7 @@ export async function submitReviewAction(form: FormData): Promise<ReviewResult> 
     if (!who) return { ok: false, error: "Please sign in with your Sparkthunder ID to leave a review." };
     const h = await headers();
     const ip = (h.get("x-forwarded-for") ?? "").split(",")[0].trim() || "unknown";
-    if (limited(`${who.email}|${ip}`, 5)) return { ok: false, error: "Too many reviews in a short time. Please try again later." };
+    if (!(await rateLimit("review", LIMITS.review, `${who.email}|${ip}`)).ok) return { ok: false, error: "Too many reviews in a short time. Please try again later." };
     const product = await getProduct(slug);
     if (!product) return { ok: false, error: "We could not find that product." };
     const db = serviceClient();

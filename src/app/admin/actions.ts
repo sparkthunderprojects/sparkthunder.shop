@@ -1,6 +1,7 @@
 "use server";
 
 import { HEX } from "@/lib/variants";
+import { LIMITS, rateLimit, wait } from "@/lib/ratelimit";
 import { revalidatePath } from "next/cache";
 import { bustTag } from "@/lib/tags";
 import { currentStoreId } from "@/lib/db/stores";
@@ -33,6 +34,10 @@ const message = (e: unknown) => (e instanceof Error ? e.message : "Something wen
 
 // ------------------------------------------------------------------ auth
 export async function loginAction(email: string, password: string): Promise<Result> {
+  // Throttle password guessing: per connection, and per email address (so guesses spread over many connections are caught too).
+  const byIp = await rateLimit("login", LIMITS.login);
+  const byEmail = await rateLimit("loginEmail", LIMITS.loginEmail, `email:${email.trim().toLowerCase()}`);
+  if (!byIp.ok || !byEmail.ok) return { ok: false, error: `Too many sign-in attempts. Please wait ${wait((byIp.ok ? byEmail : byIp) as Extract<typeof byIp, { ok: false }>)} and try again.` };
   const db = await sessionClient();
   if (!db) return { ok: false, error: "Supabase is not configured for this site yet." };
   const { error } = await db.auth.signInWithPassword({ email: email.trim(), password });

@@ -1,28 +1,17 @@
 "use server";
 
-import { headers } from "next/headers";
+import { rateLimit, LIMITS, wait } from "@/lib/ratelimit";
 import { getProduct } from "@/lib/catalog";
 import { serviceClient } from "@/lib/db/clients";
 import { isAvailable } from "@/lib/shop/alerts";
 
 // Brake on form abuse: 6 sign-ups a minute per client (per server instance, in memory).
-const hits = new Map<string, number[]>();
-function limited(ip: string) {
-  const now = Date.now();
-  const list = (hits.get(ip) ?? []).filter((t) => now - t < 60_000);
-  list.push(now);
-  hits.set(ip, list);
-  if (hits.size > 5000) hits.clear();
-  return list.length > 6;
-}
 
 export type AlertResult = { ok: true } | { ok: false; error: string };
 
 /** "Email me when it's back": remembers one email for one sold-out product (or one option of it). */
 export async function subscribeStockAlertAction(slug: string, variant: string, rawEmail: string): Promise<AlertResult> {
-  const h = await headers();
-  const ip = (h.get("x-forwarded-for") ?? "").split(",")[0].trim() || h.get("x-real-ip") || "unknown";
-  if (limited(ip)) return { ok: false, error: "Too many requests. Please wait a minute and try again." };
+  { const r = await rateLimit("stockAlert", LIMITS.stockAlert); if (!r.ok) return { ok: false, error: `Too many requests. Please wait ${wait(r)} and try again.` }; }
   const email = String(rawEmail ?? "").trim().toLowerCase().slice(0, 200);
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, error: "That email address does not look right." };
   const product = await getProduct(String(slug));

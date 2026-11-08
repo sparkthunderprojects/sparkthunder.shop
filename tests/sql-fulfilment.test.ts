@@ -216,3 +216,21 @@ describe("refunds (real SQL)", () => {
     await expect(db.exec("set role anon; select begin_refund('sparkthunder', gen_random_uuid(), 'x', 1, 0, '', '[]', false, '')")).rejects.toThrow(/permission denied/i);
   });
 });
+
+describe("rate_hit (real SQL)", () => {
+  const hit = async (k: string, limit = 3, win = 60) => (await one<{ rate_hit: { ok: boolean; hits: number; retry_after: number } }>("select rate_hit($1,$2,$3)", [k, limit, win])).rate_hit;
+  it("allows up to the limit then blocks, with a sensible wait", async () => {
+    for (let i = 1; i <= 3; i++) expect((await hit("a")).ok).toBe(true);
+    const r = await hit("a");
+    expect(r.ok).toBe(false); expect(r.hits).toBe(4);
+    expect(r.retry_after).toBeGreaterThanOrEqual(1); expect(r.retry_after).toBeLessThanOrEqual(60);
+  });
+  it("keeps keys apart and counts a burst exactly", async () => {
+    await Promise.all(Array.from({ length: 10 }, () => hit("burst", 100)));
+    expect((await hit("burst", 100)).hits).toBe(11);
+    expect((await hit("other")).hits).toBe(1);
+  });
+  it("is not callable from a browser role", async () => {
+    await expect(db.exec("set role anon; select rate_hit('x', 1, 60)")).rejects.toThrow(/permission denied/i);
+  });
+});

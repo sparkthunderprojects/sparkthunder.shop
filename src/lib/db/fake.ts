@@ -230,6 +230,15 @@ export function createFakeClient() {
         } else { p.stock_qty = (p.stock_qty as number) + add; p.in_stock = true; }
         return { data: add, error: null };
       }
+      if (name === "rate_hit") {
+        const t = store(), W = Number(args.p_window), L = Number(args.p_limit);
+        const ws = Math.floor(Date.now() / 1000 / W) * W;
+        const rows = (t.rate_limits ??= []);
+        let r = rows.find((x) => x.key === args.p_key && x.window_start === ws);
+        if (!r) { r = { key: args.p_key, window_start: ws, hits: 0 }; rows.push(r); }
+        r.hits = (r.hits as number) + 1;
+        return { data: { ok: (r.hits as number) <= L, hits: r.hits, retry_after: Math.max(1, ws + W - Math.floor(Date.now() / 1000)) }, error: null };
+      }
       if (name === "use_discount") {
         const t = store(), S = String(args.p_store);
         const reds = (t.discount_redemptions ??= []);

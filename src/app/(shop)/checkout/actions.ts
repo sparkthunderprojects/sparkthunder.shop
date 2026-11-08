@@ -1,5 +1,6 @@
 "use server";
 
+import { rateLimit, LIMITS, wait } from "@/lib/ratelimit";
 import { serviceClient } from "@/lib/db/clients";
 import { isDemo } from "@/lib/db/env";
 import { buildPlan } from "@/lib/shop/plan";
@@ -28,6 +29,8 @@ export type CheckoutResult = { ok: true; url: string } | { ok: false; error: str
 
 export async function startCheckoutAction(cart: CartInput, giftCode: string | null, discountCode: string | null = null, giftOpts: GiftOptionsInput | null = null): Promise<CheckoutResult> {
   try {
+    const rl = await rateLimit("checkout", LIMITS.checkout);
+    if (!rl.ok) return { ok: false, error: `Too many checkout attempts. Please wait ${wait(rl)} and try again.` };
     const db = serviceClient();
     const stripeOn = await hasStripe();
     const demoPay = isDemo && !stripeOn;
