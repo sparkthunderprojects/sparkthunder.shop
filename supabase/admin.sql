@@ -903,3 +903,24 @@ begin
 end $$;
 revoke all on function public.rate_hit(text, int, int) from public, anon, authenticated;
 grant execute on function public.rate_hit(text, int, int) to service_role;
+
+-- ============================================================================
+-- Audit log (idempotent): who changed what, per store. Written by the server only; admins can read their own store's.
+-- ============================================================================
+create table if not exists public.audit_log (
+  id uuid primary key default gen_random_uuid(),
+  store_id text not null references public.stores(id) on update cascade,
+  actor text not null default '',          -- the admin's email, or 'system'
+  action text not null,                    -- e.g. product.save, order.refund, login.failed
+  target_type text not null default '',
+  target_id text not null default '',
+  summary text not null default '',
+  meta jsonb not null default '{}',
+  created_at timestamptz not null default now()
+);
+create index if not exists audit_log_store_idx on public.audit_log (store_id, created_at desc);
+alter table public.audit_log enable row level security;
+drop policy if exists "admin read audit log" on public.audit_log;
+create policy "admin read audit log" on public.audit_log for select using (public.can_admin_store(store_id));
+-- No insert, update or delete policy: nobody can edit history from a browser, only the server adds to it.
+revoke insert, update, delete on public.audit_log from anon, authenticated;

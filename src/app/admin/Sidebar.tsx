@@ -28,6 +28,7 @@ const SEO: typeof NAV = [
   { href: "/admin/store", label: "Brand and design" },
   { href: "/admin/commerce", label: "Shipping and payments" },
   { href: "/admin/settings", label: "Settings" },
+  { href: "/admin/activity", label: "Activity log" },
 ];
 
 export function Sidebar({ email, demo, stores, current, owner }: { email: string; demo: boolean; stores: StoreRow[]; current: string; owner: boolean }) {

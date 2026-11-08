@@ -1,5 +1,7 @@
 "use server";
 
+import { logActivity as audit } from "@/lib/admin/activity";
+
 import { revalidatePath } from "next/cache";
 import { bustTag } from "@/lib/tags";
 import { requireAdminAction } from "@/lib/admin/auth";
@@ -17,6 +19,7 @@ export async function answerQuestionAction(id: string, slug: string, answer: str
     const { error } = await db.from("product_questions").update({ answer: a.slice(0, 1000), question: question.trim().slice(0, 300), status: "answered", answered_at: new Date().toISOString() }).eq("id", id);
     if (error) return { ok: false, error: error.message };
     await bust(slug);
+    await audit("question.answer", `Answered a question on ${slug}`, { type: "question", id });
     return { ok: true };
   } catch (e) { return { ok: false, error: message(e) }; }
 }
@@ -27,6 +30,7 @@ export async function setQuestionStatusAction(id: string, slug: string, status: 
     const { error } = await db.from("product_questions").update({ status }).eq("id", id);
     if (error) return { ok: false, error: error.message };
     await bust(slug);
+    await audit("question.status", `Set a question to ${status}`, { type: "question", id });
     return { ok: true };
   } catch (e) { return { ok: false, error: message(e) }; }
 }
@@ -37,6 +41,7 @@ export async function deleteQuestionAction(id: string, slug: string): Promise<Re
     const { error } = await db.from("product_questions").delete().eq("id", id);
     if (error) return { ok: false, error: error.message };
     await bust(slug);
+    await audit("question.delete", "Deleted a question", { type: "question", id });
     return { ok: true };
   } catch (e) { return { ok: false, error: message(e) }; }
 }

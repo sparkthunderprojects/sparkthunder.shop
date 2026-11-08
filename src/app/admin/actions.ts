@@ -1,5 +1,7 @@
 "use server";
 
+import { logActivity as audit } from "@/lib/admin/activity";
+
 import { HEX } from "@/lib/variants";
 import { LIMITS, rateLimit, wait } from "@/lib/ratelimit";
 import { revalidatePath } from "next/cache";
@@ -41,10 +43,14 @@ export async function loginAction(email: string, password: string): Promise<Resu
   const db = await sessionClient();
   if (!db) return { ok: false, error: "Supabase is not configured for this site yet." };
   const { error } = await db.auth.signInWithPassword({ email: email.trim(), password });
-  if (error) return { ok: false, error: "That email and password did not match." };
+  if (error) { await audit("login.failed", `Failed sign-in for ${email.trim().toLowerCase().slice(0, 100)}`, { actor: "anonymous" }); return { ok: false, error: "That email and password did not match." }; }
   const { data } = await db.auth.getUser();
-  const { data: row } = await db.from("admin_users").select("user_id").eq("user_id", data.user?.id ?? "").maybeSingle();
-  if (!row) { await db.auth.signOut(); return { ok: false, error: "This account is not an admin. Ask an existing admin to add it." }; }
+  const uid = data.user?.id ?? "";
+  // An owner (admin_users) or a staff member with access to at least one store (store_admins).
+  const { data: row } = await db.from("admin_users").select("user_id").eq("user_id", uid).maybeSingle();
+  const { data: staff } = row ? { data: null } : await db.from("store_admins").select("store_id").eq("user_id", uid).limit(1);
+  if (!row && !(staff as unknown[] | null)?.length) { await db.auth.signOut(); await audit("login.denied", `Sign-in refused (not an admin): ${email.trim().toLowerCase().slice(0, 100)}`, { actor: "anonymous" }); return { ok: false, error: "This account is not an admin. Ask an existing admin to add it." }; }
+  await audit("login", "Signed in", { actor: data.user?.email ?? email.trim() });
   return { ok: true };
 }
 export async function logoutAction(): Promise<Result> {
@@ -118,6 +124,7 @@ export async function saveProductAction(p: Product, originalSlug: string | null)
     await refresh(changed);
     await notifyRestocks(db);
     revalidatePath("/admin", "layout");
+    await audit("product.save", `Saved product ${clean.slug}`, { type: "product", id: clean.slug });
     return { ok: true, slug: clean.slug };
   } catch (e) {
     const m = message(e);
@@ -135,6 +142,7 @@ export async function deleteProductAction(slug: string, redirectTo: string | nul
     await repo.addRedirect(db, { from_path: `/products/${slug}`, to_path: to, note: "Product deleted" });
     await refresh([`/products/${slug}`]);
     revalidatePath("/admin", "layout");
+    await audit("product.delete", `Deleted product ${slug}`, { type: "product", id: slug });
     return { ok: true };
   } catch (e) { return { ok: false, error: message(e) }; }
 }
@@ -150,6 +158,7 @@ export async function bulkProductsAction(slugs: string[], action: "publish" | "u
     await refresh(slugs.map((s) => `/products/${s}`));
     if (action === "in-stock") await notifyRestocks(db);
     revalidatePath("/admin", "layout");
+    await audit("product.bulk", `Bulk "${action}" on ${slugs.length} product(s)`, { type: "product", meta: { slugs: slugs.slice(0, 50), action } });
     return { ok: true };
   } catch (e) { return { ok: false, error: message(e) }; }
 }
@@ -177,6 +186,7 @@ export async function saveFranchiseAction(f: Franchise, originalSlug: string | n
     if (originalSlug && originalSlug !== f.slug) await repo.addRedirect(db, { from_path: `/franchises/${originalSlug}`, to_path: `/franchises/${f.slug}`, note: "Slug changed" });
     await refresh([`/franchises/${f.slug}`]);
     revalidatePath("/admin", "layout");
+    await audit("franchise.save", `Saved franchise ${f.slug}`, { type: "franchise", id: f.slug });
     return { ok: true, slug: f.slug };
   } catch (e) { return { ok: false, error: /duplicate key/.test(message(e)) ? "That slug is already in use." : message(e) }; }
 }
@@ -190,6 +200,7 @@ export async function saveCategoryAction(c: Category, originalSlug: string | nul
     if (originalSlug && originalSlug !== c.slug) await repo.addRedirect(db, { from_path: `/categories/${originalSlug}`, to_path: `/categories/${c.slug}`, note: "Slug changed" });
     await refresh([`/categories/${c.slug}`]);
     revalidatePath("/admin", "layout");
+    await audit("category.save", `Saved category ${c.slug}`, { type: "category", id: c.slug });
     return { ok: true, slug: c.slug };
   } catch (e) { return { ok: false, error: /duplicate key/.test(message(e)) ? "That slug is already in use." : message(e) }; }
 }
@@ -203,6 +214,7 @@ export async function deleteTaxonomyAction(kind: "franchises" | "categories", sl
     await repo.addRedirect(db, { from_path: `/${kind}/${slug}`, to_path: kind === "franchises" ? "/franchises" : "/shop", note: "Deleted" });
     await refresh([]);
     revalidatePath("/admin", "layout");
+    await audit("taxonomy.delete", `Deleted ${kind} ${slug}`, { type: kind, id: slug });
     return { ok: true };
   } catch (e) { return { ok: false, error: message(e) }; }
 }
@@ -249,6 +261,7 @@ export async function addRedirectAction(from: string, to: string, status: number
     await repo.addRedirect(db, { from_path: f.replace(/\/$/, "") || "/", to_path: t, status, note: note.trim() });
     await bustTag("redirects");
     revalidatePath("/admin/redirects");
+    await audit("redirect.add", `Added redirect ${from} to ${to} (${status})`, { type: "redirect" });
     return { ok: true };
   } catch (e) { return { ok: false, error: message(e) }; }
 }
@@ -261,6 +274,7 @@ export async function saveSettingsAction(s: repo.SiteSettings): Promise<Result> 
     await repo.writeSettings(db, { ...s, sameAs: s.sameAs.map((x) => x.trim()).filter(Boolean) });
     await bustTag("settings");
     revalidatePath("/", "layout");
+    await audit("settings.save", "Saved site settings");
     return { ok: true };
   } catch (e) { return { ok: false, error: message(e) }; }
 }

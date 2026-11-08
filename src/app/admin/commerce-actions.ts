@@ -1,5 +1,7 @@
 "use server";
 
+import { logActivity as audit } from "@/lib/admin/activity";
+
 import { revalidatePath } from "next/cache";
 import { requireAdminAction } from "@/lib/admin/auth";
 import { serviceClient } from "@/lib/db/clients";
@@ -18,6 +20,7 @@ export async function saveCommerceAction(input: CommerceSettings): Promise<Resul
     if (error) return { ok: false, error: error.message };
     await bustTag("settings");
     revalidatePath("/", "layout");
+    await audit("commerce.save", "Saved shipping and payment settings");
     return { ok: true };
   } catch (e) { return { ok: false, error: e instanceof Error ? e.message : "Something went wrong." }; }
 }
@@ -49,6 +52,7 @@ export async function saveSecretsAction(input: { stripeSecret: string; stripeWeb
     const { error } = await svc.from("store_secrets").upsert({ store_id: storeId, ...patch }, { onConflict: "store_id" });
     if (error) return { ok: false, error: error.message };
     forgetStoreSecrets(storeId);
+    await audit("secrets.save", input.clear ? "Removed this store's payment and email keys" : "Changed this store's payment/email keys (values are never logged)");
     return { ok: true };
   } catch (e) { return { ok: false, error: e instanceof Error ? e.message : "Something went wrong." }; }
 }

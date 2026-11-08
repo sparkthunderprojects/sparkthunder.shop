@@ -1,5 +1,7 @@
 "use server";
 
+import { logActivity as audit } from "@/lib/admin/activity";
+
 import { revalidatePath } from "next/cache";
 import { bustTag } from "@/lib/tags";
 import { requireAdminAction } from "@/lib/admin/auth";
@@ -47,6 +49,7 @@ export async function saveCollectionAction(i: CollectionInput): Promise<Result> 
     const { error } = i.isNew ? await db.from("collections").insert(row) : await db.from("collections").update(row).eq("slug", slug);
     if (error) return { ok: false, error: error.message };
     await bust(slug);
+    await audit("collection.save", `Saved collection ${i.slug}`, { type: "collection", id: i.slug });
     return { ok: true };
   } catch (e) { return { ok: false, error: message(e) }; }
 }
@@ -57,6 +60,7 @@ export async function deleteCollectionAction(slug: string): Promise<Result> {
     const { error } = await db.from("collections").delete().eq("slug", slug);
     if (error) return { ok: false, error: error.message };
     await bust(slug);
+    await audit("collection.delete", `Deleted collection ${slug}`, { type: "collection", id: slug });
     return { ok: true };
   } catch (e) { return { ok: false, error: message(e) }; }
 }

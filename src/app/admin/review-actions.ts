@@ -1,5 +1,7 @@
 "use server";
 
+import { logActivity as audit } from "@/lib/admin/activity";
+
 import { revalidatePath } from "next/cache";
 import { bustTag } from "@/lib/tags";
 import { requireAdminAction } from "@/lib/admin/auth";
@@ -29,6 +31,7 @@ export async function moderateReviewAction(id: string, slug: string, status: "ap
       if (svc && email) await awardPoints(svc, { email, points: REVIEW_BONUS, reason: "review", ref: id, note: "Thanks for your review" }).catch(() => false);
     }
     await bust(slug);
+    await audit("review.moderate", `Set a review on ${slug} to ${status}`, { type: "review", id });
     return { ok: true };
   } catch (e) { return { ok: false, error: message(e) }; }
 }
@@ -39,6 +42,7 @@ export async function deleteReviewAction(id: string, slug: string): Promise<Resu
     const { error } = await db.from("reviews").delete().eq("id", id);
     if (error) return { ok: false, error: error.message };
     await bust(slug);
+    await audit("review.delete", `Deleted a review on ${slug}`, { type: "review", id });
     return { ok: true };
   } catch (e) { return { ok: false, error: message(e) }; }
 }

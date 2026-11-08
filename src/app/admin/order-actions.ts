@@ -1,5 +1,6 @@
 "use server";
 
+import { logActivity as audit } from "@/lib/admin/activity";
 import { getCommerce } from "@/lib/commerce";
 import { revalidatePath } from "next/cache";
 import { requireAdminAction } from "@/lib/admin/auth";
@@ -25,6 +26,7 @@ export async function markShippedAction(id: string, carrier = "", tracking = "")
     const { error } = await db.from("orders").update({ status: "shipped", tracking_carrier: carrier.trim(), tracking_number: tracking.trim(), shipped_at: new Date().toISOString() }).eq("id", id);
     if (error) return { ok: false, error: error.message };
     revalidatePath(`/admin/orders/${id}`); revalidatePath("/admin/orders");
+    await audit("order.ship", `Marked order ${o.number} as shipped`, { type: "order", id });
     if (!o.email) return { ok: true, note: "Marked as shipped. There is no email address on this order." };
     const sent = await sendEmail({ to: o.email, ...shippedEmail({ number: o.number, name: o.name, carrier: carrier.trim(), tracking: tracking.trim() }) });
     return { ok: true, note: sent.ok ? "Marked as shipped and the customer was emailed." : `Marked as shipped, but the email failed: ${sent.error}` };
@@ -44,6 +46,7 @@ export async function finishOrderAction(id: string): Promise<Result> {
     await svc.from("orders").update({ fulfil_attempts: 0, fulfilment_lock_until: null }).eq("id", id); // a fresh start: the owner is asking for it
     const r = await fulfilOrder(svc, { storeId: await currentStoreId(), sessionId: o.stripe_session_id ?? "", paymentIntent: o.stripe_payment_intent, email: o.email, name: o.name, phone: o.phone, address: o.shipping_address });
     revalidatePath(`/admin/orders/${id}`); revalidatePath("/admin/orders");
+    await audit("order.finish", `Finished processing order ${o.number}`, { type: "order", id });
     if (r.busy) return { ok: false, error: "Another process is finishing this order right now. Try again in a minute." };
     return { ok: true, note: r.order.status === "attention" ? "Finished, but some steps need your attention." : "The order is complete." };
   } catch (e) { return { ok: false, error: message(e) }; }
@@ -55,6 +58,7 @@ export async function updateOrderAction(id: string, patch: { status: OrderRow["s
     const { error } = await db.from("orders").update({ status: patch.status, notes: patch.notes.trim(), ...(patch.status === "paid" ? { attention_reason: "" } : {}) }).eq("id", id);
     if (error) return { ok: false, error: error.message };
     revalidatePath(`/admin/orders/${id}`); revalidatePath("/admin/orders");
+    await audit("order.update", `Set an order to ${patch.status}`, { type: "order", id, meta: { status: patch.status } });
     return { ok: true };
   } catch (e) { return { ok: false, error: message(e) }; }
 }
@@ -92,7 +96,8 @@ export async function refundOrderAction(input: Omit<RefundInput, "by">): Promise
     if (!data) return { ok: false, error: "Order not found." };
     const r = await createRefund(svc, await refundStripe(), await currentStoreId(), { ...input, key: String(input.key).slice(0, 80), by: email });
     revalidatePath(`/admin/orders/${input.orderId}`); revalidatePath("/admin/orders");
-    if (!r.ok) return { ok: false, error: r.error };
+    if (!r.ok) { await audit("order.refund.failed", `Refund did not finish: ${r.error}`, { type: "order", id: input.orderId }); return { ok: false, error: r.error }; }
+    await audit("order.refund", `Refunded ${(input.cardPence / 100).toFixed(2)} to card and ${(input.giftPence / 100).toFixed(2)} to gift card`, { type: "order", id: input.orderId, meta: { cardPence: input.cardPence, giftPence: input.giftPence, reason: input.reason } });
     return { ok: true, note: r.problems.length ? `Refunded, but: ${r.problems.join(" ")}` : "Refund done and the customer was emailed." };
   } catch (e) { return { ok: false, error: message(e) }; }
 }
@@ -105,6 +110,7 @@ export async function retryRefundAction(refundId: string): Promise<Result> {
     if (!svc) return { ok: false, error: "The database is not configured." };
     const r = await processRefund(svc, await refundStripe(), await currentStoreId(), refundId);
     revalidatePath("/admin/orders");
+    if (r.ok) await audit("order.refund.retry", "Finished an unfinished refund", { type: "refund", id: refundId });
     return r.ok ? { ok: true, note: "Refund finished." } : { ok: false, error: r.error };
   } catch (e) { return { ok: false, error: message(e) }; }
 }

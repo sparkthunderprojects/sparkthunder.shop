@@ -24,7 +24,7 @@ function store(): Store {
       media: [], redirects: [], settings: [], subscribers: [], admin_users: [], gift_cards: [], gift_card_ledger: [], orders: [], checkout_snapshots: [],
       collections: (seedCatalog.collections ?? []).map((c) => ({ slug: c.slug, name: c.name, description: c.description, image: c.image, launch_at: c.launchAt ?? null, product_slugs: c.productSlugs, sort_order: c.sortOrder, published: c.published })),
       stock_alerts: [], discount_codes: [], reviews: [], reward_points: [], product_questions: [],
-      store_secrets: [], order_refunds: [], refund_restocks: [],
+      store_secrets: [], order_refunds: [], refund_restocks: [], audit_log: [],
       stores: [
         { id: "sparkthunder", name: "Sparkthunder Shop", domains: ["localhost", "127.0.0.1", "sparkthunder.shop"], is_default: true, created_at: now },
         { id: "misspetty", name: "Miss Petty", domains: ["petty.localhost", "misspetty.com"], is_default: false, created_at: now },

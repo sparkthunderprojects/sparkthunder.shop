@@ -1,5 +1,7 @@
 "use server";
 
+import { logActivity as audit } from "@/lib/admin/activity";
+
 import { cookies } from "next/headers";
 import { revalidatePath, updateTag } from "next/cache";
 import { requireAdminAction, requireOwnerAction } from "@/lib/admin/auth";
@@ -34,6 +36,7 @@ export async function saveStoreRecordAction(input: { id: string; name: string; d
     if (error) return { ok: false, error: error.message };
     updateTag("stores");
     revalidatePath("/admin", "layout");
+    await audit("store.record", `${input.create ? "Created" : "Updated"} store ${input.id}`, { type: "store", id: input.id });
     return { ok: true };
   } catch (e) { return { ok: false, error: e instanceof Error ? e.message : "Something went wrong." }; }
 }
@@ -45,6 +48,7 @@ export async function setStaffAction(input: { email: string; storeId: string; ad
     if (!/^\S+@\S+\.\S+$/.test(email)) return { ok: false, error: "Enter the person's email address." };
     const { error } = await db.rpc("set_store_staff", { p_email: email, p_store: input.storeId, p_add: input.add });
     if (error) return { ok: false, error: error.message };
+    await audit("staff.change", `${input.add ? "Gave" : "Removed"} staff access for ${input.email} on store ${input.storeId}`, { type: "staff", id: input.storeId });
     return { ok: true };
   } catch (e) { return { ok: false, error: e instanceof Error ? e.message : "Something went wrong." }; }
 }
@@ -74,6 +78,7 @@ export async function cloneStoreAction(input: { fromId: string; id: string; name
         if (rows.length) await dest.from(table).insert(rows);
       }
     }
+    await audit("store.clone", `Cloned store ${input.fromId} into ${input.id}`, { type: "store", id: input.id });
     return { ok: true };
   } catch (e) { return { ok: false, error: e instanceof Error ? e.message : "Something went wrong." }; }
 }

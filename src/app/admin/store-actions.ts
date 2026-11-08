@@ -1,5 +1,7 @@
 "use server";
 
+import { logActivity as audit } from "@/lib/admin/activity";
+
 import { revalidatePath } from "next/cache";
 import { bustTag } from "@/lib/tags";
 import { requireAdminAction } from "@/lib/admin/auth";
@@ -14,6 +16,7 @@ export async function saveStoreAction(input: StoreSettings): Promise<{ ok: true 
     if (error) return { ok: false, error: error.message };
     await bustTag("settings");
     revalidatePath("/", "layout");
+    await audit("store.save", "Saved store settings");
     return { ok: true };
   } catch (e) { return { ok: false, error: e instanceof Error ? e.message : "Something went wrong." }; }
 }

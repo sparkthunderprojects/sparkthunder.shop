@@ -1,5 +1,7 @@
 "use server";
 
+import { logActivity as audit } from "@/lib/admin/activity";
+
 import { revalidatePath } from "next/cache";
 import { requireAdminAction } from "@/lib/admin/auth";
 import { normaliseDiscountCode } from "@/lib/discounts";
@@ -31,6 +33,7 @@ export async function createDiscountAction(i: DiscountInput): Promise<Result> {
     });
     if (error) return { ok: false, error: error.message };
     revalidatePath("/admin/discounts");
+    await audit("discount.create", `Created discount code ${i.code}`, { type: "discount" });
     return { ok: true };
   } catch (e) { return { ok: false, error: message(e) }; }
 }
@@ -41,6 +44,7 @@ export async function setDiscountActiveAction(id: string, active: boolean): Prom
     const { error } = await db.from("discount_codes").update({ active }).eq("id", id);
     if (error) return { ok: false, error: error.message };
     revalidatePath("/admin/discounts");
+    await audit("discount.toggle", `${active ? "Enabled" : "Disabled"} discount code`, { type: "discount", id });
     return { ok: true };
   } catch (e) { return { ok: false, error: message(e) }; }
 }
@@ -54,6 +58,7 @@ export async function deleteDiscountAction(id: string): Promise<Result> {
     const { error } = await db.from("discount_codes").delete().eq("id", id);
     if (error) return { ok: false, error: error.message };
     revalidatePath("/admin/discounts");
+    await audit("discount.delete", "Deleted a discount code", { type: "discount", id });
     return { ok: true };
   } catch (e) { return { ok: false, error: message(e) }; }
 }
