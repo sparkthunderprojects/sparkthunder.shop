@@ -9,6 +9,9 @@ import { getCard } from "@/lib/giftcards/ledger";
 import { fulfilOrder, type OrderRow } from "@/lib/shop/fulfil";
 import { serviceClient } from "@/lib/db/clients";
 import { currentStoreId } from "@/lib/db/stores";
+import { isDemo } from "@/lib/db/env";
+import { getStripe, hasStripe } from "@/lib/shop/stripe";
+import { createRefund, processRefund, type RefundInput, type RefundStripe } from "@/lib/shop/refund";
 
 type Result = { ok: true; note?: string } | { ok: false; error: string };
 const message = (e: unknown) => (e instanceof Error ? e.message : "Something went wrong.");
@@ -69,5 +72,39 @@ export async function emailGiftCardAction(id: string, toOverride?: string): Prom
     await db.from("gift_cards").update({ emailed_at: new Date().toISOString() }).eq("id", id);
     revalidatePath(`/admin/gift-cards/${id}`);
     return { ok: true, note: `Emailed to ${to}.` };
+  } catch (e) { return { ok: false, error: message(e) }; }
+}
+
+/** Stripe for refunds. In demo mode a stand-in answers, so the whole flow can be tried without a payment account. */
+async function refundStripe(): Promise<RefundStripe | null> {
+  if (isDemo) return { refunds: { create: async (_p, o) => ({ id: `re_demo_${o?.idempotencyKey ?? Date.now()}` }) } };
+  if (!(await hasStripe())) return null;
+  return (await getStripe()) as unknown as RefundStripe;
+}
+
+/** Refund all or part of an order: money back to the card and/or gift card, optionally restocking and taking back points. */
+export async function refundOrderAction(input: Omit<RefundInput, "by">): Promise<Result> {
+  try {
+    const { email } = await requireAdminAction();
+    const svc = serviceClient();
+    if (!svc) return { ok: false, error: "The database is not configured." };
+    const { data } = await svc.from("orders").select("id").eq("id", input.orderId).maybeSingle();   // scoped to this store's host/admin store
+    if (!data) return { ok: false, error: "Order not found." };
+    const r = await createRefund(svc, await refundStripe(), await currentStoreId(), { ...input, key: String(input.key).slice(0, 80), by: email });
+    revalidatePath(`/admin/orders/${input.orderId}`); revalidatePath("/admin/orders");
+    if (!r.ok) return { ok: false, error: r.error };
+    return { ok: true, note: r.problems.length ? `Refunded, but: ${r.problems.join(" ")}` : "Refund done and the customer was emailed." };
+  } catch (e) { return { ok: false, error: message(e) }; }
+}
+
+/** Finish a refund that stopped part way (for example Stripe was unreachable). Nothing already done is repeated. */
+export async function retryRefundAction(refundId: string): Promise<Result> {
+  try {
+    await requireAdminAction();
+    const svc = serviceClient();
+    if (!svc) return { ok: false, error: "The database is not configured." };
+    const r = await processRefund(svc, await refundStripe(), await currentStoreId(), refundId);
+    revalidatePath("/admin/orders");
+    return r.ok ? { ok: true, note: "Refund finished." } : { ok: false, error: r.error };
   } catch (e) { return { ok: false, error: message(e) }; }
 }

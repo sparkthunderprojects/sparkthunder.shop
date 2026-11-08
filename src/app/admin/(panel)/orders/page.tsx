@@ -13,12 +13,12 @@ export default async function OrdersPage() {
   const orders = (data ?? []) as OrderRow[];
   const toShip = orders.filter((o) => o.status === "paid" && o.items.some((l) => l.type === "product")).length;
   const attention = orders.filter((o) => o.status === "attention").length;
-  const revenue = orders.filter((o) => o.status !== "cancelled").reduce((n, o) => n + o.total_pence, 0);
+  const revenue = orders.filter((o) => o.status !== "cancelled").reduce((n, o) => n + o.total_pence - (o.refunded_card_pence ?? 0), 0);
   return (
     <>
-      <div className="adm-h"><div><h1>Orders</h1><p>Paid orders from Stripe Checkout. Refunds are made in the Stripe dashboard.</p></div></div>
+      <div className="adm-h"><div><h1>Orders</h1><p>Paid orders from Stripe Checkout. Open an order to ship it or refund it.</p></div></div>
       <div className="adm-grid adm-g3" style={{ marginBottom: 18 }}>
-        {[[String(orders.length), "Orders"], [String(toShip), "Waiting to ship"], [String(attention), "Need attention"], [formatPrice(revenue), "Card revenue (excl. gift cards)"]].slice(0, 4).map(([v, l]) => <div key={l} className="adm-card" style={{ margin: 0 }}><div className="adm-stat">{v}</div><div className="adm-stat-l">{l}</div></div>)}
+        {[[String(orders.length), "Orders"], [String(toShip), "Waiting to ship"], [String(attention), "Need attention"], [formatPrice(revenue), "Card revenue (after refunds, excl. gift cards)"]].slice(0, 4).map(([v, l]) => <div key={l} className="adm-card" style={{ margin: 0 }}><div className="adm-stat">{v}</div><div className="adm-stat-l">{l}</div></div>)}
       </div>
       <div className="adm-card" style={{ padding: 0, overflowX: "auto" }}>
         <table className="adm-table"><thead><tr><th>Order</th><th>Date</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th></tr></thead><tbody>

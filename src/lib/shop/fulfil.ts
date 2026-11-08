@@ -15,6 +15,7 @@ export type OrderRow = {
   id: string; number: string; stripe_session_id: string | null; stripe_payment_intent: string; status: "paid" | "shipped" | "cancelled" | "attention";
   email: string; name: string; phone: string; shipping_address: Record<string, string> | null; items: Snapshot["lines"];
   subtotal_pence: number; shipping_pence: number; discount_code?: string; discount_pence?: number; gift_card_pence: number; total_pence: number; gift_card_code: string; gift_message?: string; gift_wrap?: boolean; gift_wrap_pence?: number;
+  refunded_card_pence?: number; refunded_gift_pence?: number;
   fulfilment?: FulfilState; fulfil_attempts?: number; fulfilment_lock_until?: string | null; fulfilled_at?: string | null;
   tracking_carrier: string; tracking_number: string; notes: string; attention_reason: string; shipped_at: string | null; created_at: string;
 };

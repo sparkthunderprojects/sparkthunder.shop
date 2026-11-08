@@ -54,6 +54,12 @@ export function shippedEmail(o: { number: string; name: string; carrier: string;
   return { subject: `Your ${B} order ${o.number} has shipped`, html, text: `Order ${o.number} has shipped${o.carrier ? ` with ${o.carrier}` : ""}.${o.tracking ? ` Tracking: ${o.tracking}${trackingUrl(o.carrier, o.tracking) ? ` (${trackingUrl(o.carrier, o.tracking)})` : ""}` : ""}\n` };
 }
 
+export function refundEmail(o: { number: string; name: string; cardPence: number; giftPence: number; reason?: string }) {
+  const parts = [o.cardPence > 0 ? `${formatPrice(o.cardPence)} back to your original payment method (usually 5 to 10 working days to appear)` : "", o.giftPence > 0 ? `${formatPrice(o.giftPence)} back onto your gift card (available straight away)` : ""].filter(Boolean);
+  const html = shell("Your refund is on its way", `<p style="margin:0 0 12px">${o.name ? `Hi ${esc(o.name)}, ` : ""}we have refunded part or all of order <b>${esc(o.number)}</b>.</p><ul style="margin:0 0 12px;padding-left:20px">${parts.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>${o.reason ? `<p style="margin:0 0 12px;color:#6a6a70">Note: ${esc(o.reason)}</p>` : ""}<p style="margin:0">If you have any questions, just reply to this email.</p>`);
+  return { subject: `Your ${B} refund for order ${o.number}`, html, text: `We have refunded order ${o.number}:\n- ${parts.join("\n- ")}\n${o.reason ? `\nNote: ${o.reason}\n` : ""}\nIf you have any questions, just reply to this email.\n` };
+}
+
 export function backInStockEmail(o: { name: string; variant: string; url: string }) {
   const what = o.variant ? `${o.name} (${o.variant})` : o.name;
   const html = shell("Good news: it's back in stock", `<p style="margin:0 0 16px"><b>${esc(what)}</b> is available again at ${B}.</p><p style="margin:0 0 20px;color:#6a6a70">Stock can go quickly, so we would not wait.</p><p style="margin:0"><a href="${esc(o.url)}" style="background:{{accent}};color:{{onAccent}};padding:12px 22px;text-decoration:none;font-weight:700">Shop it now</a></p><p style="margin:24px 0 0;font-size:12px;color:#6a6a70">You asked us to email you when this came back. This is a one-off message and we will not email you about it again.</p>`);

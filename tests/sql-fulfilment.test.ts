@@ -16,7 +16,7 @@ const PRELUDE = `
     store_id text not null references public.stores(id), slug text not null, track_stock boolean not null default false,
     stock_qty int not null default 0, in_stock boolean not null default true, variants jsonb not null default '[]',
     primary key (store_id, slug));
-  create table public.orders (id uuid primary key default gen_random_uuid(), store_id text not null references public.stores(id), number text not null, created_at timestamptz not null default now());
+  create table public.orders (id uuid primary key default gen_random_uuid(), store_id text not null references public.stores(id), number text not null, created_at timestamptz not null default now(), total_pence int not null default 0, gift_card_pence int not null default 0, items jsonb not null default '[]');
   create table public.gift_cards (id uuid primary key default gen_random_uuid());
   create table public.discount_codes (id uuid primary key default gen_random_uuid(), store_id text not null references public.stores(id), code text not null, uses int not null default 0, max_uses int);
 `;
@@ -161,5 +161,58 @@ describe("use_discount (real SQL)", () => {
     const c = await code(null, "misspetty"), o = await order();
     expect((await use(o, c)).status).toBe("missing");
     await expect(db.exec("set role anon; select use_discount('sparkthunder', gen_random_uuid(), gen_random_uuid())")).rejects.toThrow(/permission denied/i);
+  });
+});
+
+describe("refunds (real SQL)", () => {
+  const mk = async (total = 3500, gift = 1500) => (await one<{ id: string }>(
+    "insert into orders (store_id, number, total_pence, gift_card_pence, items) values ('sparkthunder','R1',$1,$2,$3) returning id",
+    [total, gift, JSON.stringify([{ type: "product", slug: "tee", variant: "", qty: 2 }, { type: "product", slug: "hoodie", variant: "Black / M", qty: 1 }])])).id;
+  const begin = async (o: string, key: string, card: number, gift = 0, store = "sparkthunder") => (await one<{ begin_refund: { status: string; id?: string; error?: string } }>(
+    "select begin_refund($1,$2,$3,$4,$5,'',$6,false,'a')", [store, o, key, card, gift, "[]"])).begin_refund;
+  const sums = async (o: string) => one<{ refunded_card_pence: number; refunded_gift_pence: number }>("select refunded_card_pence, refunded_gift_pence from orders where id = $1", [o]);
+
+  it("starts a refund once per key and tracks the totals", async () => {
+    const o = await mk();
+    const a = await begin(o, "k1", 1000, 500), b = await begin(o, "k1", 1000, 500);
+    expect(a.status).toBe("created"); expect(b.status).toBe("existing"); expect(b.id).toBe(a.id);
+    expect(await sums(o)).toEqual({ refunded_card_pence: 1000, refunded_gift_pence: 500 });
+  });
+  it("never lets refunds add up to more than was paid, even when started at the same moment", async () => {
+    const o = await mk();
+    const rs = await Promise.all([begin(o, "a", 2000), begin(o, "b", 2000), begin(o, "c", 2000)]);
+    expect(rs.filter((r) => r.status === "created")).toHaveLength(1);
+    expect((await sums(o)).refunded_card_pence).toBe(2000);
+    expect((await begin(o, "d", 1500)).status).toBe("created");
+    expect((await begin(o, "e", 1)).status).toBe("rejected");
+    expect((await begin(o, "f", 0, 1501)).status).toBe("rejected");
+    expect((await begin(o, "g", 0, 0)).status).toBe("rejected");
+  });
+  it("fail_refund hands the amount back, but only for a refund Stripe never accepted", async () => {
+    const o = await mk();
+    const r = await begin(o, "k", 1000);
+    expect((await one<{ fail_refund: boolean }>("select fail_refund('sparkthunder',$1,'no')", [r.id])).fail_refund).toBe(true);
+    expect((await sums(o)).refunded_card_pence).toBe(0);
+    const r2 = await begin(o, "k2", 1000);
+    await db.query("update order_refunds set stripe_refund_id = 're_1' where id = $1", [r2.id]);
+    expect((await one<{ fail_refund: boolean }>("select fail_refund('sparkthunder',$1,'no')", [r2.id])).fail_refund).toBe(false);
+    expect((await sums(o)).refunded_card_pence).toBe(1000);
+  });
+  it("restock_item puts stock back once per refund, never above what was ordered, per variant", async () => {
+    const o = await mk();
+    const r1 = (await begin(o, "k1", 100)).id!, r2 = (await begin(o, "k2", 100)).id!, r3 = (await begin(o, "k3", 100)).id!;
+    const re = async (r: string, slug: string, v: string, q: number) => (await one<{ restock_item: number }>("select restock_item('sparkthunder',$1,$2,$3,$4)", [r, slug, v, q])).restock_item;
+    expect(await re(r1, "tee", "", 1)).toBe(1);
+    expect(await re(r1, "tee", "", 1)).toBe(0);              // same refund again: nothing
+    expect(await re(r2, "tee", "", 5)).toBe(1);              // only 1 more was ordered
+    expect(await re(r3, "tee", "", 1)).toBe(0);              // none left to restock
+    expect((await stock("tee")).stock_qty).toBe(7);          // 5 + 2
+    expect(await re(r1, "hoodie", "Black / M", 1)).toBe(1);
+    const h = await stock("hoodie");
+    expect(h.variants.find((v) => v.name === "Black / M")!.stockQty).toBe(4);
+    expect(h.stock_qty).toBe(7);
+  });
+  it("is not callable from a browser role", async () => {
+    await expect(db.exec("set role anon; select begin_refund('sparkthunder', gen_random_uuid(), 'x', 1, 0, '', '[]', false, '')")).rejects.toThrow(/permission denied/i);
   });
 });

@@ -24,12 +24,22 @@ function store(): Store {
       media: [], redirects: [], settings: [], subscribers: [], admin_users: [], gift_cards: [], gift_card_ledger: [], orders: [], checkout_snapshots: [],
       collections: (seedCatalog.collections ?? []).map((c) => ({ slug: c.slug, name: c.name, description: c.description, image: c.image, launch_at: c.launchAt ?? null, product_slugs: c.productSlugs, sort_order: c.sortOrder, published: c.published })),
       stock_alerts: [], discount_codes: [], reviews: [], reward_points: [], product_questions: [],
-      store_secrets: [],
+      store_secrets: [], order_refunds: [], refund_restocks: [],
       stores: [
         { id: "sparkthunder", name: "Sparkthunder Shop", domains: ["localhost", "127.0.0.1", "sparkthunder.shop"], is_default: true, created_at: now },
         { id: "misspetty", name: "Miss Petty", domains: ["petty.localhost", "misspetty.com"], is_default: false, created_at: now },
       ],
     };
+    // SPARKTHUNDER_DEMO_ORDER=1 adds one paid order (for trying shipping and refunds without a payment account).
+    if (process.env.SPARKTHUNDER_DEMO_ORDER) {
+      g.__sparkFake.orders.push({
+        id: "00000000-0000-4000-8000-000000000001", store_id: "sparkthunder", number: "SPK-1001", stripe_session_id: "cs_demo", stripe_payment_intent: "pi_demo_1", status: "paid",
+        email: "buyer@example.com", name: "Demo Buyer", phone: "", shipping_address: null, subtotal_pence: 5000, shipping_pence: 0, gift_card_pence: 0, total_pence: 5000,
+        gift_card_code: "", discount_pence: 0, tracking_carrier: "", tracking_number: "", notes: "", attention_reason: "", shipped_at: null, created_at: now, updated_at: now,
+        fulfilment: {}, fulfil_attempts: 0, fulfilment_lock_until: null, fulfilled_at: now, refunded_card_pence: 0, refunded_gift_pence: 0,
+        items: [{ type: "product", slug: seedCatalog.products[0].slug, name: seedCatalog.products[0].name, sku: "DEMO", unitPence: 2500, qty: 2, image: "" }],
+      });
+    }
     // A second, completely different store so multi-store behaviour can be exercised without a database.
     const S = "misspetty";
     g.__sparkFake.franchises.push({ store_id: S, slug: "face", name: "Face", tagline: "Skin that looks like skin", description: "Complexion makeup for every undertone.", accent: "#e58ba5", sort_order: 1, updated_at: now });
@@ -93,7 +103,7 @@ class Query implements PromiseLike<Result> {
       if (!out.created_at && this.table !== "settings") out.created_at = now;
       if (["products", "franchises", "categories"].includes(this.table)) out.updated_at = now;
       // Column defaults the real schema applies.
-      if (this.table === "orders") { out.fulfilment ??= {}; out.fulfil_attempts ??= 0; out.fulfilment_lock_until ??= null; out.fulfilled_at ??= null; }
+      if (this.table === "orders") { out.fulfilment ??= {}; out.fulfil_attempts ??= 0; out.fulfilment_lock_until ??= null; out.fulfilled_at ??= null; out.refunded_card_pence ??= 0; out.refunded_gift_pence ??= 0; }
       return out;
     };
     let result: Row[] = [];
@@ -174,6 +184,51 @@ export function createFakeClient() {
         if (short.length) return { data: { ok: false, short }, error: null };
         t.stock_reservations.push(...keep);
         return { data: { ok: true }, error: null };
+      }
+      if (name === "begin_refund") {
+        const t = store(), S = String(args.p_store);
+        const o = (t.orders ?? []).find((r) => r.id === args.p_order && sid(r) === S);
+        if (!o) return { data: { status: "rejected", error: "Order not found." }, error: null };
+        const refunds = (t.order_refunds ??= []);
+        const seen = refunds.find((r) => r.store_id === S && r.key === args.p_key);
+        if (seen) return { data: { status: "existing", id: seen.id }, error: null };
+        const card = Number(args.p_card), gift = Number(args.p_gift);
+        if (card < 0 || gift < 0 || card + gift === 0) return { data: { status: "rejected", error: "Enter an amount to refund." }, error: null };
+        if (card > (o.total_pence as number) - (o.refunded_card_pence as number)) return { data: { status: "rejected", error: `Only ${(o.total_pence as number) - (o.refunded_card_pence as number)} pence can still be refunded to the card.` }, error: null };
+        if (gift > (o.gift_card_pence as number) - (o.refunded_gift_pence as number)) return { data: { status: "rejected", error: `Only ${(o.gift_card_pence as number) - (o.refunded_gift_pence as number)} pence can still be refunded to the gift card.` }, error: null };
+        const id = `rf_${refunds.length + 1}_${Math.random().toString(36).slice(2, 8)}`;
+        refunds.push({ id, store_id: S, order_id: o.id, key: args.p_key, card_pence: card, gift_pence: gift, reason: args.p_reason ?? "", restock: args.p_restock ?? [], take_points: Boolean(args.p_points), source: args.p_source ?? "admin", status: "pending", steps: {}, stripe_refund_id: args.p_stripe_id ?? null, error: "", created_by: args.p_by ?? "", created_at: new Date().toISOString() });
+        o.refunded_card_pence = (o.refunded_card_pence as number) + card; o.refunded_gift_pence = (o.refunded_gift_pence as number) + gift;
+        return { data: { status: "created", id }, error: null };
+      }
+      if (name === "fail_refund") {
+        const t = store(), r = (t.order_refunds ?? []).find((x) => x.id === args.p_id && x.store_id === args.p_store);
+        if (!r || r.status !== "pending" || r.stripe_refund_id) return { data: false, error: null };
+        r.status = "failed"; r.error = args.p_error ?? "";
+        const o = (t.orders ?? []).find((x) => x.id === r.order_id)!;
+        o.refunded_card_pence = Math.max(0, (o.refunded_card_pence as number) - (r.card_pence as number)); o.refunded_gift_pence = Math.max(0, (o.refunded_gift_pence as number) - (r.gift_pence as number));
+        return { data: true, error: null };
+      }
+      if (name === "restock_item") {
+        const t = store(), S = String(args.p_store), slug = String(args.p_slug), variant = String(args.p_variant ?? ""), qty = Number(args.p_qty);
+        const r = (t.order_refunds ?? []).find((x) => x.id === args.p_refund && x.store_id === S);
+        const done = (t.refund_restocks ??= []);
+        if (!r || qty <= 0 || done.some((d) => d.refund_id === r.id && d.product_slug === slug && d.variant === variant)) return { data: 0, error: null };
+        const o = (t.orders ?? []).find((x) => x.id === r.order_id)!;
+        const ordered = (o.items as { type: string; slug: string; variant?: string; qty: number }[]).filter((l) => l.type === "product" && l.slug === slug && (l.variant ?? "") === variant).reduce((n, l) => n + l.qty, 0);
+        const already = done.filter((d) => d.order_id === o.id && d.product_slug === slug && d.variant === variant).reduce((n, d) => n + (d.qty as number), 0);
+        const add = ordered === 0 ? qty : Math.min(qty, ordered - already);
+        if (add <= 0) return { data: 0, error: null };
+        done.push({ refund_id: r.id, order_id: o.id, store_id: S, product_slug: slug, variant, qty: add });
+        const p = (t.products ?? []).find((x) => x.slug === slug && sid(x) === S);
+        if (!p || !p.track_stock) return { data: add, error: null };
+        const vs = p.variants as { name: string; stockQty: number }[] | null;
+        if (variant && vs?.length) {
+          p.variants = vs.map((v) => (v.name === variant ? { ...v, stockQty: v.stockQty + add } : v));
+          const total = (p.variants as { stockQty: number }[]).reduce((n, v) => n + v.stockQty, 0);
+          p.stock_qty = total; p.in_stock = total > 0;
+        } else { p.stock_qty = (p.stock_qty as number) + add; p.in_stock = true; }
+        return { data: add, error: null };
       }
       if (name === "use_discount") {
         const t = store(), S = String(args.p_store);

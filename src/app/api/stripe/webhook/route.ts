@@ -5,6 +5,7 @@ import type Stripe from "stripe";
 import { CATALOG_TAG } from "@/lib/catalog";
 import { serviceClient } from "@/lib/db/clients";
 import { fulfilOrder } from "@/lib/shop/fulfil";
+import { recordExternalRefunds } from "@/lib/shop/refund";
 import { getStripe } from "@/lib/shop/stripe";
 import { getStoreSecrets } from "@/lib/secrets";
 
@@ -44,6 +45,21 @@ export async function POST(req: Request) {
         console.error("[stripe webhook] fulfilment failed", e);
         return new Response("Fulfilment failed", { status: 500 }); // Stripe will retry; fulfilOrder resumes from the last finished step
       }
+    }
+  }
+  if (event.type === "charge.refunded") {
+    const ch = event.data.object as Stripe.Charge;
+    const db = serviceClient();
+    if (!db) return new Response("Database not configured", { status: 500 });
+    try {
+      const pi = typeof ch.payment_intent === "string" ? ch.payment_intent : ch.payment_intent?.id ?? "";
+      // The event may carry only the latest refunds, so ask Stripe for the full list.
+      const list = await (await getStripe()).refunds.list({ payment_intent: pi, limit: 100 });
+      await recordExternalRefunds(db, await currentStoreId(), pi, list.data.map((r) => ({ id: r.id, amount: r.amount, status: r.status, metadata: r.metadata })));
+      revalidatePath("/admin", "layout");
+    } catch (e) {
+      console.error("[stripe webhook] recording refund failed", e);
+      return new Response("Could not record the refund", { status: 500 });
     }
   }
   return new Response("ok");

@@ -758,3 +758,121 @@ begin
 end $$;
 revoke all on function public.use_discount(text, uuid, uuid) from public, anon, authenticated;
 grant execute on function public.use_discount(text, uuid, uuid) to service_role;
+
+-- ============================================================================
+-- Refunds (idempotent): full and partial, money back to card and gift card, optional restock
+-- ============================================================================
+alter table public.orders
+  add column if not exists refunded_card_pence int not null default 0,
+  add column if not exists refunded_gift_pence int not null default 0;
+
+create table if not exists public.order_refunds (
+  id uuid primary key default gen_random_uuid(),
+  store_id text not null references public.stores(id) on update cascade,
+  order_id uuid not null references public.orders(id) on delete cascade,
+  key text not null,                                   -- one per click of "Refund": repeating it never refunds twice
+  card_pence int not null default 0 check (card_pence >= 0),
+  gift_pence int not null default 0 check (gift_pence >= 0),
+  reason text not null default '',
+  restock jsonb not null default '[]',                 -- [{"slug","variant","qty"}]
+  take_points boolean not null default false,
+  source text not null default 'admin',                -- 'admin' or 'stripe' (made in the Stripe dashboard)
+  status text not null default 'pending' check (status in ('pending','done','failed')),
+  steps jsonb not null default '{}',                   -- which steps are finished (stripe, gift card, stock, points, email)
+  stripe_refund_id text,
+  error text not null default '',
+  created_by text not null default '',
+  created_at timestamptz not null default now(),
+  unique (store_id, key)
+);
+create unique index if not exists order_refunds_stripe_idx on public.order_refunds (stripe_refund_id) where stripe_refund_id is not null;
+create index if not exists order_refunds_order_idx on public.order_refunds (order_id);
+alter table public.order_refunds enable row level security;
+drop policy if exists "admin read order refunds" on public.order_refunds;
+create policy "admin read order refunds" on public.order_refunds for select using (public.can_admin_store(store_id));
+
+create table if not exists public.refund_restocks (
+  refund_id uuid not null references public.order_refunds(id) on delete cascade,
+  order_id uuid not null references public.orders(id) on delete cascade,
+  store_id text not null,
+  product_slug text not null,
+  variant text not null default '',
+  qty int not null,
+  primary key (refund_id, product_slug, variant)
+);
+alter table public.refund_restocks enable row level security;
+drop policy if exists "admin read refund restocks" on public.refund_restocks;
+create policy "admin read refund restocks" on public.refund_restocks for select using (public.can_admin_store(store_id));
+
+-- Start a refund. Locks the order, so two refunds at once can never add up to more than was paid.
+-- Repeating the call with the same key returns the refund already started.
+create or replace function public.begin_refund(p_store text, p_order uuid, p_key text, p_card int, p_gift int, p_reason text, p_restock jsonb, p_points boolean, p_by text, p_source text default 'admin', p_stripe_id text default null) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare o public.orders%rowtype; r public.order_refunds%rowtype;
+begin
+  select * into o from public.orders where id = p_order and store_id = p_store for update;
+  if not found then return jsonb_build_object('status', 'rejected', 'error', 'Order not found.'); end if;
+  select * into r from public.order_refunds where store_id = p_store and key = p_key;
+  if found then return jsonb_build_object('status', 'existing', 'id', r.id); end if;
+  if p_card < 0 or p_gift < 0 or p_card + p_gift = 0 then return jsonb_build_object('status', 'rejected', 'error', 'Enter an amount to refund.'); end if;
+  if p_card > o.total_pence - o.refunded_card_pence then
+    return jsonb_build_object('status', 'rejected', 'error', format('Only %s pence can still be refunded to the card.', o.total_pence - o.refunded_card_pence));
+  end if;
+  if p_gift > o.gift_card_pence - o.refunded_gift_pence then
+    return jsonb_build_object('status', 'rejected', 'error', format('Only %s pence can still be refunded to the gift card.', o.gift_card_pence - o.refunded_gift_pence));
+  end if;
+  insert into public.order_refunds (store_id, order_id, key, card_pence, gift_pence, reason, restock, take_points, source, stripe_refund_id, created_by)
+  values (p_store, p_order, p_key, p_card, p_gift, coalesce(p_reason, ''), coalesce(p_restock, '[]'::jsonb), p_points, p_source, p_stripe_id, coalesce(p_by, ''))
+  returning * into r;
+  update public.orders set refunded_card_pence = refunded_card_pence + p_card, refunded_gift_pence = refunded_gift_pence + p_gift where id = p_order;
+  return jsonb_build_object('status', 'created', 'id', r.id);
+end $$;
+
+-- A refund that Stripe definitely rejected: hand its amount back so it can be tried again.
+create or replace function public.fail_refund(p_store text, p_id uuid, p_error text) returns boolean
+language plpgsql security definer set search_path = public as $$
+declare r public.order_refunds%rowtype;
+begin
+  select * into r from public.order_refunds where id = p_id and store_id = p_store for update;
+  if not found or r.status <> 'pending' or r.stripe_refund_id is not null then return false; end if;
+  update public.order_refunds set status = 'failed', error = coalesce(p_error, '') where id = p_id;
+  update public.orders set refunded_card_pence = greatest(0, refunded_card_pence - r.card_pence), refunded_gift_pence = greatest(0, refunded_gift_pence - r.gift_pence) where id = r.order_id;
+  return true;
+end $$;
+
+-- Put returned items back on the shelf, once per refund and product, and never more than the order contained.
+-- Returns the quantity added (0 if already done, or nothing left to restock).
+create or replace function public.restock_item(p_store text, p_refund uuid, p_slug text, p_variant text, p_qty int) returns int
+language plpgsql security definer set search_path = public as $$
+declare r public.order_refunds%rowtype; ordered int; already int; add_qty int; prod public.products%rowtype; vs jsonb; total int;
+begin
+  select * into r from public.order_refunds where id = p_refund and store_id = p_store;
+  if not found or p_qty <= 0 then return 0; end if;
+  perform 1 from public.orders where id = r.order_id for update;
+  if exists (select 1 from public.refund_restocks where refund_id = p_refund and product_slug = p_slug and variant = coalesce(p_variant, '')) then return 0; end if;
+  select coalesce(sum((l ->> 'qty')::int), 0) into ordered from public.orders o, jsonb_array_elements(o.items) l
+    where o.id = r.order_id and l ->> 'type' = 'product' and l ->> 'slug' = p_slug and coalesce(l ->> 'variant', '') = coalesce(p_variant, '');
+  select coalesce(sum(qty), 0) into already from public.refund_restocks where order_id = r.order_id and product_slug = p_slug and variant = coalesce(p_variant, '');
+  -- A bundle's parts are not order lines themselves (ordered = 0): the admin's choice stands, still once per refund.
+  add_qty := case when ordered = 0 then p_qty else least(p_qty, ordered - already) end;
+  if add_qty <= 0 then return 0; end if;
+  insert into public.refund_restocks (refund_id, order_id, store_id, product_slug, variant, qty) values (p_refund, r.order_id, p_store, p_slug, coalesce(p_variant, ''), add_qty);
+  select * into prod from public.products where store_id = p_store and slug = p_slug for update;
+  if not found or not prod.track_stock then return add_qty; end if;
+  if coalesce(p_variant, '') <> '' and jsonb_typeof(prod.variants) = 'array' and jsonb_array_length(prod.variants) > 0 then
+    select coalesce(jsonb_agg(case when v ->> 'name' = p_variant then jsonb_set(v, '{stockQty}', to_jsonb((v ->> 'stockQty')::int + add_qty)) else v end order by ord), '[]'::jsonb)
+      into vs from jsonb_array_elements(prod.variants) with ordinality as t(v, ord);
+    select coalesce(sum((v ->> 'stockQty')::int), 0) into total from jsonb_array_elements(vs) v;
+    update public.products set variants = vs, stock_qty = total, in_stock = total > 0 where store_id = p_store and slug = p_slug;
+  else
+    update public.products set stock_qty = prod.stock_qty + add_qty, in_stock = true where store_id = p_store and slug = p_slug;
+  end if;
+  return add_qty;
+end $$;
+
+revoke all on function public.begin_refund(text, uuid, text, int, int, text, jsonb, boolean, text, text, text) from public, anon, authenticated;
+revoke all on function public.fail_refund(text, uuid, text) from public, anon, authenticated;
+revoke all on function public.restock_item(text, uuid, text, text, int) from public, anon, authenticated;
+grant execute on function public.begin_refund(text, uuid, text, int, int, text, jsonb, boolean, text, text, text) to service_role;
+grant execute on function public.fail_refund(text, uuid, text) to service_role;
+grant execute on function public.restock_item(text, uuid, text, text, int) to service_role;
