@@ -13,6 +13,7 @@ vi.mock("@/lib/email/send", () => ({
 
 import { createFakeClient } from "@/lib/db/fake";
 import { fulfilOrder } from "@/lib/shop/fulfil";
+import { holdStock, releaseStock, stockItems } from "@/lib/shop/stock";
 import type { Snapshot } from "@/lib/shop/types";
 
 const g = globalThis as unknown as { __sparkFake?: unknown };
@@ -150,5 +151,42 @@ describe("fulfilOrder", () => {
     const r = await fulfilOrder(db, { sessionId: "cs_none", paymentIntent: "pi", email: "x@example.com", name: "X", phone: "", address: null, storeId: "sparkthunder" });
     expect(r.order.status).toBe("attention");
     expect(r.order.attention_reason).toMatch(/snapshot was missing/);
+  });
+});
+
+describe("stock holds at checkout", () => {
+  const items = (lines: Snapshot["lines"]) => stockItems(db, lines);
+
+  it("lets only one of two shoppers take the last unit, and says why to the other", async () => {
+    expect((await holdStock(db, "sparkthunder", "rsv_a", await items([line("cap", 1)]))).ok).toBe(true);
+    const b = await holdStock(db, "sparkthunder", "rsv_b", await items([line("cap", 1)]));
+    expect(b.ok).toBe(false);
+    expect(!b.ok && b.message).toMatch(/cap: none left right now/);
+  });
+
+  it("gives the stock back when the hold is released, so the next shopper can buy it", async () => {
+    await holdStock(db, "sparkthunder", "rsv_a", await items([line("cap", 1)]));
+    await releaseStock(db, "sparkthunder", "rsv_a");
+    expect((await holdStock(db, "sparkthunder", "rsv_b", await items([line("cap", 1)]))).ok).toBe(true);
+  });
+
+  it("a paid order uses up its hold, and the stock is counted off exactly once", async () => {
+    const lines = [line("tee", 2)];
+    expect((await holdStock(db, "sparkthunder", "rsv_p", await items(lines))).ok).toBe(true);
+    const s = await checkout("cs_hold", lines, { reservation: "rsv_p" });
+    await fulfilOrder(db, s);
+    expect((await product("tee")).stock_qty).toBe(3);
+    // The hold is gone: the 3 left can all be held by someone else.
+    expect((await holdStock(db, "sparkthunder", "rsv_q", await items([line("tee", 3)]))).ok).toBe(true);
+  });
+
+  it("holds do not count against the shopper who made them when they start again", async () => {
+    await holdStock(db, "sparkthunder", "rsv_a", await items([line("tee", 5)]));
+    expect((await holdStock(db, "sparkthunder", "rsv_a", await items([line("tee", 5)]))).ok).toBe(true);
+  });
+
+  it("ignores products that do not track stock", async () => {
+    await db.from("products").update({ track_stock: false }).eq("slug", "tee");
+    expect((await holdStock(db, "sparkthunder", "rsv_a", await items([line("tee", 99)]))).ok).toBe(true);
   });
 });

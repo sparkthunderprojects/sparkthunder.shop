@@ -87,3 +87,47 @@ describe("next_order_number and the migration (real SQL)", () => {
     expect((await one<{ n: number }>("select count(*)::int n from orders where fulfilled_at is null")).n).toBe(1);
   });
 });
+
+describe("stock holds (real SQL)", () => {
+  const hold = async (key: string, items: { slug: string; variant?: string; qty: number }[], store = "sparkthunder") =>
+    (await one<{ reserve_stock: { ok: boolean; short?: { slug: string; available: number; wanted: number }[] } }>("select reserve_stock($1,$2,$3::jsonb,35)", [store, key, JSON.stringify(items)])).reserve_stock;
+  const release = async (key: string, store = "sparkthunder") => (await one<{ release_stock: number }>("select release_stock($1,$2)", [store, key])).release_stock;
+
+  it("holds stock for one checkout so a second shopper cannot take the same units", async () => {
+    expect((await hold("a", [{ slug: "tee", qty: 4 }])).ok).toBe(true);
+    const b = await hold("b", [{ slug: "tee", qty: 2 }]);            // 5 in stock, 4 held by a
+    expect(b.ok).toBe(false);
+    expect(b.short).toEqual([{ slug: "tee", variant: "", wanted: 2, available: 1 }]);
+    expect((await hold("c", [{ slug: "tee", qty: 1 }])).ok).toBe(true);
+  });
+  it("is all or nothing: nothing is held when any item is short", async () => {
+    await hold("a", [{ slug: "tee", qty: 5 }]);
+    expect((await hold("b", [{ slug: "poster", qty: 1 }, { slug: "tee", qty: 1 }])).ok).toBe(false);
+    expect((await one<{ n: number }>("select count(*)::int n from stock_reservations where hold_key='b'")).n).toBe(0);
+  });
+  it("frees the stock when released, and when the hold runs out", async () => {
+    await hold("a", [{ slug: "tee", qty: 5 }]);
+    expect((await hold("b", [{ slug: "tee", qty: 1 }])).ok).toBe(false);
+    expect(await release("a")).toBe(1);
+    expect(await release("a")).toBe(0);                               // safe to repeat
+    expect((await hold("b", [{ slug: "tee", qty: 5 }])).ok).toBe(true);
+    await db.exec("update stock_reservations set expires_at = now() - interval '1 minute'");
+    expect((await hold("c", [{ slug: "tee", qty: 5 }])).ok).toBe(true);
+  });
+  it("lets the same shopper hold again without blocking themselves", async () => {
+    await hold("a", [{ slug: "tee", qty: 5 }]);
+    expect((await hold("a", [{ slug: "tee", qty: 5 }])).ok).toBe(true);
+  });
+  it("holds per variant, adds up repeated lines, and ignores untracked products", async () => {
+    expect((await hold("a", [{ slug: "hoodie", variant: "Black / M", qty: 2 }, { slug: "hoodie", variant: "Black / M", qty: 1 }, { slug: "poster", qty: 99 }])).ok).toBe(true);
+    expect((await hold("b", [{ slug: "hoodie", variant: "Black / M", qty: 1 }])).ok).toBe(false);   // 3 in that size, all held
+    expect((await hold("b", [{ slug: "hoodie", variant: "Black / L", qty: 3 }])).ok).toBe(true);    // other size is free
+  });
+  it("keeps stores apart", async () => {
+    await hold("a", [{ slug: "tee", qty: 5 }]);
+    expect((await hold("b", [{ slug: "tee", qty: 50 }], "misspetty")).ok).toBe(true);
+  });
+  it("is not callable from a browser role", async () => {
+    await expect(db.exec("set role anon; select reserve_stock('sparkthunder','x','[]'::jsonb,35)")).rejects.toThrow(/permission denied/i);
+  });
+});

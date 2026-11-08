@@ -16,6 +16,8 @@ export type Snapshot = {
   giftOptions?: { message: string; wrap: boolean; wrapPence: number } | null;
   giftCard: { cardId: string; code: string; appliedPence: number } | null;
   totalPence: number;
+  /** The stock hold taken for this checkout (see lib/shop/stock.ts). */
+  reservation?: string;
 };
 
 export type CartInput = { slug: string; qty: number; pricePence?: number; gift?: GiftDetails }[];

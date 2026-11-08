@@ -149,6 +149,32 @@ export function createFakeClient() {
         c.value = (c.value as number) + 1;
         return { data: c.value, error: null };
       }
+      if (name === "reserve_stock" || name === "release_stock") {
+        const t = store(), S = String(args.p_store), key = String(args.p_key);
+        const holds = (t.stock_reservations ??= []);
+        // Same behaviour as the SQL functions: all or nothing, counting other checkouts' unexpired holds.
+        t.stock_reservations = holds.filter((h) => !(h.store_id === S && h.hold_key === key));
+        if (name === "release_stock") return { data: holds.length - t.stock_reservations.length, error: null };
+        const want = new Map<string, { slug: string; variant: string; qty: number }>();
+        for (const i of args.p_items as { slug: string; variant?: string; qty: number }[]) {
+          const k = `${i.slug}|${i.variant ?? ""}`, cur = want.get(k);
+          want.set(k, { slug: i.slug, variant: i.variant ?? "", qty: (cur?.qty ?? 0) + i.qty });
+        }
+        const short: { slug: string; variant: string; wanted: number; available: number }[] = [];
+        const keep: Row[] = [];
+        for (const w of [...want.values()].sort((a, b) => (a.slug + a.variant < b.slug + b.variant ? -1 : 1))) {
+          const p = (t.products ?? []).find((r) => r.slug === w.slug && sid(r) === S);
+          if (!p || !p.track_stock) continue;
+          const vs = p.variants as { name: string; stockQty: number }[] | null;
+          const onHand = w.variant && vs?.length ? (vs.find((v) => v.name === w.variant)?.stockQty ?? 0) : (p.stock_qty as number);
+          const held = t.stock_reservations.filter((h) => h.store_id === S && h.product_slug === w.slug && h.variant === w.variant && new Date(h.expires_at as string) > new Date()).reduce((n, h) => n + (h.qty as number), 0);
+          if (w.qty > onHand - held) short.push({ slug: w.slug, variant: w.variant, wanted: w.qty, available: Math.max(0, onHand - held) });
+          keep.push({ store_id: S, hold_key: key, product_slug: w.slug, variant: w.variant, qty: w.qty, expires_at: new Date(Date.now() + Number(args.p_minutes) * 60_000).toISOString() });
+        }
+        if (short.length) return { data: { ok: false, short }, error: null };
+        t.stock_reservations.push(...keep);
+        return { data: { ok: true }, error: null };
+      }
       if (name === "take_stock") {
         // Same behaviour as the SQL function: exactly once per (order, product, variant), applied under one lock.
         const t = store(), S = String(args.p_store), slug = String(args.p_slug), variant = String(args.p_variant ?? ""), qty = Number(args.p_qty);

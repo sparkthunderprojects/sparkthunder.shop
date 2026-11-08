@@ -657,3 +657,73 @@ revoke all on function public.next_order_number(text) from public, anon, authent
 revoke all on function public.take_stock(text, uuid, text, text, int) from public, anon, authenticated;
 grant execute on function public.next_order_number(text) to service_role;
 grant execute on function public.take_stock(text, uuid, text, text, int) to service_role;
+
+-- ============================================================================
+-- Stock holds at checkout (idempotent): the last item cannot be sold twice
+-- ============================================================================
+create table if not exists public.stock_reservations (
+  id uuid primary key default gen_random_uuid(),
+  store_id text not null references public.stores(id) on update cascade,
+  hold_key text not null,                         -- one checkout attempt
+  product_slug text not null,
+  variant text not null default '',
+  qty int not null check (qty > 0),
+  expires_at timestamptz not null,
+  created_at timestamptz not null default now(),
+  unique (hold_key, product_slug, variant)
+);
+create index if not exists stock_reservations_lookup on public.stock_reservations (store_id, product_slug, expires_at);
+alter table public.stock_reservations enable row level security;
+drop policy if exists "admin read stock reservations" on public.stock_reservations;
+create policy "admin read stock reservations" on public.stock_reservations for select using (public.can_admin_store(store_id));
+
+-- Hold stock for a checkout. All or nothing: if any item is short (counting what other shoppers are holding), nothing is held and
+-- the short items come back. Product rows are locked in a fixed order, so two checkouts can never both take the last unit.
+-- p_items is [{"slug":"tee","variant":"","qty":2}, ...]. Holding again with the same key replaces that checkout's earlier hold.
+create or replace function public.reserve_stock(p_store text, p_key text, p_items jsonb, p_minutes int) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare it record; prod public.products%rowtype; on_hand int; held int; short jsonb := '[]'::jsonb; exp timestamptz := now() + make_interval(mins => p_minutes);
+begin
+  delete from public.stock_reservations where hold_key = p_key or expires_at < now() - interval '1 day';
+  for it in
+    select x.slug, coalesce(x.variant, '') as variant, sum(x.qty)::int as qty
+    from jsonb_to_recordset(p_items) as x(slug text, variant text, qty int)
+    group by 1, 2 order by 1, 2
+  loop
+    select * into prod from public.products where store_id = p_store and slug = it.slug for update;
+    if not found or not prod.track_stock then continue; end if;
+    if it.variant <> '' and jsonb_typeof(prod.variants) = 'array' and jsonb_array_length(prod.variants) > 0 then
+      select coalesce((v ->> 'stockQty')::int, 0) into on_hand from jsonb_array_elements(prod.variants) v where v ->> 'name' = it.variant limit 1;
+      on_hand := coalesce(on_hand, 0);
+    else
+      on_hand := prod.stock_qty;
+    end if;
+    select coalesce(sum(qty), 0) into held from public.stock_reservations
+      where store_id = p_store and product_slug = it.slug and variant = it.variant and expires_at > now();
+    if it.qty > on_hand - held then
+      short := short || jsonb_build_array(jsonb_build_object('slug', it.slug, 'variant', it.variant, 'wanted', it.qty, 'available', greatest(0, on_hand - held)));
+    end if;
+  end loop;
+  if jsonb_array_length(short) > 0 then return jsonb_build_object('ok', false, 'short', short); end if;
+  insert into public.stock_reservations (store_id, hold_key, product_slug, variant, qty, expires_at)
+  select p_store, p_key, x.slug, coalesce(x.variant, ''), sum(x.qty)::int, exp
+  from jsonb_to_recordset(p_items) as x(slug text, variant text, qty int)
+  join public.products p on p.store_id = p_store and p.slug = x.slug and p.track_stock
+  group by 1, 2, 3, 4, 6;
+  return jsonb_build_object('ok', true, 'expires_at', exp);
+end $$;
+
+-- Give a checkout's stock back (paid and counted, abandoned, or expired). Safe to call any number of times.
+create or replace function public.release_stock(p_store text, p_key text) returns int
+language plpgsql security definer set search_path = public as $$
+declare n int;
+begin
+  delete from public.stock_reservations where store_id = p_store and hold_key = p_key;
+  get diagnostics n = row_count;
+  return n;
+end $$;
+
+revoke all on function public.reserve_stock(text, text, jsonb, int) from public, anon, authenticated;
+revoke all on function public.release_stock(text, text) from public, anon, authenticated;
+grant execute on function public.reserve_stock(text, text, jsonb, int) to service_role;
+grant execute on function public.release_stock(text, text) to service_role;

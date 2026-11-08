@@ -75,3 +75,7 @@ One deployment serves any number of stores. Each store has its own domains, prod
 ## Product options and variants
 
 Each product can name up to three option axes (for example Shade, Size, Finish). In the admin, list the values and press **Generate variants** to create every combination, each with its own SKU, stock, price, sale price and photo. Values with a colour swatch show as round swatches. Sold-out combinations are greyed out, cards show "From £x" when prices differ, and the structured data lists one offer per variant. Variant names are the values joined with " / " and are the basket key, so renaming a variant empties it from existing baskets.
+
+## Stock holds at checkout
+
+When a shopper starts checkout, the tracked items in their basket are held for 35 minutes (database functions `reserve_stock` and `release_stock`). Other shoppers see those units as unavailable, the Stripe payment page expires after 32 minutes, a paid order uses up its hold, and an abandoned checkout frees the stock on its own. Starting checkout again replaces the shopper's own earlier hold. Products without stock tracking are never held.

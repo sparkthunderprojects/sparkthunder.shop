@@ -6,6 +6,7 @@ import { sendEmail } from "@/lib/email/send";
 import { recordDiscountUse } from "@/lib/discounts";
 import { changeBalance, issueCard } from "@/lib/giftcards/ledger";
 import type { Snapshot } from "./types";
+import { releaseStock, stockItems } from "./stock";
 
 /** Which fulfilment steps have been completed for an order. Saved after every step so a crash can be picked up where it stopped. */
 export type FulfilState = { discount?: boolean; giftCardCharged?: boolean; issued?: string[]; stock?: string[]; points?: boolean; emailed?: boolean; problems?: string[] };
@@ -53,19 +54,6 @@ async function createOrder(db: Db, s: PaidSession, storeId: string, payload: Sna
     throw new Error(`Could not save the order: ${ins.error.message}`);
   }
   throw new Error("Could not allocate an order number.");
-}
-
-/** What an order takes off stock: each product line, with bundles expanded into the products inside them. */
-async function stockItems(db: Db, payload: Snapshot) {
-  const out: { key: string; slug: string; variant: string; qty: number; label: string }[] = [];
-  for (const [li, line] of payload.lines.entries()) {
-    if (line.type !== "product") continue;
-    const { data } = await db.from("products").select("bundle_items").eq("slug", line.slug).maybeSingle();
-    const items = (data as { bundle_items: { slug: string; qty: number }[] | null } | null)?.bundle_items ?? [];
-    if (items.length) for (const it of items) out.push({ key: `${li}:${it.slug}:`, slug: it.slug, variant: "", qty: it.qty * line.qty, label: `${line.name} (contains ${it.slug})` });
-    else out.push({ key: `${li}:${line.slug}:${line.variant ?? ""}`, slug: line.slug, variant: line.variant ?? "", qty: line.qty, label: line.name });
-  }
-  return out;
 }
 
 const businessGiftCardError = (m: string) => /not enough balance|disabled|expired|not found/i.test(m);
@@ -163,7 +151,7 @@ export async function fulfilOrder(db: Db, s: PaidSession): Promise<{ order: Orde
 
       // 3. Take tracked stock off, atomically and exactly once per product (a bundle takes stock off every product inside it).
       const taken = new Set(state.stock ?? []);
-      for (const it of await stockItems(db, payload)) {
+      for (const it of await stockItems(db, payload.lines)) {
         if (taken.has(it.key)) continue;
         if (await attempt(`Taking stock off ${it.label}`, async () => {
           const { data, error } = await db.rpc("take_stock", { p_store: storeId, p_order: orderId, p_slug: it.slug, p_variant: it.variant, p_qty: it.qty });
@@ -172,6 +160,9 @@ export async function fulfilOrder(db: Db, s: PaidSession): Promise<{ order: Orde
           if (before >= 0 && before < it.qty) problems.add(`${it.label} oversold: ${it.qty} bought, ${before} were in stock.`);
         })) { taken.add(it.key); state.stock = [...taken]; await save(); }
       }
+
+      // The stock is now counted off for real, so the checkout's hold is no longer needed.
+      await releaseStock(db, storeId, payload.reservation);
 
       // 4. Spark points for signed-up customers (matched by email, so it works whether or not they were logged in at checkout).
       if (s.email && !state.points) {
