@@ -15,7 +15,7 @@ export default async function ActivityPage({ searchParams }: PageProps<"/admin/a
   const rows = (data ?? []) as ActivityRow[];
   return (
     <>
-      <div className="adm-h"><div><h1>Activity log</h1><p>Who changed what in this store's admin. This record can only be added to, never edited or deleted. Showing the latest 300.</p></div></div>
+      <div className="adm-h"><div><h1>Activity log</h1><p>Who changed what in this store&apos;s admin. This record can only be added to, never edited or deleted. Showing the latest 300.</p></div></div>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
         {GROUPS.map(([g, label]) => <Link key={g} href={g ? `/admin/activity?g=${g}` : "/admin/activity"} className={`adm-btn ${group === g ? "adm-pri" : ""}`}>{label}</Link>)}
       </div>
