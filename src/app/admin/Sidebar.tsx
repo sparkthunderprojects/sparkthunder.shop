@@ -54,6 +54,7 @@ export function Sidebar({ email, demo, stores, current, owner }: { email: string
         {NAV.map(item)}
         <div className="adm-sep">Search</div>
         {SEO.map(item)}
+        {owner ? item({ href: "/admin/overview", label: "All stores" }) : null}
         {owner ? item({ href: "/admin/stores", label: "Stores" }) : null}
         <div className="adm-sep">Coming soon</div>
         <span>Customers <small>Soon</small></span>
