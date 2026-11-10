@@ -16,7 +16,7 @@ export default async function OrdersPage() {
   const revenue = orders.filter((o) => o.status !== "cancelled").reduce((n, o) => n + o.total_pence - (o.refunded_card_pence ?? 0), 0);
   return (
     <>
-      <div className="adm-h"><div><h1>Orders</h1><p>Paid orders from Stripe Checkout. Open an order to ship it or refund it.</p></div></div>
+      <div className="adm-h"><div><h1>Orders</h1><p>Paid orders from Stripe Checkout. Open an order to ship it or refund it.</p></div><a className="adm-btn" href="/admin/export/orders" download>Download CSV</a></div>
       <div className="adm-grid adm-g3" style={{ marginBottom: 18 }}>
         {[[String(orders.length), "Orders"], [String(toShip), "Waiting to ship"], [String(attention), "Need attention"], [formatPrice(revenue), "Card revenue (after refunds, excl. gift cards)"]].slice(0, 4).map(([v, l]) => <div key={l} className="adm-card" style={{ margin: 0 }}><div className="adm-stat">{v}</div><div className="adm-stat-l">{l}</div></div>)}
       </div>
