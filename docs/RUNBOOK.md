@@ -72,7 +72,7 @@ Restore drills done: (none yet)
 
 ## 8. Environment variables
 
-Required in production: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SITE_URL`.
+Required in production: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (or `SPARK_SERVICE_KEY` where the host forbids the SUPABASE_ prefix), `NEXT_PUBLIC_SITE_URL`.
 Per store (set in admin, Shipping and payments, and stored in the database): Stripe secret and webhook secret, Resend key and from address. The `STRIPE_*`, `RESEND_API_KEY` and `EMAIL_FROM` variables are the fallback for the default store.
 Optional: `PLATFORM_HOSTS` (extra host names that count as this platform rather than a store), `REVALIDATE_SECRET`, `INDEXNOW_KEY`, `NEXT_PUBLIC_GA_ID`, `NEXT_PUBLIC_META_PIXEL_ID`, `SPARK_CSP` (`report-only` or `off` for the security policy).
 Never set `SPARKTHUNDER_DEMO` in production: it replaces the database with a fake one.

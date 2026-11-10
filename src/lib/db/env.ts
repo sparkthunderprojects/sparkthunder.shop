@@ -12,4 +12,5 @@ export const isDemo =
   process.env.SPARKTHUNDER_DEMO === "1" &&
   !process.env.NETLIFY && !process.env.VERCEL && !process.env.CI;
 
-export const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+// Some hosts (e.g. Bolt) refuse secret names starting with SUPABASE_, so SPARK_SERVICE_KEY is accepted as an alternative name.
+export const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SPARK_SERVICE_KEY ?? "";
