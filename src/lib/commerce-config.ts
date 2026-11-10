@@ -11,6 +11,10 @@ export type CommerceSettings = {
   supportEmail: string;
   /** Letters at the start of order numbers and gift card codes, e.g. "SPK" in SPK-1001. */
   codePrefix: string;
+  /** Charge-inclusive VAT: shop prices already contain VAT; this only works out and shows the VAT part. Off until the store is VAT registered. */
+  vatEnabled: boolean;
+  vatRatePercent: number;
+  vatNumber: string;
 };
 
 export const DEFAULT_COMMERCE: CommerceSettings = {
@@ -20,12 +24,16 @@ export const DEFAULT_COMMERCE: CommerceSettings = {
   shippingCountries: (process.env.SHIPPING_COUNTRIES ?? "GB").split(",").map((c) => c.trim().toUpperCase()).filter(Boolean),
   supportEmail: "",
   codePrefix: "SPK",
+  vatEnabled: false,
+  vatRatePercent: 20,
+  vatNumber: "",
 };
 
 /** A neutral prefix for a store that has not set one: the first letters of its id (misspetty -> MIS). */
 export const derivePrefix = (storeId: string) => (storeId.replace(/[^a-z]/gi, "").slice(0, 3).toUpperCase() || "ORD");
 const cleanPrefix = (v: unknown, fallback: string) => { const p = String(v ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 5); return p.length >= 2 ? p : fallback; };
 
+const rate = (v: unknown, fallback: number) => { const n = Number(v); return Number.isFinite(n) && n >= 0 && n <= 30 ? Math.round(n * 100) / 100 : fallback; };
 const pence = (v: unknown, fallback: number, max = 100000) => { const n = Math.round(Number(v)); return Number.isFinite(n) && n >= 0 ? Math.min(n, max) : fallback; };
 
 export function normaliseCommerce(raw: Partial<CommerceSettings> | null | undefined): CommerceSettings {
@@ -33,5 +41,5 @@ export function normaliseCommerce(raw: Partial<CommerceSettings> | null | undefi
   const countries = Array.isArray(r.shippingCountries) ? [...new Set(r.shippingCountries.map((c) => String(c).trim().toUpperCase()).filter((c) => /^[A-Z]{2}$/.test(c)))].slice(0, 60) : d.shippingCountries;
   const free = r.freeShippingPence === null ? null : r.freeShippingPence === undefined ? d.freeShippingPence : pence(r.freeShippingPence, 0) || null;
   const email = typeof r.supportEmail === "string" && /^\S+@\S+\.\S+$/.test(r.supportEmail.trim()) ? r.supportEmail.trim().slice(0, 120) : "";
-  return { shippingFlatPence: pence(r.shippingFlatPence, d.shippingFlatPence, 10000), freeShippingPence: free, giftWrapPence: pence(r.giftWrapPence, d.giftWrapPence, 10000), shippingCountries: countries.length ? countries : d.shippingCountries, supportEmail: email, codePrefix: cleanPrefix(r.codePrefix, d.codePrefix) };
+  return { shippingFlatPence: pence(r.shippingFlatPence, d.shippingFlatPence, 10000), freeShippingPence: free, giftWrapPence: pence(r.giftWrapPence, d.giftWrapPence, 10000), shippingCountries: countries.length ? countries : d.shippingCountries, supportEmail: email, codePrefix: cleanPrefix(r.codePrefix, d.codePrefix), vatEnabled: r.vatEnabled === true, vatRatePercent: rate(r.vatRatePercent, d.vatRatePercent), vatNumber: String(r.vatNumber ?? "").replace(/[^A-Za-z0-9 ]/g, "").trim().slice(0, 20) };
 }

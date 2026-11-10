@@ -31,7 +31,7 @@ ${card.message ? `<div style="font-style:italic;color:#ddd;margin:0 0 12px">&ldq
   return { subject: `${from} sent you a ${amount} ${B} gift card`, html, text };
 }
 
-export function orderEmail(o: { number: string; name: string; lines: SnapshotLine[]; subtotalPence: number; shippingPence: number; discountPence?: number; discountCode?: string; giftWrapPence?: number; giftMessage?: string; giftCardPence: number; totalPence: number; address?: Record<string, string> | null; giftCardsIssued: number }) {
+export function orderEmail(o: { vat?: { ratePercent: number; pence: number; number: string } | null; number: string; name: string; lines: SnapshotLine[]; subtotalPence: number; shippingPence: number; discountPence?: number; discountCode?: string; giftWrapPence?: number; giftMessage?: string; giftCardPence: number; totalPence: number; address?: Record<string, string> | null; giftCardsIssued: number }) {
   const rows = o.lines.map((l) => `<tr><td style="padding:6px 0">${esc(l.name)} × ${l.qty}</td><td align="right">${formatPrice(l.unitPence * l.qty)}</td></tr>`).join("");
   const addr = o.address ? Object.values(o.address).filter(Boolean).map(esc).join("<br>") : "";
   const html = shell(`Thanks for your order, ${esc(o.name.split(" ")[0] || "fan")}`, `
@@ -42,10 +42,11 @@ ${o.giftWrapPence ? `<tr><td style="padding:6px 0;color:#6a6a70">Gift wrap</td><
 ${o.discountPence ? `<tr><td style="padding:6px 0;color:#6a6a70">Discount${o.discountCode ? ` (${esc(o.discountCode)})` : ""}</td><td align="right">-${formatPrice(o.discountPence)}</td></tr>` : ""}
 ${o.giftCardPence ? `<tr><td style="padding:6px 0;color:#6a6a70">Gift card</td><td align="right">-${formatPrice(o.giftCardPence)}</td></tr>` : ""}
 <tr><td style="padding:10px 0;font-weight:700">Total</td><td align="right" style="font-weight:700">${formatPrice(o.totalPence)}</td></tr></table>
+${o.vat && o.vat.pence > 0 ? `<p style="margin:8px 0 0;color:#6a6a70;font-size:13px">Includes VAT of ${formatPrice(o.vat.pence)} at ${o.vat.ratePercent}%${o.vat.number ? ` (VAT no. ${esc(o.vat.number)})` : ""}.</p>` : ""}
 ${addr ? `<p style="margin:16px 0 4px;font-weight:700">Shipping to</p><p style="margin:0">${addr}</p>` : ""}
 ${o.giftMessage ? `<p style="margin:16px 0 4px;font-weight:700">Your gift message</p><p style="margin:0">${esc(o.giftMessage)}</p>` : ""}
 <p style="margin:20px 0 0;color:#6a6a70">We will email you again when your order ships.</p>`);
-  const text = `Thanks for your order. Order ${o.number} is confirmed.\n\n${o.lines.map((l) => `${l.name} x ${l.qty}  ${formatPrice(l.unitPence * l.qty)}`).join("\n")}\nShipping: ${o.shippingPence ? formatPrice(o.shippingPence) : "Free"}\n${o.discountPence ? `Discount: -${formatPrice(o.discountPence)}\n` : ""}${o.giftWrapPence ? `Gift wrap: ${formatPrice(o.giftWrapPence)}\n` : ""}${o.giftCardPence ? `Gift card: -${formatPrice(o.giftCardPence)}\n` : ""}Total: ${formatPrice(o.totalPence)}\n`;
+  const text = `Thanks for your order. Order ${o.number} is confirmed.\n\n${o.lines.map((l) => `${l.name} x ${l.qty}  ${formatPrice(l.unitPence * l.qty)}`).join("\n")}\nShipping: ${o.shippingPence ? formatPrice(o.shippingPence) : "Free"}\n${o.discountPence ? `Discount: -${formatPrice(o.discountPence)}\n` : ""}${o.giftWrapPence ? `Gift wrap: ${formatPrice(o.giftWrapPence)}\n` : ""}${o.giftCardPence ? `Gift card: -${formatPrice(o.giftCardPence)}\n` : ""}Total: ${formatPrice(o.totalPence)}\n${o.vat && o.vat.pence > 0 ? `Includes VAT of ${formatPrice(o.vat.pence)} at ${o.vat.ratePercent}%${o.vat.number ? ` (VAT no. ${o.vat.number})` : ""}.\n` : ""}`;
   return { subject: `Your ${B} order ${o.number}`, html, text };
 }
 

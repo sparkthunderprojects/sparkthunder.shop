@@ -17,6 +17,7 @@ export type OrderRow = {
   id: string; number: string; stripe_session_id: string | null; stripe_payment_intent: string; status: "paid" | "shipped" | "cancelled" | "attention";
   email: string; name: string; phone: string; shipping_address: Record<string, string> | null; items: Snapshot["lines"];
   subtotal_pence: number; shipping_pence: number; discount_code?: string; discount_pence?: number; gift_card_pence: number; total_pence: number; gift_card_code: string; gift_message?: string; gift_wrap?: boolean; gift_wrap_pence?: number;
+  vat_pence?: number; vat_rate?: number; vat_number?: string;
   refunded_card_pence?: number; refunded_gift_pence?: number;
   fulfilment?: FulfilState; fulfil_attempts?: number; fulfilment_lock_until?: string | null; fulfilled_at?: string | null;
   tracking_carrier: string; tracking_number: string; notes: string; attention_reason: string; shipped_at: string | null; created_at: string;
@@ -47,6 +48,7 @@ async function createOrder(db: Db, s: PaidSession, storeId: string, payload: Sna
       discount_code: payload?.discount?.code ?? "", discount_pence: payload?.discount?.appliedPence ?? 0,
       gift_message: payload?.giftOptions?.message ?? "", gift_wrap: payload?.giftOptions?.wrap ?? false, gift_wrap_pence: payload?.giftOptions?.wrapPence ?? 0,
       gift_card_pence: payload?.giftCard?.appliedPence ?? 0, total_pence: payload?.totalPence ?? 0, gift_card_code: payload?.giftCard?.code ?? "",
+      vat_pence: payload?.vat?.pence ?? 0, vat_rate: payload?.vat?.ratePercent ?? 0, vat_number: payload?.vat?.number ?? "",
     }).select("*").single();
     if (!ins.error) return ins.data as OrderRow;
     if (/duplicate|unique/i.test(ins.error.message)) {
@@ -177,7 +179,7 @@ export async function fulfilOrder(db: Db, s: PaidSession): Promise<{ order: Orde
 
       // 5. Confirmation email.
       if (!state.emailed) {
-        const mail = orderEmail({ number, name: s.name, lines: payload.lines, subtotalPence: payload.subtotalPence, shippingPence: payload.shippingPence, discountPence: payload.discount?.appliedPence ?? 0, discountCode: payload.discount?.code ?? "", giftWrapPence: payload.giftOptions?.wrapPence ?? 0, giftMessage: payload.giftOptions?.message ?? "", giftCardPence: payload.giftCard?.appliedPence ?? 0, totalPence: payload.totalPence, address: s.address, giftCardsIssued: issued.size });
+        const mail = orderEmail({ number, name: s.name, lines: payload.lines, subtotalPence: payload.subtotalPence, shippingPence: payload.shippingPence, discountPence: payload.discount?.appliedPence ?? 0, discountCode: payload.discount?.code ?? "", giftWrapPence: payload.giftOptions?.wrapPence ?? 0, giftMessage: payload.giftOptions?.message ?? "", giftCardPence: payload.giftCard?.appliedPence ?? 0, totalPence: payload.totalPence, address: s.address, giftCardsIssued: issued.size, vat: payload.vat ?? null });
         const sent = s.email ? await sendEmail({ to: s.email, ...mail }) : { ok: false as const, error: "no email address" };
         if (sent.ok) state.emailed = true; else problems.add(`Order confirmation email not sent: ${sent.error}`);
       }

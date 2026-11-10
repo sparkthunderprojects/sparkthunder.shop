@@ -208,4 +208,9 @@ describe("stock holds at checkout", () => {
     expect(r.order.fulfilled_at).toBeTruthy();
     expect(JSON.stringify(r.order.fulfilment?.problems)).toContain("over its use limit");
   });
+
+  it("saves the VAT worked out at checkout on the order", async () => {
+    const r = await fulfilOrder(db, await checkout("cs_vat", [line("tee", 1)], { vat: { ratePercent: 20, pence: 233, number: "GB123" } }));
+    expect(r.order).toMatchObject({ vat_pence: 233, vat_rate: 20, vat_number: "GB123" });
+  });
 });

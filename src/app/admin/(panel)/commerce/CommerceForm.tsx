@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveCommerceAction, saveSecretsAction } from "../../commerce-actions";
 import type { CommerceSettings } from "@/lib/commerce-config";
+import { Toggle } from "../../ui";
 
 const Field = ({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) => (
   <label style={{ display: "grid", gap: 4 }}><span>{label}</span>{children}{hint ? <small style={{ opacity: 0.7 }}>{hint}</small> : null}</label>
@@ -18,12 +19,13 @@ export function CommerceForm({ commerce, status }: { commerce: CommerceSettings;
   const [countries, setCountries] = useState(commerce.shippingCountries.join(", "));
   const [support, setSupport] = useState(commerce.supportEmail);
   const [prefix, setPrefix] = useState(commerce.codePrefix);
+  const [vatOn, setVatOn] = useState(commerce.vatEnabled), [vatRate, setVatRate] = useState(String(commerce.vatRatePercent)), [vatNo, setVatNo] = useState(commerce.vatNumber);
   const [msg, setMsg] = useState("");
   const [sk, setSk] = useState(""), [wh, setWh] = useState(""), [rk, setRk] = useState(""), [from, setFrom] = useState(status.emailFrom);
   const [pmsg, setPmsg] = useState("");
 
   const saveCommerce = async () => {
-    const r = await saveCommerceAction({ shippingFlatPence: toPence(ship) ?? 0, freeShippingPence: toPence(free), giftWrapPence: toPence(wrap) ?? 0, shippingCountries: countries.split(/[\s,]+/).filter(Boolean), supportEmail: support, codePrefix: prefix });
+    const r = await saveCommerceAction({ shippingFlatPence: toPence(ship) ?? 0, freeShippingPence: toPence(free), giftWrapPence: toPence(wrap) ?? 0, shippingCountries: countries.split(/[\s,]+/).filter(Boolean), supportEmail: support, codePrefix: prefix, vatEnabled: vatOn, vatRatePercent: Number(vatRate) || 0, vatNumber: vatNo });
     setMsg(r.ok ? "Saved." : r.error); if (r.ok) router.refresh();
   };
   const saveSecrets = async (clear = false) => {
@@ -40,6 +42,8 @@ export function CommerceForm({ commerce, status }: { commerce: CommerceSettings;
         <Field label="Free shipping from (£)" hint="Leave empty for no free-shipping offer."><input className="adm-in" inputMode="decimal" value={free} onChange={(e) => setFree(e.target.value)} /></Field>
         <Field label="Gift wrap price (£)"><input className="adm-in" inputMode="decimal" value={wrap} onChange={(e) => setWrap(e.target.value)} /></Field>
         <Field label="Ships to (country codes)" hint="For example GB, IE, US."><input className="adm-in" value={countries} onChange={(e) => setCountries(e.target.value)} /></Field>
+        <Toggle label="This store is VAT registered" checked={vatOn} onChange={setVatOn} hint="Your prices already include VAT. This works out the VAT part and shows it on order emails and in the admin. Leave off until you are registered." />
+        {vatOn ? <div className="adm-grid adm-g2"><Field label="VAT rate (%)" hint="20 is the UK standard rate."><input className="adm-in" inputMode="decimal" value={vatRate} onChange={(e) => setVatRate(e.target.value)} /></Field><Field label="VAT number" hint="Shown on order emails, e.g. GB123456789."><input className="adm-in" value={vatNo} onChange={(e) => setVatNo(e.target.value)} /></Field></div> : null}
         <Field label="Support email"><input className="adm-in" type="email" value={support} onChange={(e) => setSupport(e.target.value)} /></Field>
         <Field label="Order and gift card prefix" hint={`Letters at the start of order numbers and gift card codes, e.g. ${prefix || "SPK"}-1001. 2 to 5 letters or numbers.`}><input className="adm-in" maxLength={5} value={prefix} onChange={(e) => setPrefix(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))} /></Field>
         <div><button type="button" className="adm-btn" onClick={saveCommerce}>Save</button> <span role="status">{msg}</span></div>

@@ -942,3 +942,11 @@ alter table public.system_events enable row level security;
 drop policy if exists "admin read system events" on public.system_events;
 create policy "admin read system events" on public.system_events for select using (public.can_admin_store(store_id));
 revoke insert, update, delete on public.system_events from anon, authenticated;
+
+-- ============================================================================
+-- VAT shown on orders (idempotent): the VAT contained in the prices, saved with each order
+-- ============================================================================
+alter table public.orders
+  add column if not exists vat_pence int not null default 0,
+  add column if not exists vat_rate numeric(5,2) not null default 0,
+  add column if not exists vat_number text not null default '';

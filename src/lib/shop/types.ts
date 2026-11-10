@@ -18,6 +18,8 @@ export type Snapshot = {
   totalPence: number;
   /** The stock hold taken for this checkout (see lib/shop/stock.ts). */
   reservation?: string;
+  /** VAT contained in the prices, worked out when checkout started (null if the store does not charge VAT). */
+  vat?: { ratePercent: number; pence: number; number: string } | null;
 };
 
 export type CartInput = { slug: string; qty: number; pricePence?: number; gift?: GiftDetails }[];

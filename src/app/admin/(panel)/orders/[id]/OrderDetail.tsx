@@ -43,6 +43,7 @@ export function OrderDetail({ order: o }: { order: OrderRow }) {
             {o.gift_wrap_pence ? <tr><td colSpan={2} className="adm-hint">Gift wrap</td><td align="right">{formatPrice(o.gift_wrap_pence)}</td></tr> : null}
             {o.discount_pence ? <tr><td colSpan={2} className="adm-hint">Discount code {o.discount_code}</td><td align="right">-{formatPrice(o.discount_pence)}</td></tr> : null}
             {o.gift_card_pence ? <tr><td colSpan={2} className="adm-hint">Gift card {o.gift_card_code ? <Link href="/admin/gift-cards">({o.gift_card_code.slice(0, 4)}…)</Link> : null}</td><td align="right">-{formatPrice(o.gift_card_pence)}</td></tr> : null}
+            {o.vat_pence ? <tr><td colSpan={2} className="adm-hint">Includes VAT at {o.vat_rate}%{o.vat_number ? ` (${o.vat_number})` : ""}</td><td align="right">{formatPrice(o.vat_pence)}</td></tr> : null}
             <tr><td colSpan={2}><b>Paid by card</b></td><td align="right"><b>{formatPrice(o.total_pence)}</b></td></tr>
           </tbody></table>
         </section>

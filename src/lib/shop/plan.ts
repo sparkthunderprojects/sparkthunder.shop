@@ -7,6 +7,7 @@ import { isGiftThemeId } from "@/lib/giftcards/themes";
 import { checkDiscount } from "@/lib/discounts";
 import { absoluteUrl, formatPrice } from "@/lib/site";
 import { getCommerce } from "@/lib/commerce";
+import { orderVat } from "@/lib/vat";
 import { getStore } from "@/lib/store";
 import type { CartInput, GiftOptionsInput, Snapshot, SnapshotLine } from "./types";
 
@@ -80,5 +81,5 @@ export async function buildPlan(db: Db, cart: CartInput, giftCode: string | null
   const giftOptions: Snapshot["giftOptions"] = wrap || giftMessage ? { message: giftMessage, wrap, wrapPence: wrap ? GIFT_WRAP_PENCE : 0 } : null;
   const totalPence = subtotalPence + shippingPence + (giftOptions?.wrapPence ?? 0) - (discount?.appliedPence ?? 0) - (giftCard?.appliedPence ?? 0);
   if (totalPence > 0 && totalPence < MIN_CHARGE_PENCE) return { ok: false, error: `After your discounts the amount left to pay is ${formatPrice(totalPence)}. Card payments must be at least ${formatPrice(MIN_CHARGE_PENCE)}, so add another item or remove the gift card or code.` };
-  return { ok: true, snapshot: { lines, subtotalPence, shippingPence, needsShipping, discount, giftOptions, giftCard, totalPence } };
+  return { ok: true, snapshot: { lines, subtotalPence, shippingPence, needsShipping, discount, giftOptions, giftCard, totalPence, vat: orderVat({ lines, shippingPence, giftOptions, discount }, commerce) } };
 }
