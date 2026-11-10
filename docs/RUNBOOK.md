@@ -76,3 +76,10 @@ Required in production: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_K
 Per store (set in admin, Shipping and payments, and stored in the database): Stripe secret and webhook secret, Resend key and from address. The `STRIPE_*`, `RESEND_API_KEY` and `EMAIL_FROM` variables are the fallback for the default store.
 Optional: `PLATFORM_HOSTS` (extra host names that count as this platform rather than a store), `REVALIDATE_SECRET`, `INDEXNOW_KEY`, `NEXT_PUBLIC_GA_ID`, `NEXT_PUBLIC_META_PIXEL_ID`, `SPARK_CSP` (`report-only` or `off` for the security policy).
 Never set `SPARKTHUNDER_DEMO` in production: it replaces the database with a fake one.
+
+## Printify (print on demand)
+- Connect under Admin > Printify: paste the API token (Printify: Account > Connections > API tokens), press Connect, import products, then Connect tracking from the live site.
+- Paid orders containing Printify products are created at Printify (external id = our order number) and sent to production automatically. Repeats are safe.
+- If an order shows "Sending the order to Printify" under attention, fix the cause (address, product removed at Printify) and press Finish processing on the order. It resumes without creating a second Printify order.
+- Refunds do NOT cancel the Printify order. If you refund before production starts, cancel it in the Printify dashboard yourself.
+- Prices come from Printify. After changing a price or switching options on/off there, press Import / refresh. Edited wording is kept.

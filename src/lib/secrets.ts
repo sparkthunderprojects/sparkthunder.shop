@@ -4,9 +4,9 @@ import { SUPABASE_SERVICE_KEY, SUPABASE_URL, isDemo } from "@/lib/db/env";
 import { DEFAULT_STORE_ID } from "@/lib/db/stores";
 
 /** Credentials that belong to one store. Kept in a table only the server's service key can read; never sent to a browser. */
-export type StoreSecrets = { stripeSecret: string; stripeWebhookSecret: string; resendKey: string; emailFrom: string };
+export type StoreSecrets = { stripeSecret: string; stripeWebhookSecret: string; resendKey: string; emailFrom: string; printifyToken: string; printifyShopId: string; printifyWebhookSecret: string };
 
-const EMPTY: StoreSecrets = { stripeSecret: "", stripeWebhookSecret: "", resendKey: "", emailFrom: "" };
+const EMPTY: StoreSecrets = { stripeSecret: "", stripeWebhookSecret: "", resendKey: "", emailFrom: "", printifyToken: "", printifyShopId: "", printifyWebhookSecret: "" };
 
 function db() {
   if (isDemo) return createFakeClient() as never as ReturnType<typeof createClient>;
@@ -27,11 +27,11 @@ export async function getStoreSecrets(storeId: string): Promise<StoreSecrets> {
   let v = EMPTY;
   if (client) {
     const { data } = await client.from("store_secrets").select("*").eq("store_id", storeId).maybeSingle();
-    const r = data as { stripe_secret?: string; stripe_webhook_secret?: string; resend_key?: string; email_from?: string } | null;
-    if (r) v = { stripeSecret: r.stripe_secret ?? "", stripeWebhookSecret: r.stripe_webhook_secret ?? "", resendKey: r.resend_key ?? "", emailFrom: r.email_from ?? "" };
+    const r = data as { stripe_secret?: string; stripe_webhook_secret?: string; resend_key?: string; email_from?: string; printify_token?: string; printify_shop_id?: string; printify_webhook_secret?: string } | null;
+    if (r) v = { stripeSecret: r.stripe_secret ?? "", stripeWebhookSecret: r.stripe_webhook_secret ?? "", resendKey: r.resend_key ?? "", emailFrom: r.email_from ?? "", printifyToken: r.printify_token ?? "", printifyShopId: r.printify_shop_id ?? "", printifyWebhookSecret: r.printify_webhook_secret ?? "" };
   }
   if (storeId === DEFAULT_STORE_ID) {
-    v = { stripeSecret: v.stripeSecret || process.env.STRIPE_SECRET_KEY || "", stripeWebhookSecret: v.stripeWebhookSecret || process.env.STRIPE_WEBHOOK_SECRET || "", resendKey: v.resendKey || process.env.RESEND_API_KEY || "", emailFrom: v.emailFrom || process.env.EMAIL_FROM || "" };
+    v = { stripeSecret: v.stripeSecret || process.env.STRIPE_SECRET_KEY || "", stripeWebhookSecret: v.stripeWebhookSecret || process.env.STRIPE_WEBHOOK_SECRET || "", resendKey: v.resendKey || process.env.RESEND_API_KEY || "", emailFrom: v.emailFrom || process.env.EMAIL_FROM || "", printifyToken: v.printifyToken, printifyShopId: v.printifyShopId, printifyWebhookSecret: v.printifyWebhookSecret };
   }
   if (memo.size > 300) memo.clear();
   memo.set(storeId, { at: Date.now(), v });

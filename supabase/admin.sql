@@ -950,3 +950,16 @@ alter table public.orders
   add column if not exists vat_pence int not null default 0,
   add column if not exists vat_rate numeric(5,2) not null default 0,
   add column if not exists vat_number text not null default '';
+
+-- ============================================================================
+-- Printify (print on demand) (idempotent): per-store connection, imported products, orders sent for printing
+-- ============================================================================
+alter table public.store_secrets
+  add column if not exists printify_token text not null default '',
+  add column if not exists printify_shop_id text not null default '',
+  add column if not exists printify_webhook_secret text not null default '';
+alter table public.products add column if not exists printify_id text not null default '';
+create index if not exists products_printify_idx on public.products (store_id, printify_id) where printify_id <> '';
+alter table public.orders
+  add column if not exists printify_order_id text not null default '',
+  add column if not exists printify_status text not null default '';

@@ -9,9 +9,12 @@ import { recordDiscountUse } from "@/lib/discounts";
 import { changeBalance, issueCard } from "@/lib/giftcards/ledger";
 import type { Snapshot } from "./types";
 import { releaseStock, stockItems } from "./stock";
+import { getStoreSecrets } from "@/lib/secrets";
+import { Printify } from "@/lib/printify/api";
+import { PrintifyProblem, sendToPrintify, type PrintifyState } from "@/lib/printify/order";
 
 /** Which fulfilment steps have been completed for an order. Saved after every step so a crash can be picked up where it stopped. */
-export type FulfilState = { discount?: boolean; giftCardCharged?: boolean; issued?: string[]; stock?: string[]; points?: boolean; emailed?: boolean; problems?: string[] };
+export type FulfilState = { discount?: boolean; giftCardCharged?: boolean; issued?: string[]; stock?: string[]; points?: boolean; emailed?: boolean; printify?: PrintifyState; problems?: string[] };
 
 export type OrderRow = {
   id: string; number: string; stripe_session_id: string | null; stripe_payment_intent: string; status: "paid" | "shipped" | "cancelled" | "attention";
@@ -20,7 +23,7 @@ export type OrderRow = {
   vat_pence?: number; vat_rate?: number; vat_number?: string;
   refunded_card_pence?: number; refunded_gift_pence?: number;
   fulfilment?: FulfilState; fulfil_attempts?: number; fulfilment_lock_until?: string | null; fulfilled_at?: string | null;
-  tracking_carrier: string; tracking_number: string; notes: string; attention_reason: string; shipped_at: string | null; created_at: string;
+  printify_order_id?: string; printify_status?: string; tracking_carrier: string; tracking_number: string; notes: string; attention_reason: string; shipped_at: string | null; created_at: string;
 };
 export type PaidSession = { storeId?: string; sessionId: string; paymentIntent: string; email: string; name: string; phone: string; address: Record<string, string> | null };
 
@@ -167,6 +170,20 @@ export async function fulfilOrder(db: Db, s: PaidSession): Promise<{ order: Orde
           const before = Number(data);
           if (before >= 0 && before < it.qty) problems.add(`${it.label} oversold: ${it.qty} bought, ${before} were in stock.`);
         })) { taken.add(it.key); state.stock = [...taken]; await save(); }
+      }
+
+      // 3b. Print on demand: hand Printify-made items to Printify to print and post. Repeating is safe (see printify/order.ts).
+      const pfy = await getStoreSecrets(storeId);
+      if (pfy.printifyToken && pfy.printifyShopId && !state.printify?.sent) {
+        const ps: PrintifyState = { ...(state.printify ?? {}) };
+        if (await attempt("Sending the order to Printify", async () => {
+          try {
+            await sendToPrintify(db, new Printify(pfy.printifyToken), pfy.printifyShopId, { number, email: s.email, name: s.name, phone: s.phone, address: s.address, lines: payload.lines }, ps, async () => {
+              state.printify = { ...ps }; await save();
+              if (ps.orderId) await db.from("orders").update({ printify_order_id: ps.orderId }).eq("id", orderId);
+            });
+          } catch (e) { if (e instanceof PrintifyProblem) throw new Business(e.message); throw e; }
+        })) { state.printify = { ...ps }; await save(); }
       }
 
       // The stock is now counted off for real, so the checkout's hold is no longer needed.

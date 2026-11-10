@@ -30,7 +30,7 @@ export type SeoFields = {
 
 export type BundleItem = { slug: string; qty: number };
 /** One purchasable combination. `name` joins the option values with " / " (e.g. "Rose / 30ml"); it is also the basket key. */
-export type Variant = { name: string; sku: string; stockQty: number; pricePence?: number; comparePricePence?: number; image?: string };
+export type Variant = { name: string; sku: string; stockQty: number; pricePence?: number; comparePricePence?: number; image?: string; /** The supplier's id for this option (Printify variant id) when the product is print on demand. */ externalId?: string };
 
 export type Product = {
   slug: string;
@@ -71,6 +71,8 @@ export type Product = {
   bestSeller?: boolean;
   /** Admin-only: draft products are hidden from the storefront. */
   published?: boolean;
+  /** Printify product id when this product is print on demand (orders for it are sent to Printify). */
+  printifyId?: string;
 } & SeoFields;
 
 /** A themed drop or collection. Products in a collection with a future launch date can be seen but not bought until then. */

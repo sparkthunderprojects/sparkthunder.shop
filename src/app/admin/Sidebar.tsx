@@ -27,6 +27,7 @@ const SEO: typeof NAV = [
   { href: "/admin/redirects", label: "Redirects" },
   { href: "/admin/store", label: "Brand and design" },
   { href: "/admin/commerce", label: "Shipping and payments" },
+  { href: "/admin/printify", label: "Printify" },
   { href: "/admin/settings", label: "Settings" },
   { href: "/admin/health", label: "Health" },
   { href: "/admin/activity", label: "Activity log" },

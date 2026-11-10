@@ -84,7 +84,7 @@ class Query implements PromiseLike<Result> {
   upsert(rows: Row | Row[], opts?: { onConflict?: string }) { this.op = "upsert"; this.payload = rows; this.onConflict = opts?.onConflict ?? null; return this; }
   delete() { this.op = "delete"; return this; }
   eq(col: string, val: unknown) { this.filters.push((r) => (col === "store_id" ? sid(r) === val : r[col] === val)); return this; }
-  neq(col: string, val: unknown) { this.filters.push((r) => r[col] !== val); return this; }
+  neq(col: string, val: unknown) { this.filters.push((r) => (val === "" ? (r[col] ?? "") !== "" : r[col] !== val)); return this; }
   in(col: string, vals: unknown[]) { this.filters.push((r) => vals.includes(r[col])); return this; }
   ilike(col: string, pat: string) { const re = new RegExp("^" + pat.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/%/g, ".*") + "$", "i"); this.filters.push((r) => re.test(String(r[col] ?? ""))); return this; }
   order(col: string, opts?: { ascending?: boolean }) { this.orders.push({ col, asc: opts?.ascending !== false }); return this; }

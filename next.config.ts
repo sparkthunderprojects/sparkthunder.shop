@@ -11,6 +11,9 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       // Supabase Storage (product photography lives here once uploaded)
       { protocol: "https", hostname: "*.supabase.co", pathname: "/storage/v1/object/public/**" },
+      // Print on demand mockups imported from Printify
+      { protocol: "https", hostname: "images-api.printify.com" },
+      { protocol: "https", hostname: "*.printify.com" },
     ],
   },
   async headers() {

@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 /** Runs the real SQL from supabase/admin.sql (the fulfilment block) in an in-memory Postgres. */
 const sql = readFileSync(path.join(__dirname, "../supabase/admin.sql"), "utf8");
-const block = sql.slice(sql.indexOf("-- Reliable fulfilment (idempotent)") - 80);
+const block = sql.slice(sql.indexOf("-- Reliable fulfilment (idempotent)") - 80, sql.indexOf("-- Printify (print on demand)") - 80);
 
 const PRELUDE = `
   create role anon; create role authenticated; create role service_role;
