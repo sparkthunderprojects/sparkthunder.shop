@@ -10,6 +10,7 @@ let failed = 0; const check = (ok, what) => { console.log(`${ok ? "ok  " : "FAIL
 const browser = await chromium.launch(); const page = await browser.newPage();
 try {
   await page.goto(`${base}/admin/commerce`, { waitUntil: "networkidle" });
+  while (await page.getByRole("button", { name: "Remove", exact: true }).count()) await page.getByRole("button", { name: "Remove", exact: true }).first().click(); // the demo store remembers earlier runs
   await page.getByRole("button", { name: "Add a currency" }).click();
   await page.getByPlaceholder("USD").fill("USD"); await page.getByPlaceholder("1.27").fill("1.25");
   await page.getByRole("button", { name: "Save", exact: true }).first().click();

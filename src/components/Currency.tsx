@@ -13,6 +13,7 @@ const C = createContext<Ctx>({ base: "GBP", options: [], code: "GBP", setCode: (
 export function CurrencyProvider({ base, options, children }: { base: string; options: DisplayCurrency[]; children: React.ReactNode }) {
   const [code, set] = useState(base);
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- a saved choice can only be read after hydration, so the server and first paint agree
     try { const s = localStorage.getItem(KEY); if (s && options.some((o) => o.code === s)) set(s); } catch { /* private mode */ }
   }, [options]);
   const setCode = useCallback((c: string) => { set(c); try { if (c === base) localStorage.removeItem(KEY); else localStorage.setItem(KEY, c); } catch { /* private mode */ } }, [base]);
