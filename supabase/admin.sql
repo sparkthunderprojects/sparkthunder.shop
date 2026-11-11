@@ -1044,3 +1044,27 @@ drop policy if exists "admin read email_unsubscribes" on public.email_unsubscrib
 create policy "admin read email_unsubscribes" on public.email_unsubscribes for select using (public.can_admin_store(store_id));
 
 alter table public.orders add column if not exists review_requested_at timestamptz;
+
+-- ============================================================================
+-- Staff roles (idempotent): what each staff member may do in a store
+-- ============================================================================
+alter table public.store_admins add column if not exists role text not null default 'manager';
+alter table public.store_admins drop constraint if exists store_admins_role_check;
+alter table public.store_admins add constraint store_admins_role_check check (role in ('manager','fulfilment','support','editor'));
+
+drop function if exists public.set_store_staff(text, text, boolean);
+create or replace function public.set_store_staff(p_email text, p_store text, p_add boolean, p_role text default 'manager') returns void
+language plpgsql security definer set search_path = public, auth as $$
+declare uid uuid;
+begin
+  if not public.is_admin() then raise exception 'Only owners can manage staff'; end if;
+  if p_role not in ('manager','fulfilment','support','editor') then raise exception 'Unknown role'; end if;
+  select id into uid from auth.users where lower(email) = lower(p_email);
+  if uid is null then raise exception 'No account with that email. Ask them to sign up first.'; end if;
+  if p_add then
+    insert into public.store_admins (user_id, store_id, role) values (uid, p_store, p_role)
+    on conflict (user_id, store_id) do update set role = excluded.role;
+  else delete from public.store_admins where user_id = uid and store_id = p_store; end if;
+end $$;
+revoke all on function public.set_store_staff(text, text, boolean, text) from public;
+grant execute on function public.set_store_staff(text, text, boolean, text) to authenticated;

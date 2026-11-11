@@ -9,7 +9,7 @@ import { normaliseStore, type StoreSettings } from "@/lib/store-config";
 
 export async function saveStoreAction(input: StoreSettings): Promise<{ ok: true } | { ok: false; error: string }> {
   try {
-    const { db } = await requireAdminAction();
+    const { db } = await requireAdminAction("settings");
     const value = normaliseStore(input); // checked and clamped on the server, whatever the browser sent
     if (!value.name) return { ok: false, error: "Give the store a name." };
     const { error } = await db.from("settings").upsert({ key: "store", value }, { onConflict: "key" });

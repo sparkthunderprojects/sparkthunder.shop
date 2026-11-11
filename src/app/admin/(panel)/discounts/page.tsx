@@ -6,7 +6,7 @@ import { DiscountManager } from "./DiscountManager";
 export const metadata = { title: "Discount codes" };
 
 export default async function DiscountsAdmin() {
-  const { db } = await requireAdmin();
+  const { db } = await requireAdmin("marketing");
   const [{ data }, franchises] = await Promise.all([db.from("discount_codes").select("*").order("created_at", { ascending: false }), getFranchises()]);
   return (
     <>

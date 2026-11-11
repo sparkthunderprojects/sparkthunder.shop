@@ -8,7 +8,7 @@ import { SendNowButton } from "./SendNowButton";
 export const metadata = { title: "Stock alerts" };
 
 export default async function StockAlertsAdmin() {
-  const { db } = await requireAdmin();
+  const { db } = await requireAdmin("catalogue");
   const [{ data: a }, { data: p }] = await Promise.all([db.from("stock_alerts").select("*"), db.from("products").select("*")]);
   const alerts = (a ?? []) as AlertRow[];
   const products = new Map(withBundleStock(((p ?? []) as ProductRow[]).map(productFromRow)).map((x) => [x.slug, x]));

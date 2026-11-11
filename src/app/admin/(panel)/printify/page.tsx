@@ -7,7 +7,7 @@ import { PrintifyPanel } from "./PrintifyPanel";
 export const metadata = { title: "Printify" };
 
 export default async function PrintifyPage() {
-  const { db } = await requireAdmin();
+  const { db } = await requireAdmin("settings");
   const [s, franchises, categories, count] = await Promise.all([
     currentStoreId().then(getStoreSecrets), listFranchises(db), listCategories(db),
     db.from("products").select("slug", { count: "exact", head: true }).neq("printify_id", ""),

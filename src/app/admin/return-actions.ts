@@ -14,7 +14,7 @@ const ORDER: ReturnStatus[] = ["requested", "approved", "received", "refunded"];
 /** Move a return along. Approving, rejecting, receiving and refunding each email the customer (with your note, if any). */
 export async function setReturnStatusAction(id: string, status: ReturnStatus, note: string): Promise<Result> {
   try {
-    const { db } = await requireAdminAction();
+    const { db } = await requireAdminAction("orders");
     const { data } = await db.from("return_requests").select("*").eq("id", id).maybeSingle();
     const r = data as ReturnRow | null;
     if (!r) return { ok: false, error: "Return not found." };

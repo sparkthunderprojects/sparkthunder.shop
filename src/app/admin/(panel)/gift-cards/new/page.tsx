@@ -9,7 +9,7 @@ import { IssueForm } from "./IssueForm";
 export const metadata = { title: "Issue a gift card" };
 
 export default async function NewGiftCard() {
-  await requireAdmin();
+  await requireAdmin("marketing");
   const store = await getStore(), original = (await currentStoreId()) === DEFAULT_STORE_ID;
   return <IssueForm store={{ name: store.name, origin: await siteOrigin(), prefix: (await getCommerce()).codePrefix, themes: giftThemes(store, original) }} />;
 }

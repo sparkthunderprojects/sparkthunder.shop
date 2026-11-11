@@ -7,7 +7,7 @@ import { AdjustPoints } from "./AdjustPoints";
 export const metadata = { title: "Spark points" };
 
 export default async function RewardsAdmin() {
-  const { db } = await requireAdmin();
+  const { db } = await requireAdmin("marketing");
   const { data } = await (serviceClient() ?? db).from("reward_points").select("*").order("created_at", { ascending: false });
   const rows = (data ?? []) as LedgerRow[];
   const by = new Map<string, { email: string; balance: number; earned: number; last: string }>();

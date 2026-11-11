@@ -5,7 +5,7 @@ import { QuestionList } from "./QuestionList";
 export const metadata = { title: "Questions" };
 
 export default async function QuestionsAdmin() {
-  const { db } = await requireAdmin();
+  const { db } = await requireAdmin("content");
   const { data } = await db.from("product_questions").select("*").order("created_at", { ascending: false });
   const rows = (data ?? []) as QuestionRow[];
   const pending = rows.filter((r) => r.status === "pending").length;

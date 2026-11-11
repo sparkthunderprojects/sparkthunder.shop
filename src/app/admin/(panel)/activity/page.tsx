@@ -6,7 +6,7 @@ export const metadata = { title: "Activity log" };
 const GROUPS = [["", "Everything"], ["product", "Products"], ["order", "Orders and refunds"], ["giftcard", "Gift cards"], ["discount", "Discounts"], ["login", "Sign-ins"], ["store", "Store settings"], ["staff", "Staff"], ["secrets", "Keys"]] as const;
 
 export default async function ActivityPage({ searchParams }: PageProps<"/admin/activity">) {
-  const { db } = await requireAdmin();
+  const { db } = await requireAdmin("settings");
   const q = await searchParams;
   const group = typeof q.g === "string" ? q.g : "";
   let query = db.from("audit_log").select("*").order("created_at", { ascending: false }).limit(300);

@@ -6,7 +6,7 @@ import { ProductTable, type Row } from "./ProductTable";
 export const metadata = { title: "Products" };
 
 export default async function ProductsPage() {
-  const { db } = await requireAdmin();
+  const { db } = await requireAdmin("catalogue");
   const audit = await runAudit(db);
   const score = new Map(audit.rows.filter((r) => r.kind === "product").map((r) => [r.slug, r.score]));
   const fr = new Map(audit.franchises.map((f) => [f.slug, f.name]));

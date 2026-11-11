@@ -10,7 +10,7 @@ export const metadata = { title: "Sales" };
 const RANGES = [["7", "7 days"], ["30", "30 days"], ["90", "90 days"], ["all", "All time"]] as const;
 
 export default async function SalesPage({ searchParams }: PageProps<"/admin/sales">) {
-  const { db } = await requireAdmin();
+  const { db } = await requireAdmin("reports");
   const sp = await searchParams;
   const r = typeof sp.range === "string" && RANGES.some(([k]) => k === sp.range) ? sp.range : "30";
   const [{ data: o }, { data: p }, { data: sn }] = await Promise.all([db.from("orders").select("*").order("created_at", { ascending: false }), db.from("products").select("*"), db.from("checkout_snapshots").select("created_at, fulfilled_at")]);

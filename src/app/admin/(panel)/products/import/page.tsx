@@ -5,7 +5,7 @@ import { ImportForm } from "./ImportForm";
 export const metadata = { title: "Import products" };
 
 export default async function ImportPage() {
-  await requireAdmin();
+  await requireAdmin("catalogue");
   return (
     <>
       <div className="adm-h"><div><h1>Import or bulk edit products</h1><p>Change prices, stock, names, tags and visibility for many products at once, or add new ones, from a spreadsheet.</p></div><Link className="adm-btn" href="/admin/products">Back to products</Link></div>

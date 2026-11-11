@@ -6,7 +6,7 @@ import { ScoreBadge } from "../../SeoWidgets";
 export const metadata = { title: "SEO audit" };
 
 export default async function SeoAudit() {
-  const { db } = await requireAdmin();
+  const { db } = await requireAdmin("catalogue");
   const a = await runAudit(db);
   const rows = [...a.rows].sort((x, y) => x.score - y.score);
   const grade = a.average >= 90 ? "A" : a.average >= 75 ? "B" : a.average >= 55 ? "C" : "D";

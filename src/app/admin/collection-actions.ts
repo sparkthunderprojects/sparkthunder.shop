@@ -27,7 +27,7 @@ async function bust(slug: string) {
 
 export async function saveCollectionAction(i: CollectionInput): Promise<Result> {
   try {
-    const { db } = await requireAdminAction();
+    const { db } = await requireAdminAction("catalogue");
     const name = i.name.trim();
     if (!name) return { ok: false, error: "Give the collection a name." };
     const slug = (i.slug.trim() || slugify(name)).toLowerCase();
@@ -56,7 +56,7 @@ export async function saveCollectionAction(i: CollectionInput): Promise<Result> 
 
 export async function deleteCollectionAction(slug: string): Promise<Result> {
   try {
-    const { db } = await requireAdminAction();
+    const { db } = await requireAdminAction("catalogue");
     const { error } = await db.from("collections").delete().eq("slug", slug);
     if (error) return { ok: false, error: error.message };
     await bust(slug);

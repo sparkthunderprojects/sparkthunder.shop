@@ -6,7 +6,7 @@ import { ReviewModeration } from "./ReviewModeration";
 export const metadata = { title: "Reviews" };
 
 export default async function ReviewsAdmin() {
-  const { db } = await requireAdmin();
+  const { db } = await requireAdmin("content");
   // Buyer emails are not readable by browser-side roles, so the (already verified) admin page reads them with the server key.
   const { data } = await (serviceClient() ?? db).from("reviews").select("*").order("created_at", { ascending: false });
   const rows = (data ?? []) as ReviewRow[];

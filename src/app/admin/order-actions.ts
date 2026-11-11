@@ -21,7 +21,7 @@ const message = (e: unknown) => (e instanceof Error ? e.message : "Something wen
 
 export async function markShippedAction(id: string, carrier = "", tracking = ""): Promise<Result> {
   try {
-    const { db } = await requireAdminAction();
+    const { db } = await requireAdminAction("orders");
     const { data } = await db.from("orders").select("*").eq("id", id).maybeSingle();
     const o = data as OrderRow | null;
     if (!o) return { ok: false, error: "Order not found." };
@@ -38,7 +38,7 @@ export async function markShippedAction(id: string, carrier = "", tracking = "")
 /** Finish an order that stopped part way (stock, gift cards, points, email). Only the unfinished steps run. */
 export async function finishOrderAction(id: string): Promise<Result> {
   try {
-    const { db } = await requireAdminAction();
+    const { db } = await requireAdminAction("orders");
     const { data } = await db.from("orders").select("*").eq("id", id).maybeSingle();
     const o = data as OrderRow | null;
     if (!o) return { ok: false, error: "Order not found." };
@@ -56,7 +56,7 @@ export async function finishOrderAction(id: string): Promise<Result> {
 
 export async function updateOrderAction(id: string, patch: { status: OrderRow["status"]; notes: string }): Promise<Result> {
   try {
-    const { db } = await requireAdminAction();
+    const { db } = await requireAdminAction("orders");
     const { error } = await db.from("orders").update({ status: patch.status, notes: patch.notes.trim(), ...(patch.status === "paid" ? { attention_reason: "" } : {}) }).eq("id", id);
     if (error) return { ok: false, error: error.message };
     revalidatePath(`/admin/orders/${id}`); revalidatePath("/admin/orders");
@@ -68,7 +68,7 @@ export async function updateOrderAction(id: string, patch: { status: OrderRow["s
 /** Email (or re-email) a gift card to its recipient. Also used for cards issued by hand in the admin. */
 export async function emailGiftCardAction(id: string, toOverride?: string): Promise<Result> {
   try {
-    const { db } = await requireAdminAction();
+    const { db } = await requireAdminAction("orders");
     const card = await getCard(db, id);
     if (!card) return { ok: false, error: "Gift card not found." };
     const to = (toOverride || card.recipient_email).trim();
@@ -91,7 +91,7 @@ async function refundStripe(): Promise<RefundStripe | null> {
 /** Refund all or part of an order: money back to the card and/or gift card, optionally restocking and taking back points. */
 export async function refundOrderAction(input: Omit<RefundInput, "by">): Promise<Result> {
   try {
-    const { email } = await requireAdminAction();
+    const { email } = await requireAdminAction("refunds");
     const svc = serviceClient();
     if (!svc) return { ok: false, error: dbSetupProblem() };
     const { data } = await svc.from("orders").select("id").eq("id", input.orderId).maybeSingle();   // scoped to this store's host/admin store
@@ -107,7 +107,7 @@ export async function refundOrderAction(input: Omit<RefundInput, "by">): Promise
 /** Finish a refund that stopped part way (for example Stripe was unreachable). Nothing already done is repeated. */
 export async function retryRefundAction(refundId: string): Promise<Result> {
   try {
-    await requireAdminAction();
+    await requireAdminAction("refunds");
     const svc = serviceClient();
     if (!svc) return { ok: false, error: dbSetupProblem() };
     const r = await processRefund(svc, await refundStripe(), await currentStoreId(), refundId);

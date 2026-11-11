@@ -10,7 +10,7 @@ export const metadata = { title: "All stores" };
 const RANGES = [["7", "7 days"], ["30", "30 days"], ["90", "90 days"]] as const;
 
 export default async function OverviewPage({ searchParams }: PageProps<"/admin/overview">) {
-  const admin = await requireAdmin();
+  const admin = await requireAdmin("reports");
   if (admin.access !== "*") redirect("/admin"); // owners only: this reads every store
   const sp = await searchParams;
   const days = Number(RANGES.find(([k]) => k === sp.range)?.[0] ?? 30);

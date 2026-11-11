@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ROLES, ROLE_LABEL, type Role } from "@/lib/admin/roles";
 import { cloneStoreAction, saveStoreRecordAction, setStaffAction, switchStoreAction } from "../../stores-actions";
 import type { StoreRow } from "@/lib/db/stores";
 
@@ -41,11 +42,13 @@ function Row({ s, current, create }: { s?: StoreRow; current?: boolean; create?:
 function Staff({ storeId }: { storeId: string }) {
   const [email, setEmail] = useState("");
   const [msg, setMsg] = useState("");
-  const run = async (add: boolean) => { const r = await setStaffAction({ email, storeId, add }); setMsg(r.ok ? (add ? "Added." : "Removed.") : r.error); if (r.ok) setEmail(""); };
+  const [role, setRole] = useState<Role>("manager");
+  const run = async (add: boolean) => { const r = await setStaffAction({ email, storeId, add, role }); setMsg(r.ok ? (add ? "Added." : "Removed.") : r.error); if (r.ok) setEmail(""); };
   return (
     <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
       <input className="adm-in" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Staff email (must have an account)" style={{ minWidth: 260 }} aria-label={`Staff email for ${storeId}`} />
-      <button type="button" className="adm-btn" onClick={() => run(true)}>Give access</button>
+      <select className="adm-sel" value={role} onChange={(e) => setRole(e.target.value as Role)} aria-label="Role">{ROLES.map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}</select>
+      <button type="button" className="adm-btn" onClick={() => run(true)}>Give access (or change role)</button>
       <button type="button" className="adm-btn" onClick={() => run(false)}>Remove access</button>
       <span role="status">{msg}</span>
     </div>

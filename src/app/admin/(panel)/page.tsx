@@ -9,8 +9,9 @@ import { ScoreBadge } from "../SeoWidgets";
 
 export const metadata = { title: "Dashboard" };
 
-export default async function Dashboard() {
+export default async function Dashboard({ searchParams }: { searchParams: Promise<{ denied?: string }> }) {
   const { db } = await requireAdmin();
+  const denied = (await searchParams).denied;
   const [audit, c, cards] = await Promise.all([runAudit(db), counts(db), listCards(db).catch(() => [])]);
   const giftOwed = cards.filter((g) => effectiveStatus(g) === "active").reduce((n, g) => n + g.balance_pence, 0);
   const grade = audit.average >= 90 ? "A" : audit.average >= 75 ? "B" : audit.average >= 55 ? "C" : "D";
@@ -21,6 +22,7 @@ export default async function Dashboard() {
   const giftStat = formatPrice(giftOwed);
   return (
     <>
+      {denied ? <p role="alert" className="adm-card" style={{ borderColor: "#c0392b" }}>Your role does not include that part of the admin. Ask a store manager or owner if you need it.</p> : null}
       <div className="adm-h"><div><h1>Dashboard</h1><p>Your catalogue and search health at a glance.</p></div>
         <Link className="adm-btn adm-bolt" href="/admin/products/new">Add product</Link></div>
       <div className="adm-grid adm-g3" style={{ marginBottom: 18 }}>

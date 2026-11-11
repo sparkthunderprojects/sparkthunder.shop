@@ -1,4 +1,5 @@
-import { getAdmin } from "@/lib/admin/auth";
+import { getAdmin, permsHere } from "@/lib/admin/auth";
+import { can } from "@/lib/admin/roles";
 import { logActivity } from "@/lib/admin/activity";
 import { toCsv } from "@/lib/csv";
 import { currentStoreId } from "@/lib/db/stores";
@@ -12,6 +13,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ kind: s
   const admin = await getAdmin();
   if (!admin) return new Response("Not signed in", { status: 401 });
   const { kind } = await params;
+  const need = kind === "products" ? "catalogue" : kind === "subscribers" ? "marketing" : "reports";
+  if (!can(await permsHere(admin), need)) return new Response("Your role does not allow that export.", { status: 403 });
   const { db } = admin;
   let name = "", body = "";
   if (kind === "orders") {

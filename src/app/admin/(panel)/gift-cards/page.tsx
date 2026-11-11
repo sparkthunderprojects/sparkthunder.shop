@@ -9,7 +9,7 @@ import { GiftCardTable, type GRow } from "./GiftCardTable";
 export const metadata = { title: "Gift cards" };
 
 export default async function GiftCardsAdmin() {
-  const { db } = await requireAdmin();
+  const { db } = await requireAdmin("marketing");
   const cards = await listCards(db);
   const prefix = (await getCommerce()).codePrefix;
   const active = cards.filter((c) => effectiveStatus(c) === "active");

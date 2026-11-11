@@ -14,7 +14,7 @@ export type PromotionInput = {
 
 export async function createPromotionAction(i: PromotionInput): Promise<Result> {
   try {
-    const { db } = await requireAdminAction();
+    const { db } = await requireAdminAction("marketing");
     const name = i.name.trim().slice(0, 60);
     if (!name) return { ok: false, error: "Give the offer a name customers will see, e.g. \"Buy 2 get 1 free\"." };
     const value = Math.round(i.value), buy = Math.round(i.buyQty), get = Math.round(i.getQty);
@@ -39,7 +39,7 @@ export async function createPromotionAction(i: PromotionInput): Promise<Result> 
 
 export async function setPromotionActiveAction(id: string, active: boolean): Promise<Result> {
   try {
-    const { db } = await requireAdminAction();
+    const { db } = await requireAdminAction("marketing");
     const { error } = await db.from("promotions").update({ active }).eq("id", id);
     if (error) return { ok: false, error: error.message };
     revalidatePath("/admin/promotions");
@@ -50,7 +50,7 @@ export async function setPromotionActiveAction(id: string, active: boolean): Pro
 
 export async function deletePromotionAction(id: string): Promise<Result> {
   try {
-    const { db } = await requireAdminAction();
+    const { db } = await requireAdminAction("marketing");
     const { error } = await db.from("promotions").delete().eq("id", id);
     if (error) return { ok: false, error: error.message };
     revalidatePath("/admin/promotions");

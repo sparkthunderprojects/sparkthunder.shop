@@ -25,7 +25,7 @@ async function client() {
 /** Save the token (and optionally the shop id). Write-only: values are never shown again. Finds the shop id itself when the account has one shop. */
 export async function connectPrintifyAction(input: { token: string; shopId: string }): Promise<R<{ shops: { id: string; title: string }[]; shopId: string }>> {
   try {
-    await requireAdminAction();
+    await requireAdminAction("settings");
     const storeId = await currentStoreId();
     const token = input.token.trim(), existing = await getStoreSecrets(storeId);
     const use = token || existing.printifyToken;
@@ -47,7 +47,7 @@ export async function connectPrintifyAction(input: { token: string; shopId: stri
 
 export async function disconnectPrintifyAction(): Promise<R> {
   try {
-    await requireAdminAction();
+    await requireAdminAction("settings");
     const storeId = await currentStoreId(), svc = serviceClient(storeId);
     if (!svc) return { ok: false, error: dbSetupProblem() };
     await svc.from("store_secrets").upsert({ store_id: storeId, printify_token: "", printify_shop_id: "", printify_webhook_secret: "" }, { onConflict: "store_id" });
@@ -60,7 +60,7 @@ export async function disconnectPrintifyAction(): Promise<R> {
 
 export async function importPrintifyAction(input: { franchiseSlug: string; categorySlug: string; publishNew: boolean }): Promise<R<{ result: SyncResult }>> {
   try {
-    const { db } = await requireAdminAction();
+    const { db } = await requireAdminAction("settings");
     const { secrets, api } = await client();
     if (!secrets.printifyShopId) return { ok: false, error: "Choose your Printify shop first." };
     if (!input.franchiseSlug || !input.categorySlug) return { ok: false, error: "Choose where new products should go (a franchise and a category)." };
@@ -74,7 +74,7 @@ export async function importPrintifyAction(input: { franchiseSlug: string; categ
 /** Register the tracking webhook at Printify, pointing at this store's own domain. A fresh signing secret is made and stored. */
 export async function connectPrintifyWebhookAction(): Promise<R<{ url: string }>> {
   try {
-    await requireAdminAction();
+    await requireAdminAction("settings");
     const { storeId, secrets, api } = await client();
     if (!secrets.printifyShopId) return { ok: false, error: "Choose your Printify shop first." };
     const h = await headers();

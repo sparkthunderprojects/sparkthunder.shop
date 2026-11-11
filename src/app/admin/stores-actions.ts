@@ -8,6 +8,7 @@ import { revalidatePath, updateTag } from "next/cache";
 import { requireAdminAction, requireOwnerAction } from "@/lib/admin/auth";
 import { ADMIN_STORE_COOKIE, listStores } from "@/lib/db/stores";
 import { serviceClient } from "@/lib/db/clients";
+import { isRole } from "@/lib/admin/roles";
 
 /** Pick which store the admin is editing. Stored in a cookie that only the admin area reads. */
 export async function switchStoreAction(id: string): Promise<void> {
@@ -42,14 +43,15 @@ export async function saveStoreRecordAction(input: { id: string; name: string; d
   } catch (e) { return { ok: false, error: e instanceof Error ? e.message : "Something went wrong." }; }
 }
 
-export async function setStaffAction(input: { email: string; storeId: string; add: boolean }): Promise<{ ok: true } | { ok: false; error: string }> {
+export async function setStaffAction(input: { email: string; storeId: string; add: boolean; role?: string }): Promise<{ ok: true } | { ok: false; error: string }> {
   try {
     const { db } = await requireOwnerAction();
     const email = input.email.trim();
     if (!/^\S+@\S+\.\S+$/.test(email)) return { ok: false, error: "Enter the person's email address." };
-    const { error } = await db.rpc("set_store_staff", { p_email: email, p_store: input.storeId, p_add: input.add });
+    const role = isRole(input.role) ? input.role : "manager";
+    const { error } = await db.rpc("set_store_staff", { p_email: email, p_store: input.storeId, p_add: input.add, p_role: role });
     if (error) return { ok: false, error: error.message };
-    await audit("staff.change", `${input.add ? "Gave" : "Removed"} staff access for ${input.email} on store ${input.storeId}`, { type: "staff", id: input.storeId });
+    await audit("staff.change", `${input.add ? `Gave ${role} access to` : "Removed staff access for"} ${input.email} on store ${input.storeId}`, { type: "staff", id: input.storeId });
     return { ok: true };
   } catch (e) { return { ok: false, error: e instanceof Error ? e.message : "Something went wrong." }; }
 }

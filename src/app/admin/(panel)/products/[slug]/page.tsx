@@ -11,7 +11,7 @@ export async function generateMetadata({ params }: PageProps<"/admin/products/[s
 
 export default async function EditProduct({ params }: PageProps<"/admin/products/[slug]">) {
   const { slug } = await params;
-  const { db } = await requireAdmin();
+  const { db } = await requireAdmin("catalogue");
   const [franchises, categories, media, allProducts] = await Promise.all([listFranchises(db), listCategories(db), listMedia(db), listProducts(db)]);
   let product: Product | null = null;
   if (slug !== "new") { product = await getProductRaw(db, slug); if (!product) notFound(); }

@@ -5,7 +5,7 @@ import { TaxonomyEditor } from "../../../TaxonomyEditor";
 
 export default async function Edit({ params }: PageProps<"/admin/categories/[slug]">) {
   const { slug } = await params;
-  const { db } = await requireAdmin();
+  const { db } = await requireAdmin("catalogue");
   const [items, products] = await Promise.all([listCategories(db), listProducts(db)]);
   const found = items.find((i) => i.slug === slug);
   if (slug !== "new" && !found) notFound();

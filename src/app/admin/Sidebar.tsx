@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { logoutAction } from "./actions";
 import { switchStoreAction } from "./stores-actions";
 import type { StoreRow } from "@/lib/db/stores";
+import { can, permForPath, type Perms } from "@/lib/admin/roles";
 
 const NAV: { href: string; label: string; exact?: boolean }[] = [
   { href: "/admin", label: "Dashboard", exact: true },
@@ -35,10 +36,12 @@ const SEO: typeof NAV = [
   { href: "/admin/activity", label: "Activity log" },
 ];
 
-export function Sidebar({ email, demo, stores, current, owner }: { email: string; demo: boolean; stores: StoreRow[]; current: string; owner: boolean }) {
+export function Sidebar({ email, demo, stores, current, owner, perms }: { email: string; demo: boolean; stores: StoreRow[]; current: string; owner: boolean; perms: Perms }) {
   const path = usePathname();
   const router = useRouter();
   const item = (n: (typeof NAV)[number]) => {
+    const need = permForPath(n.href);
+    if (need && !can(perms, need)) return null; // hidden, and the page itself refuses too
     const on = n.exact ? path === n.href : path === n.href || path.startsWith(n.href + "/");
     return <Link key={n.href} href={n.href} aria-current={on ? "page" : undefined}>{n.label}</Link>;
   };

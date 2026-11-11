@@ -6,7 +6,7 @@ import { PromotionManager } from "./PromotionManager";
 export const metadata = { title: "Automatic offers" };
 
 export default async function PromotionsAdmin() {
-  const { db } = await requireAdmin();
+  const { db } = await requireAdmin("marketing");
   const [{ data }, franchises, categories] = await Promise.all([db.from("promotions").select("*").order("created_at", { ascending: false }), getFranchises(), getCategories()]);
   return (
     <>

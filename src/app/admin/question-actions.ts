@@ -13,7 +13,7 @@ async function bust(slug: string) { await bustTag(QUESTIONS_TAG); revalidatePath
 
 export async function answerQuestionAction(id: string, slug: string, answer: string, question: string): Promise<Result> {
   try {
-    const { db } = await requireAdminAction();
+    const { db } = await requireAdminAction("content");
     const a = answer.trim();
     if (a.length < 2) return { ok: false, error: "Write an answer first." };
     const { error } = await db.from("product_questions").update({ answer: a.slice(0, 1000), question: question.trim().slice(0, 300), status: "answered", answered_at: new Date().toISOString() }).eq("id", id);
@@ -26,7 +26,7 @@ export async function answerQuestionAction(id: string, slug: string, answer: str
 
 export async function setQuestionStatusAction(id: string, slug: string, status: "rejected" | "pending"): Promise<Result> {
   try {
-    const { db } = await requireAdminAction();
+    const { db } = await requireAdminAction("content");
     const { error } = await db.from("product_questions").update({ status }).eq("id", id);
     if (error) return { ok: false, error: error.message };
     await bust(slug);
@@ -37,7 +37,7 @@ export async function setQuestionStatusAction(id: string, slug: string, status: 
 
 export async function deleteQuestionAction(id: string, slug: string): Promise<Result> {
   try {
-    const { db } = await requireAdminAction();
+    const { db } = await requireAdminAction("content");
     const { error } = await db.from("product_questions").delete().eq("id", id);
     if (error) return { ok: false, error: error.message };
     await bust(slug);

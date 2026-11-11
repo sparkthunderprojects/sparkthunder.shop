@@ -15,7 +15,7 @@ type Result = { ok: true } | { ok: false; error: string };
 
 export async function saveCommerceAction(input: CommerceSettings): Promise<Result> {
   try {
-    const { db } = await requireAdminAction();
+    const { db } = await requireAdminAction("settings");
     const value = normaliseCommerce(input);
     const { error } = await db.from("settings").upsert({ key: "commerce", value }, { onConflict: "key" });
     if (error) return { ok: false, error: error.message };
@@ -28,7 +28,7 @@ export async function saveCommerceAction(input: CommerceSettings): Promise<Resul
 
 /** What is connected, without ever returning the secrets themselves. */
 export async function secretsStatusAction(): Promise<{ stripe: boolean; webhook: boolean; email: boolean; emailFrom: string }> {
-  await requireAdminAction();
+  await requireAdminAction("settings");
   const s = await getStoreSecrets(await currentStoreId());
   return { stripe: Boolean(s.stripeSecret), webhook: Boolean(s.stripeWebhookSecret), email: Boolean(s.resendKey), emailFrom: s.emailFrom };
 }
@@ -36,7 +36,7 @@ export async function secretsStatusAction(): Promise<{ stripe: boolean; webhook:
 /** Write-only: blank fields are left as they were; "clear" removes everything for this store. */
 export async function saveSecretsAction(input: { stripeSecret: string; stripeWebhookSecret: string; resendKey: string; emailFrom: string; clear?: boolean }): Promise<Result> {
   try {
-    await requireAdminAction();
+    await requireAdminAction("settings");
     const storeId = await currentStoreId();
     const svc = serviceClient(storeId);
     if (!svc) return { ok: false, error: dbSetupProblem() };

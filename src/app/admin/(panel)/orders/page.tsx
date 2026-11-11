@@ -8,7 +8,7 @@ const BADGE = { paid: "adm-warn", shipped: "adm-ok", cancelled: "", attention: "
 const LABEL = { paid: "To ship", shipped: "Shipped", cancelled: "Cancelled", attention: "Needs attention" } as const;
 
 export default async function OrdersPage() {
-  const { db } = await requireAdmin();
+  const { db } = await requireAdmin("orders");
   const { data } = await db.from("orders").select("*").order("created_at", { ascending: false });
   const orders = (data ?? []) as OrderRow[];
   const toShip = orders.filter((o) => o.status === "paid" && o.items.some((l) => l.type === "product")).length;

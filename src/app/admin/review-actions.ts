@@ -20,7 +20,7 @@ async function bust(slug: string) {
 
 export async function moderateReviewAction(id: string, slug: string, status: "approved" | "rejected" | "pending"): Promise<Result> {
   try {
-    const { db } = await requireAdminAction();
+    const { db } = await requireAdminAction("content");
     const { error } = await db.from("reviews").update({ status }).eq("id", id);
     if (error) return { ok: false, error: error.message };
     if (status === "approved") {
@@ -38,7 +38,7 @@ export async function moderateReviewAction(id: string, slug: string, status: "ap
 
 export async function deleteReviewAction(id: string, slug: string): Promise<Result> {
   try {
-    const { db } = await requireAdminAction();
+    const { db } = await requireAdminAction("content");
     const { error } = await db.from("reviews").delete().eq("id", id);
     if (error) return { ok: false, error: error.message };
     await bust(slug);

@@ -10,7 +10,7 @@ const COLOUR = { red: "#c0392b", amber: "#b7791f", green: "#2f855a" } as const;
 const WORD = { red: "Needs attention", amber: "Worth a look", green: "All clear" } as const;
 
 export default async function HealthPage() {
-  const { db } = await requireAdmin();
+  const { db } = await requireAdmin("settings");
   const [secrets, commerce] = await Promise.all([getStoreSecrets(await currentStoreId()), getCommerce()]);
   const { checks, events, setupSql } = await loadHealth(db, { stripe: Boolean(secrets.stripeSecret), webhook: Boolean(secrets.stripeWebhookSecret), email: Boolean(secrets.resendKey && secrets.emailFrom), supportEmail: Boolean(commerce.supportEmail) });
   const state = overall(checks);

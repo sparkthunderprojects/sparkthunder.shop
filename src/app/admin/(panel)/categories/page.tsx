@@ -5,7 +5,7 @@ import { listCategories, listProducts } from "@/lib/admin/repo";
 export const metadata = { title: "Categories" };
 
 export default async function List() {
-  const { db } = await requireAdmin();
+  const { db } = await requireAdmin("catalogue");
   const [items, products] = await Promise.all([listCategories(db), listProducts(db)]);
   return (
     <>

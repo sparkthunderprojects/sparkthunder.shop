@@ -9,7 +9,7 @@ import { awardPoints } from "@/lib/rewards";
 
 export async function adjustPointsAction(email: string, points: number, note: string): Promise<{ ok: true } | { ok: false; error: string }> {
   try {
-    await requireAdminAction();
+    await requireAdminAction("marketing");
     const e = String(email).trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return { ok: false, error: "Enter the customer's email address." };
     const n = Math.round(Number(points));

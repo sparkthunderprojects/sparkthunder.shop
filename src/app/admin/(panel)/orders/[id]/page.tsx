@@ -9,7 +9,7 @@ export const metadata = { title: "Order" };
 
 export default async function OrderPage({ params }: PageProps<"/admin/orders/[id]">) {
   const { id } = await params;
-  const { db } = await requireAdmin();
+  const { db } = await requireAdmin("orders");
   const { data } = await db.from("orders").select("*").eq("id", id).maybeSingle();
   if (!data) notFound();
   const { data: refunds } = await db.from("order_refunds").select("*").eq("order_id", id).order("created_at", { ascending: true });

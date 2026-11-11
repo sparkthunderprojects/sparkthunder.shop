@@ -5,7 +5,7 @@ import { CollectionManager } from "./CollectionManager";
 export const metadata = { title: "Collections" };
 
 export default async function CollectionsAdmin() {
-  const { db } = await requireAdmin();
+  const { db } = await requireAdmin("catalogue");
   const [{ data: c }, { data: p }] = await Promise.all([db.from("collections").select("*").order("sort_order"), db.from("products").select("*")]);
   const products = ((p ?? []) as ProductRow[]).map(productFromRow).map((x) => ({ slug: x.slug, name: x.name }));
   return (

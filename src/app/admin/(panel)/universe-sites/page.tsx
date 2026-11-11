@@ -6,7 +6,7 @@ import { EmbedBuilder } from "./EmbedBuilder";
 export const metadata = { title: "Universe sites" };
 
 export default async function UniverseSitesAdmin() {
-  await requireAdmin();
+  await requireAdmin("catalogue");
   const franchises = await getFranchises();
   return (
     <>

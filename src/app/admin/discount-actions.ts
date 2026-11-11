@@ -16,7 +16,7 @@ export type DiscountInput = {
 
 export async function createDiscountAction(i: DiscountInput): Promise<Result> {
   try {
-    const { db } = await requireAdminAction();
+    const { db } = await requireAdminAction("marketing");
     const code = normaliseDiscountCode(i.code);
     if (code.length < 3) return { ok: false, error: "Codes need at least 3 letters or numbers (spaces and dashes are ignored)." };
     const value = Math.round(i.value);
@@ -40,7 +40,7 @@ export async function createDiscountAction(i: DiscountInput): Promise<Result> {
 
 export async function setDiscountActiveAction(id: string, active: boolean): Promise<Result> {
   try {
-    const { db } = await requireAdminAction();
+    const { db } = await requireAdminAction("marketing");
     const { error } = await db.from("discount_codes").update({ active }).eq("id", id);
     if (error) return { ok: false, error: error.message };
     revalidatePath("/admin/discounts");
@@ -52,7 +52,7 @@ export async function setDiscountActiveAction(id: string, active: boolean): Prom
 /** Codes that have been used are kept for the record (turn them off instead). */
 export async function deleteDiscountAction(id: string): Promise<Result> {
   try {
-    const { db } = await requireAdminAction();
+    const { db } = await requireAdminAction("marketing");
     const { data } = await db.from("discount_codes").select("uses").eq("id", id).maybeSingle();
     if ((data as { uses: number } | null)?.uses) return { ok: false, error: "This code has been used, so it is kept for your records. Turn it off instead." };
     const { error } = await db.from("discount_codes").delete().eq("id", id);

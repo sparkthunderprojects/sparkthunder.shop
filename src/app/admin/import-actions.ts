@@ -21,7 +21,7 @@ async function plan(db: Db, csv: string): Promise<ImportPlan> {
 /** Show what a CSV would change, without changing anything. */
 export async function previewImportAction(csv: string): Promise<R<{ plan: ImportPlan }>> {
   try {
-    const { db } = await requireAdminAction();
+    const { db } = await requireAdminAction("catalogue");
     if (csv.length > MAX_BYTES) return { ok: false, error: "That file is too large. Split it into smaller files." };
     return { ok: true, plan: await plan(db, csv) };
   } catch (e) { return { ok: false, error: e instanceof Error ? e.message : "Something went wrong." }; }
@@ -30,7 +30,7 @@ export async function previewImportAction(csv: string): Promise<R<{ plan: Import
 /** Apply a CSV. The plan is recalculated from the file here (never trusted from the browser). Rows with problems are skipped, the rest are applied. */
 export async function applyImportAction(csv: string): Promise<R<{ updated: number; created: number; skipped: number }>> {
   try {
-    const { db } = await requireAdminAction();
+    const { db } = await requireAdminAction("catalogue");
     if (csv.length > MAX_BYTES) return { ok: false, error: "That file is too large. Split it into smaller files." };
     const p = await plan(db, csv);
     let updated = 0, created = 0;

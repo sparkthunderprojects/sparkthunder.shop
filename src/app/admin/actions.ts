@@ -62,7 +62,7 @@ export async function logoutAction(): Promise<Result> {
 // ------------------------------------------------------------------ products
 export async function saveProductAction(p: Product, originalSlug: string | null): Promise<Result<{ slug: string }>> {
   try {
-    const { db } = await requireAdminAction();
+    const { db } = await requireAdminAction("catalogue");
     const fields: Record<string, string> = {};
     p = { ...p, slug: p.slug.trim(), name: p.name.trim(), sku: p.sku.trim() };
     if (!p.name) fields.name = "Enter a product name.";
@@ -134,7 +134,7 @@ export async function saveProductAction(p: Product, originalSlug: string | null)
 
 export async function deleteProductAction(slug: string, redirectTo: string | null): Promise<Result> {
   try {
-    const { db } = await requireAdminAction();
+    const { db } = await requireAdminAction("catalogue");
     const product = await repo.getProductRaw(db, slug);
     await repo.deleteRow(db, "products", slug);
     // Keep the old URL's search value: send it to the category page (or a chosen page) with a 301.
@@ -149,7 +149,7 @@ export async function deleteProductAction(slug: string, redirectTo: string | nul
 
 export async function bulkProductsAction(slugs: string[], action: "publish" | "unpublish" | "feature" | "unfeature" | "mark-new" | "unmark-new" | "in-stock" | "out-of-stock"): Promise<Result> {
   try {
-    const { db } = await requireAdminAction();
+    const { db } = await requireAdminAction("catalogue");
     const patch: Record<string, unknown> = {
       publish: { published: true }, unpublish: { published: false }, feature: { is_featured: true }, unfeature: { is_featured: false },
       "mark-new": { is_new: true }, "unmark-new": { is_new: false }, "in-stock": { in_stock: true }, "out-of-stock": { in_stock: false },
@@ -175,7 +175,7 @@ function checkTaxonomy(x: { slug: string; name: string; seoTitle?: string; seoDe
 
 export async function saveFranchiseAction(f: Franchise, originalSlug: string | null): Promise<Result<{ slug: string }>> {
   try {
-    const { db } = await requireAdminAction();
+    const { db } = await requireAdminAction("catalogue");
     f = { ...f, slug: f.slug.trim() || slugify(f.name), name: f.name.trim() };
     const fields = checkTaxonomy(f);
     if (!/^#[0-9a-fA-F]{6}$/.test(f.accent)) fields.accent = "Use a hex colour like #3a5fc8.";
@@ -192,7 +192,7 @@ export async function saveFranchiseAction(f: Franchise, originalSlug: string | n
 }
 export async function saveCategoryAction(c: Category, originalSlug: string | null): Promise<Result<{ slug: string }>> {
   try {
-    const { db } = await requireAdminAction();
+    const { db } = await requireAdminAction("catalogue");
     c = { ...c, slug: c.slug.trim() || slugify(c.name), name: c.name.trim() };
     const fields = checkTaxonomy(c);
     if (Object.keys(fields).length) return { ok: false, error: "Please fix the highlighted fields.", fields };
@@ -206,7 +206,7 @@ export async function saveCategoryAction(c: Category, originalSlug: string | nul
 }
 export async function deleteTaxonomyAction(kind: "franchises" | "categories", slug: string): Promise<Result> {
   try {
-    const { db } = await requireAdminAction();
+    const { db } = await requireAdminAction("catalogue");
     const col = kind === "franchises" ? "franchise_slug" : "category_slug";
     const { count } = await db.from("products").select("*", { count: "exact", head: true }).eq(col, slug);
     if ((count ?? 0) > 0) return { ok: false, error: `${count} product${count === 1 ? " still belongs" : "s still belong"} to this. Move or delete them first.` };
@@ -222,7 +222,7 @@ export async function deleteTaxonomyAction(kind: "franchises" | "categories", sl
 // ------------------------------------------------------------------ media
 export async function uploadMediaAction(form: FormData): Promise<Result<{ item: repo.MediaItem }>> {
   try {
-    const { db } = await requireAdminAction();
+    const { db } = await requireAdminAction("catalogue");
     const file = form.get("file");
     if (!(file instanceof File) || file.size === 0) return { ok: false, error: "Choose an image to upload." };
     if (!/^image\/(webp|jpeg|png|avif)$/.test(file.type)) return { ok: false, error: "Upload a JPEG, PNG, WebP or AVIF image." };
@@ -243,16 +243,16 @@ export async function uploadMediaAction(form: FormData): Promise<Result<{ item: 
   } catch (e) { return { ok: false, error: message(e) }; }
 }
 export async function updateMediaAltAction(id: string, alt: string): Promise<Result> {
-  try { const { db } = await requireAdminAction(); await repo.updateMediaAlt(db, id, alt.trim()); return { ok: true }; } catch (e) { return { ok: false, error: message(e) }; }
+  try { const { db } = await requireAdminAction("catalogue"); await repo.updateMediaAlt(db, id, alt.trim()); return { ok: true }; } catch (e) { return { ok: false, error: message(e) }; }
 }
 export async function deleteMediaAction(id: string): Promise<Result> {
-  try { const { db } = await requireAdminAction(); await repo.removeMedia(db, id); revalidatePath("/admin/media"); return { ok: true }; } catch (e) { return { ok: false, error: message(e) }; }
+  try { const { db } = await requireAdminAction("catalogue"); await repo.removeMedia(db, id); revalidatePath("/admin/media"); return { ok: true }; } catch (e) { return { ok: false, error: message(e) }; }
 }
 
 // ------------------------------------------------------------------ redirects & settings
 export async function addRedirectAction(from: string, to: string, status: number, note: string): Promise<Result> {
   try {
-    const { db } = await requireAdminAction();
+    const { db } = await requireAdminAction("catalogue");
     const f = from.trim(), t = to.trim();
     if (!f.startsWith("/")) return { ok: false, error: "The old URL must start with / (for example /products/old-name)." };
     if (!(t.startsWith("/") || /^https?:\/\//.test(t))) return { ok: false, error: "The new URL must start with / or https://." };
@@ -266,11 +266,11 @@ export async function addRedirectAction(from: string, to: string, status: number
   } catch (e) { return { ok: false, error: message(e) }; }
 }
 export async function deleteRedirectAction(id: number): Promise<Result> {
-  try { const { db } = await requireAdminAction(); await repo.removeRedirect(db, id); await bustTag("redirects"); revalidatePath("/admin/redirects"); return { ok: true }; } catch (e) { return { ok: false, error: message(e) }; }
+  try { const { db } = await requireAdminAction("catalogue"); await repo.removeRedirect(db, id); await bustTag("redirects"); revalidatePath("/admin/redirects"); return { ok: true }; } catch (e) { return { ok: false, error: message(e) }; }
 }
 export async function saveSettingsAction(s: repo.SiteSettings): Promise<Result> {
   try {
-    const { db } = await requireAdminAction();
+    const { db } = await requireAdminAction("settings");
     await repo.writeSettings(db, { ...s, sameAs: s.sameAs.map((x) => x.trim()).filter(Boolean) });
     await bustTag("settings");
     revalidatePath("/", "layout");

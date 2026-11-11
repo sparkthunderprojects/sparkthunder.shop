@@ -5,7 +5,7 @@ import { ReturnsTable } from "./ReturnsTable";
 export const metadata = { title: "Returns" };
 
 export default async function ReturnsAdmin() {
-  const { db } = await requireAdmin();
+  const { db } = await requireAdmin("orders");
   const { data, error } = await db.from("return_requests").select("*").order("created_at", { ascending: false }).limit(200);
   return (
     <>
