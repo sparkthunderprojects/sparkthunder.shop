@@ -90,3 +90,11 @@ Never set `SPARKTHUNDER_DEMO` in production: it replaces the database with a fak
 - Review requests go once per shipped order, 7 to 30 days after dispatch.
 - Every one of these emails has an unsubscribe link (no login needed). Order and shipping emails are not affected.
 - Run the workflow by hand from the GitHub Actions tab to test.
+
+## Caching (CDN)
+Pages that look the same to every visitor (home, shop, product, category, franchise, collection and the standing legal pages) are sent with `Cache-Control: public, max-age=0, s-maxage=30, stale-while-revalidate=120`. A CDN in front of the site may keep them for 30 seconds, so a busy store's pages are served from the CDN, not rendered again for every visitor. Browsers always re-check (max-age=0).
+- The basket, checkout, account, search and admin are never cacheable (`private, no-store`).
+- An edit in the admin reaches shoppers within about 30 seconds. A 404 for a page that did not exist yet can also linger for that long.
+- The cache must key on the full web address including the domain (CDNs do this by default). Do not configure a cache that ignores the host: stores would see each other's pages.
+- `scripts/cache-check.mjs` (run in CI) proves public pages are identical for every visitor, set no cookies, and that private pages are never cacheable. If you add a page that reads a cookie or depends on the visitor, do not add it to `src/lib/cache-policy.ts`.
+- To turn caching off for everything, empty `CACHEABLE_SOURCES` in `src/lib/cache-policy.ts`.

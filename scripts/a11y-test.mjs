@@ -8,7 +8,7 @@ let chromium;
 try { ({ chromium } = require("playwright")); } catch { ({ chromium } = require(require("node:path").join(execSync("npm root -g").toString().trim(), "playwright"))); }
 const port = process.argv[2] ?? "3470";
 const axeSource = readFileSync(require.resolve("axe-core/axe.min.js"), "utf8");
-const pages = ["/", "/products", "/products/knightverge-crest-tee", "/cart", "/checkout", "/search?q=tee", "/delivery-returns", "/privacy", "/account"];
+const pages = ["/", "/shop", "/products/knightverge-crest-tee", "/cart", "/checkout", "/search?q=tee", "/delivery-returns", "/privacy", "/account"];
 const browser = await chromium.launch();
 let bad = 0;
 for (const path of pages) {

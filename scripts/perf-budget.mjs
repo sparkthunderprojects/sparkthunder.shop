@@ -10,7 +10,7 @@ const scale = Number(process.env.BUDGET_SCALE ?? 1);
 // jsKB = JavaScript downloaded (compressed), lcp in ms, cls unitless (Google's "good" thresholds are 2500 ms and 0.1).
 const BUDGETS = JSON.parse(process.env.BUDGETS ?? "null") ?? {
   "/": { jsKB: 230, lcp: 2500, cls: 0.1 },
-  "/products": { jsKB: 230, lcp: 2500, cls: 0.1 },
+  "/shop": { jsKB: 230, lcp: 2500, cls: 0.1 },
   "/products/knightverge-crest-tee": { jsKB: 240, lcp: 2500, cls: 0.1 },
   "/cart": { jsKB: 230, lcp: 2500, cls: 0.1 },
 };

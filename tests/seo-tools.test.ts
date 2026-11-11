@@ -47,3 +47,14 @@ describe("automatic internal links", () => {
   });
   it("leaves text without matches alone", () => { expect(autoLink("Nothing to see.", T)).toEqual([{ text: "Nothing to see." }]); });
 });
+
+import { CACHEABLE_SOURCES, PUBLIC_PAGE_CACHE } from "@/lib/cache-policy";
+describe("what a shared cache may keep", () => {
+  it("never includes private or personal pages", () => {
+    for (const s of CACHEABLE_SOURCES) expect(s, s).not.toMatch(/^\/(admin|account|cart|checkout|search|api|auth|unsubscribe|gift-cards)/);
+  });
+  it("is short, so edits show up quickly", () => {
+    expect(PUBLIC_PAGE_CACHE).toMatch(/s-maxage=30\b/);
+    expect(PUBLIC_PAGE_CACHE).toContain("public");
+  });
+});
