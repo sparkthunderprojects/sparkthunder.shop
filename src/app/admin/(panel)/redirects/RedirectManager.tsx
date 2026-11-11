@@ -1,11 +1,12 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { addRedirectAction, deleteRedirectAction } from "../../actions";
+import { addRedirectAction, deleteRedirectAction, fixRedirectChainsAction } from "../../actions";
 import { Field, useAction } from "../../ui";
 import type { RedirectRow } from "@/lib/admin/repo";
+import type { RedirectIssue } from "@/lib/seo/redirects-check";
 
-export function RedirectManager({ initial }: { initial: RedirectRow[] }) {
+export function RedirectManager({ initial, issues }: { initial: RedirectRow[]; issues: RedirectIssue[] }) {
   const router = useRouter();
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -15,6 +16,13 @@ export function RedirectManager({ initial }: { initial: RedirectRow[] }) {
   return (
     <>
       <div className="adm-h"><div><h1>Redirects</h1><p>Old URLs keep their ranking by sending visitors and Google to the new page. Slug changes and deleted products add rules here automatically. Chains are collapsed so there is only ever one hop.</p></div></div>
+      <section className="adm-card"><h2>Redirect health</h2>
+        {issues.length === 0 ? <p className="adm-hint">No problems found: no chains, loops, hidden pages or dead destinations.</p> : (<>
+          {issues.map((i) => <div key={`${i.id}-${i.kind}`} style={{ padding: "6px 0", borderBottom: "1px solid #eef0f3" }}><span className={`adm-badge ${i.kind === "chain" || i.kind === "duplicate" ? "adm-warn" : "adm-bad"}`}>{i.kind}</span> <code>{i.from}</code> {i.message}
+            {i.kind !== "chain" ? <button className="adm-btn adm-danger" style={{ marginLeft: 8 }} disabled={pending} onClick={() => run(() => deleteRedirectAction(i.id), "Removed", () => router.refresh())}>Remove</button> : null}</div>)}
+          {issues.some((i) => i.kind === "chain") ? <p style={{ marginTop: 10 }}><button className="adm-btn adm-pri" disabled={pending} onClick={() => run(() => fixRedirectChainsAction(), "Chains shortened", () => router.refresh())}>Shorten all chains</button></p> : null}
+        </>)}
+      </section>
       <section className="adm-card"><h2>Add a redirect</h2>
         <form className="adm-grid" style={{ gridTemplateColumns: "2fr 2fr 1fr 2fr auto", alignItems: "end" }}
           onSubmit={(e) => { e.preventDefault(); run(() => addRedirectAction(from, to, status, note), "Redirect added", () => { setFrom(""); setTo(""); setNote(""); router.refresh(); }); }}>

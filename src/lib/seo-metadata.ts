@@ -20,7 +20,7 @@ export async function buildMetadata(opts: {
   return {
     title: opts.title,
     description: opts.description,
-    alternates: { canonical: url },
+    alternates: { canonical: url, languages: { [SITE.locale.replace("_", "-")]: url, "x-default": url } }, // a page that names itself for its language and as the default: valid hreflang for a one-language store
     robots: opts.noindex ? { index: false, follow: true } : { index: true, follow: true },
     openGraph: {
       type: opts.type ?? "website",

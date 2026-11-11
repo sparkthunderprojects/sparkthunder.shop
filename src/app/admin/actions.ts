@@ -1,5 +1,7 @@
 "use server";
 
+import { checkRedirects } from "@/lib/seo/redirects-check";
+import { livePaths } from "@/lib/seo/live-paths";
 import { logActivity as audit } from "@/lib/admin/activity";
 
 import { HEX } from "@/lib/variants";
@@ -276,5 +278,19 @@ export async function saveSettingsAction(s: repo.SiteSettings): Promise<Result> 
     revalidatePath("/", "layout");
     await audit("settings.save", "Saved site settings");
     return { ok: true };
+  } catch (e) { return { ok: false, error: message(e) }; }
+}
+
+/** Point every redirect that goes through other redirects straight at its final destination. */
+export async function fixRedirectChainsAction(): Promise<Result<{ fixed: number }>> {
+  try {
+    const { db } = await requireAdminAction("catalogue");
+    const rows = await repo.listRedirects(db);
+    const chains = checkRedirects(rows, await livePaths()).filter((i) => i.kind === "chain" && i.fixTo);
+    for (const c of chains) await db.from("redirects").update({ to_path: c.fixTo }).eq("id", c.id);
+    await bustTag("redirects");
+    revalidatePath("/admin/redirects");
+    if (chains.length) await audit("redirect.fix", `Shortened ${chains.length} redirect chain${chains.length === 1 ? "" : "s"}`, { type: "redirect" });
+    return { ok: true, fixed: chains.length };
   } catch (e) { return { ok: false, error: message(e) }; }
 }

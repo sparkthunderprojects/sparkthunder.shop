@@ -39,7 +39,7 @@ jobs:
           NEXT_TELEMETRY_DISABLED: "1"
       - name: Install the browser for the real-browser checks
         run: npx playwright install --with-deps chromium
-      - name: Accessibility and checkout journey in a real browser
+      - name: Accessibility, checkout, search-engine markup and performance budget in a real browser
         run: bash scripts/ci-browser.sh
         env:
           NEXT_TELEMETRY_DISABLED: "1"

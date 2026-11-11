@@ -8,3 +8,5 @@ trap 'kill $PID 2>/dev/null || true' EXIT
 for i in $(seq 1 40); do curl -fs "http://127.0.0.1:$PORT/" >/dev/null 2>&1 && break; sleep 1; done
 node scripts/a11y-test.mjs "$PORT"
 node scripts/checkout-test.mjs "$PORT"
+node scripts/seo-check.mjs "$PORT"
+node scripts/perf-budget.mjs "$PORT"

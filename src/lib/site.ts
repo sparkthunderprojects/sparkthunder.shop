@@ -2,9 +2,9 @@ export const SITE = {
   name: "Sparkthunder Shop",
   legalName: "Sparkthunder",
   url: (process.env.NEXT_PUBLIC_SITE_URL ?? "https://sparkthunder.shop").replace(/\/$/, ""),
-  tagline: "Official merchandise from the Sparkthunder universe of franchises",
+  tagline: "Official merchandise from the Sparkthunder universe",
   description:
-    "The official Sparkthunder store. Shop apparel, collectibles, drinkware, posters and tabletop gear from Knightverge, Occult Inc and every franchise in the Sparkthunder universe.",
+    "The official Sparkthunder store. Shop apparel, collectibles, drinkware, posters and tabletop gear from Knightverge, Occult Inc and every Sparkthunder franchise.",
   locale: "en_GB",
   currency: "GBP",
   twitter: "@sparkthunder",

@@ -23,6 +23,7 @@ import { getQuestions } from "@/lib/questions";
 import { ReviewsSection } from "@/components/ReviewsSection";
 import { getReviews } from "@/lib/reviews";
 import { breadcrumbLd, productLd } from "@/lib/seo";
+import { autoLink } from "@/lib/seo/autolink";
 import { buildMetadata } from "@/lib/seo-metadata";
 import { formatPrice } from "@/lib/site";
 import { worldStyle } from "@/lib/theme";
@@ -142,7 +143,7 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
             </section>
           )}
 
-          <p className="prose-lore mt-10">{product.description}</p>
+          <p className="prose-lore mt-10">{autoLink(product.description, [...allProducts.map((x) => ({ name: x.name, href: `/products/${x.slug}` })), ...franchises.map((f) => ({ name: f.name, href: `/franchises/${f.slug}` }))], { selfHref: `/products/${product.slug}` }).map((piece, i) => piece.href ? <Link key={i} href={piece.href as never} className="underline underline-offset-4">{piece.text}</Link> : <span key={i}>{piece.text}</span>)}</p>
 
           {product.details.length > 0 && (
             <section className="mt-10" aria-labelledby="details-h">
