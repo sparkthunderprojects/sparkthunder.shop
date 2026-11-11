@@ -20,12 +20,15 @@ export function CommerceForm({ commerce, status }: { commerce: CommerceSettings;
   const [support, setSupport] = useState(commerce.supportEmail);
   const [prefix, setPrefix] = useState(commerce.codePrefix);
   const [vatOn, setVatOn] = useState(commerce.vatEnabled), [vatRate, setVatRate] = useState(String(commerce.vatRatePercent)), [vatNo, setVatNo] = useState(commerce.vatNumber);
+  type ZoneForm = { name: string; countries: string; first: string; extra: string; free: string };
+  const [zones, setZones] = useState<ZoneForm[]>(commerce.shippingZones.map((z) => ({ name: z.name, countries: z.countries.join(", "), first: pounds(z.firstItemPence), extra: pounds(z.extraItemPence), free: pounds(z.freeOverPence) })));
+  const setZone = (i: number, patch: Partial<ZoneForm>) => setZones((zs) => zs.map((z, j) => (j === i ? { ...z, ...patch } : z)));
   const [msg, setMsg] = useState("");
   const [sk, setSk] = useState(""), [wh, setWh] = useState(""), [rk, setRk] = useState(""), [from, setFrom] = useState(status.emailFrom);
   const [pmsg, setPmsg] = useState("");
 
   const saveCommerce = async () => {
-    const r = await saveCommerceAction({ shippingFlatPence: toPence(ship) ?? 0, freeShippingPence: toPence(free), giftWrapPence: toPence(wrap) ?? 0, shippingCountries: countries.split(/[\s,]+/).filter(Boolean), supportEmail: support, codePrefix: prefix, vatEnabled: vatOn, vatRatePercent: Number(vatRate) || 0, vatNumber: vatNo });
+    const r = await saveCommerceAction({ shippingZones: zones.map((z) => ({ name: z.name, countries: z.countries.split(/[\s,]+/).filter(Boolean), firstItemPence: toPence(z.first) ?? 0, extraItemPence: toPence(z.extra) ?? 0, freeOverPence: toPence(z.free) })), shippingFlatPence: toPence(ship) ?? 0, freeShippingPence: toPence(free), giftWrapPence: toPence(wrap) ?? 0, shippingCountries: countries.split(/[\s,]+/).filter(Boolean), supportEmail: support, codePrefix: prefix, vatEnabled: vatOn, vatRatePercent: Number(vatRate) || 0, vatNumber: vatNo });
     setMsg(r.ok ? "Saved." : r.error); if (r.ok) router.refresh();
   };
   const saveSecrets = async (clear = false) => {
@@ -38,10 +41,33 @@ export function CommerceForm({ commerce, status }: { commerce: CommerceSettings;
       <div className="adm-h"><div><h1>Shipping and payments</h1><p>The money rules and connected accounts for this store only. Other stores have their own.</p></div></div>
       <div className="adm-card" style={{ display: "grid", gap: 12, marginBottom: 16 }}>
         <h2>Shipping and gifting</h2>
-        <Field label="Flat shipping (£)"><input className="adm-in" inputMode="decimal" value={ship} onChange={(e) => setShip(e.target.value)} /></Field>
-        <Field label="Free shipping from (£)" hint="Leave empty for no free-shipping offer."><input className="adm-in" inputMode="decimal" value={free} onChange={(e) => setFree(e.target.value)} /></Field>
+        {zones.length === 0 ? (
+          <>
+            <Field label="Flat shipping (£)"><input className="adm-in" inputMode="decimal" value={ship} onChange={(e) => setShip(e.target.value)} /></Field>
+            <Field label="Free shipping from (£)" hint="Leave empty for no free-shipping offer."><input className="adm-in" inputMode="decimal" value={free} onChange={(e) => setFree(e.target.value)} /></Field>
+          </>
+        ) : null}
+        <div style={{ display: "grid", gap: 10 }}>
+          <b>Delivery zones</b>
+          <small style={{ opacity: 0.7 }}>{zones.length ? "Each country belongs to one zone. Delivery costs the first-item price, plus the extra-item price for each further item (print-on-demand items post separately, so this follows Printify's own pricing). Customers can only choose countries listed here." : "Optional. Without zones, every country in the list below pays the flat rate above. Add zones to charge different amounts for the UK, Europe, the rest of the world, and so on."}</small>
+          {zones.map((z, i) => (
+            <div key={i} className="adm-card" style={{ display: "grid", gap: 8 }}>
+              <div className="adm-grid adm-g2">
+                <Field label="Zone name"><input className="adm-in" value={z.name} onChange={(e) => setZone(i, { name: e.target.value })} placeholder="United Kingdom" /></Field>
+                <Field label="Country codes" hint="For example GB, IE, FR, DE."><input className="adm-in" value={z.countries} onChange={(e) => setZone(i, { countries: e.target.value })} /></Field>
+              </div>
+              <div className="adm-grid adm-g2">
+                <Field label="First item (£)"><input className="adm-in" inputMode="decimal" value={z.first} onChange={(e) => setZone(i, { first: e.target.value })} /></Field>
+                <Field label="Each extra item (£)"><input className="adm-in" inputMode="decimal" value={z.extra} onChange={(e) => setZone(i, { extra: e.target.value })} /></Field>
+              </div>
+              <Field label="Free delivery over (£)" hint="Leave empty for none."><input className="adm-in" inputMode="decimal" value={z.free} onChange={(e) => setZone(i, { free: e.target.value })} /></Field>
+              <div><button type="button" className="adm-btn" onClick={() => setZones((zs) => zs.filter((_, j) => j !== i))}>Remove zone</button></div>
+            </div>
+          ))}
+          <div><button type="button" className="adm-btn" onClick={() => setZones((zs) => [...zs, { name: "", countries: "", first: "", extra: "", free: "" }])}>Add a delivery zone</button></div>
+        </div>
         <Field label="Gift wrap price (£)"><input className="adm-in" inputMode="decimal" value={wrap} onChange={(e) => setWrap(e.target.value)} /></Field>
-        <Field label="Ships to (country codes)" hint="For example GB, IE, US."><input className="adm-in" value={countries} onChange={(e) => setCountries(e.target.value)} /></Field>
+        {zones.length === 0 ? <Field label="Ships to (country codes)" hint="For example GB, IE, US."><input className="adm-in" value={countries} onChange={(e) => setCountries(e.target.value)} /></Field> : null}
         <Toggle label="This store is VAT registered" checked={vatOn} onChange={setVatOn} hint="Your prices already include VAT. This works out the VAT part and shows it on order emails and in the admin. Leave off until you are registered." />
         {vatOn ? <div className="adm-grid adm-g2"><Field label="VAT rate (%)" hint="20 is the UK standard rate."><input className="adm-in" inputMode="decimal" value={vatRate} onChange={(e) => setVatRate(e.target.value)} /></Field><Field label="VAT number" hint="Shown on order emails, e.g. GB123456789."><input className="adm-in" value={vatNo} onChange={(e) => setVatNo(e.target.value)} /></Field></div> : null}
         <Field label="Support email"><input className="adm-in" type="email" value={support} onChange={(e) => setSupport(e.target.value)} /></Field>

@@ -11,6 +11,8 @@ export type Snapshot = {
   subtotalPence: number;
   shippingPence: number;
   needsShipping: boolean;
+  /** Where this order is being delivered (two-letter code) and the zone that priced it. */
+  country?: string; shippingZone?: string;
   discount?: { id: string; code: string; appliedPence: number } | null;
   /** "This is a gift" options for a posted order: a printed note and/or gift wrap. */
   giftOptions?: { message: string; wrap: boolean; wrapPence: number } | null;

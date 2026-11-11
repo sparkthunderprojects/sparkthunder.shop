@@ -7,8 +7,9 @@ import { useCommerce } from "@/components/CommerceProvider";
 /** Progress toward free shipping. Renders nothing unless NEXT_PUBLIC_FREE_SHIPPING_PENCE is configured. */
 export function FreeShippingBar() {
   const { subtotalPence, count } = useCart();
-  const FREE_SHIPPING_PENCE = useCommerce().freeShippingPence;
-  if (!FREE_SHIPPING_PENCE || count === 0) return null;
+  const c = useCommerce();
+  const FREE_SHIPPING_PENCE = c.freeShippingPence;
+  if (c.shippingZones.length || !FREE_SHIPPING_PENCE || count === 0) return null; // with zones the basket shows the offer for the chosen country
   const left = FREE_SHIPPING_PENCE - subtotalPence;
   const pct = Math.min(100, Math.round((subtotalPence / FREE_SHIPPING_PENCE) * 100));
   return (

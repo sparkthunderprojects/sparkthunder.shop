@@ -28,7 +28,7 @@ async function holdKey(): Promise<string> {
 
 export type CheckoutResult = { ok: true; url: string } | { ok: false; error: string };
 
-export async function startCheckoutAction(cart: CartInput, giftCode: string | null, discountCode: string | null = null, giftOpts: GiftOptionsInput | null = null): Promise<CheckoutResult> {
+export async function startCheckoutAction(cart: CartInput, giftCode: string | null, discountCode: string | null = null, giftOpts: GiftOptionsInput | null = null, country: string | null = null): Promise<CheckoutResult> {
   try {
     const rl = await rateLimit("checkout", LIMITS.checkout);
     if (!rl.ok) return { ok: false, error: `Too many checkout attempts. Please wait ${wait(rl)} and try again.` };
@@ -37,7 +37,7 @@ export async function startCheckoutAction(cart: CartInput, giftCode: string | nu
     const demoPay = isDemo && !stripeOn;
     if (!db || (!stripeOn && !demoPay)) return { ok: false, error: "Checkout is not switched on yet. Please check back soon." };
 
-    const plan = await buildPlan(db, cart, giftCode, discountCode, giftOpts);
+    const plan = await buildPlan(db, cart, giftCode, discountCode, giftOpts, country);
     if (!plan.ok) return plan;
     const snap = plan.snapshot;
 
@@ -79,9 +79,9 @@ export async function startCheckoutAction(cart: CartInput, giftCode: string | nu
       ...(discounts ? { discounts } : {}),
       payment_method_collection: "if_required",
       ...(snap.needsShipping ? {
-        shipping_address_collection: { allowed_countries: (await getCommerce()).shippingCountries as never },
+        shipping_address_collection: { allowed_countries: (snap.country ? [snap.country] : (await getCommerce()).shippingCountries) as never },
         phone_number_collection: { enabled: true },
-        shipping_options: [{ shipping_rate_data: { type: "fixed_amount" as const, display_name: snap.shippingPence ? "Standard delivery" : "Free delivery", fixed_amount: { amount: snap.shippingPence, currency: "gbp" } } }],
+        shipping_options: [{ shipping_rate_data: { type: "fixed_amount" as const, display_name: snap.shippingPence ? (snap.shippingZone || "Standard delivery") : "Free delivery", fixed_amount: { amount: snap.shippingPence, currency: "gbp" } } }],
       } : {}),
       success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/cart`,
@@ -105,4 +105,4 @@ export async function startCheckoutAction(cart: CartInput, giftCode: string | nu
   }
 }
 
-export const shippingInfo = async () => { const c = await getCommerce(); return { flat: c.shippingFlatPence, countries: c.shippingCountries }; };
+

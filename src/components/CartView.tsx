@@ -11,6 +11,9 @@ import { GiftCardApply, useAppliedGiftCard } from "@/components/GiftCardApply";
 import { isGiftCardLine } from "@/lib/giftcards/format";
 import { formatPrice } from "@/lib/site";
 import { useCommerce } from "@/components/CommerceProvider";
+import { quoteShipping } from "@/lib/commerce-config";
+
+const countryName = (code: string) => { try { return new Intl.DisplayNames(["en"], { type: "region" }).of(code) ?? code; } catch { return code; } };
 
 export function CartView() {
   const { items, subtotalPence, setQty, remove } = useCart();
@@ -23,7 +26,11 @@ export function CartView() {
   const physical = items.some((i) => !isGiftCardLine(i.slug));
   const [gift, setGift] = useState(false);
   const [wrap, setWrap] = useState(false);
-  const GIFT_WRAP_PENCE = useCommerce().giftWrapPence;
+  const commerce = useCommerce();
+  const GIFT_WRAP_PENCE = commerce.giftWrapPence;
+  const [country, setCountry] = useState(commerce.shippingCountries[0] ?? "GB");
+  const physicalItems = items.filter((i) => !isGiftCardLine(i.slug));
+  const ship = physical ? quoteShipping(commerce, country, physicalItems.reduce((n, i) => n + i.qty, 0), payable) : null;
   const [note, setNote] = useState("");
   const wrapPence = physical && gift && wrap ? GIFT_WRAP_PENCE : 0;
   const disc = useDiscount(cartInput);
@@ -83,9 +90,27 @@ export function CartView() {
           </div>
         ) : null}
         {!(applied > 0) && card && payable === 0 ? <p className="mt-2 text-sm text-muted">Gift cards cannot be used to buy other gift cards.</p> : null}
-        <p className="mt-1 text-sm text-muted">Shipping and taxes are calculated at checkout.</p>
+        {physical ? (
+          <div className="mt-5 border-t border-ink/15 pt-4">
+            {commerce.shippingCountries.length > 1 ? (
+              <label className="grid gap-1 text-sm font-bold">Deliver to
+                <select value={country} onChange={(e) => setCountry(e.target.value)} className="border border-ink/30 bg-paper px-3 py-2 font-normal">
+                  {commerce.shippingCountries.map((c) => <option key={c} value={c}>{countryName(c)}</option>)}
+                </select>
+              </label>
+            ) : null}
+            {ship?.ok ? (
+              <>
+                <p className="mt-3 flex justify-between"><span>Delivery{commerce.shippingZones.length ? ` (${ship.zone})` : ""}</span><span className="font-bold">{ship.pence ? formatPrice(ship.pence) : "Free"}</span></p>
+                {ship.freeOverPence && ship.pence > 0 ? <p className="mt-1 text-sm text-muted">Spend {formatPrice(ship.freeOverPence - payable)} more for free delivery.</p> : null}
+                <p className="mt-1 flex justify-between text-lg"><span>Estimated total</span><span className="font-bold">{formatPrice(subtotalPence + wrapPence + ship.pence - discount - applied)}</span></p>
+              </>
+            ) : ship ? <p role="alert" className="mt-2 text-sm font-bold text-red-700">{ship.error}</p> : null}
+          </div>
+        ) : null}
+        <p className="mt-1 text-sm text-muted">Taxes are included in prices where they apply.</p>
         <button className="btn mt-6 w-full" disabled={busy} onClick={() => { setErr(""); start(async () => {
-          const r = await startCheckoutAction(cartInput, applied > 0 && card ? card.code : null, disc.code, physical && gift ? { message: note, wrap } : null);
+          const r = await startCheckoutAction(cartInput, applied > 0 && card ? card.code : null, disc.code, physical && gift ? { message: note, wrap } : null, physical ? country : null);
           if (r.ok) window.location.href = r.url; else setErr(r.error);
         }); }}>{busy ? "Starting checkout..." : "Checkout"}</button>
         {err ? <p role="alert" className="mt-3 text-sm font-bold text-red-700">{err}</p> : null}

@@ -6,7 +6,7 @@ import { GIFT_LIMITS, getCardByCode, effectiveStatus } from "@/lib/giftcards/led
 import { isGiftThemeId } from "@/lib/giftcards/themes";
 import { checkDiscount } from "@/lib/discounts";
 import { absoluteUrl, formatPrice } from "@/lib/site";
-import { getCommerce } from "@/lib/commerce";
+import { getCommerce, quoteShipping } from "@/lib/commerce";
 import { orderVat } from "@/lib/vat";
 import { getStore } from "@/lib/store";
 import type { CartInput, GiftOptionsInput, Snapshot, SnapshotLine } from "./types";
@@ -17,10 +17,10 @@ export const MIN_CHARGE_PENCE = 30; // Stripe's minimum card charge in GBP
  * Turn the browser's basket into a trusted order plan. Product prices and names come from the catalogue,
  * never from the client; gift card amounts are range-checked; a gift card code is verified and capped.
  */
-export async function buildPlan(db: Db, cart: CartInput, giftCode: string | null, discountCode: string | null = null, giftOpts: GiftOptionsInput | null = null): Promise<{ ok: true; snapshot: Snapshot } | { ok: false; error: string }> {
+export async function buildPlan(db: Db, cart: CartInput, giftCode: string | null, discountCode: string | null = null, giftOpts: GiftOptionsInput | null = null, country: string | null = null): Promise<{ ok: true; snapshot: Snapshot } | { ok: false; error: string }> {
   if (!cart.length) return { ok: false, error: "Your basket is empty." };
   const commerce = await getCommerce();
-  const FREE_SHIPPING_PENCE = commerce.freeShippingPence, GIFT_WRAP_PENCE = commerce.giftWrapPence, SHIPPING_FLAT_PENCE = commerce.shippingFlatPence;
+  const GIFT_WRAP_PENCE = commerce.giftWrapPence;
   const catalogue = new Map((await getAllProducts()).map((p) => [p.slug, p]));
   const lines: SnapshotLine[] = [];
   const franchiseOf = new Map<string, string>(); // product slug -> universe, for universe-only discount codes
@@ -57,7 +57,11 @@ export async function buildPlan(db: Db, cart: CartInput, giftCode: string | null
   const productSubtotal = lines.filter((l) => l.type === "product").reduce((n, l) => n + l.unitPence * l.qty, 0);
   const subtotalPence = lines.reduce((n, l) => n + l.unitPence * l.qty, 0);
   const needsShipping = productSubtotal > 0;
-  const shippingPence = !needsShipping ? 0 : FREE_SHIPPING_PENCE && productSubtotal >= FREE_SHIPPING_PENCE ? 0 : SHIPPING_FLAT_PENCE;
+  const deliverTo = (country ?? commerce.shippingCountries[0] ?? "GB").toUpperCase();
+  const itemCount = lines.reduce((n, l) => n + (l.type === "product" ? l.qty : 0), 0);
+  const quote = needsShipping ? quoteShipping(commerce, deliverTo, itemCount, productSubtotal) : null;
+  if (quote && !quote.ok) return { ok: false, error: quote.error };
+  const shippingPence = quote?.ok ? quote.pence : 0;
 
   let discount: Snapshot["discount"] = null;
   if (discountCode) {
@@ -81,5 +85,5 @@ export async function buildPlan(db: Db, cart: CartInput, giftCode: string | null
   const giftOptions: Snapshot["giftOptions"] = wrap || giftMessage ? { message: giftMessage, wrap, wrapPence: wrap ? GIFT_WRAP_PENCE : 0 } : null;
   const totalPence = subtotalPence + shippingPence + (giftOptions?.wrapPence ?? 0) - (discount?.appliedPence ?? 0) - (giftCard?.appliedPence ?? 0);
   if (totalPence > 0 && totalPence < MIN_CHARGE_PENCE) return { ok: false, error: `After your discounts the amount left to pay is ${formatPrice(totalPence)}. Card payments must be at least ${formatPrice(MIN_CHARGE_PENCE)}, so add another item or remove the gift card or code.` };
-  return { ok: true, snapshot: { lines, subtotalPence, shippingPence, needsShipping, discount, giftOptions, giftCard, totalPence, vat: orderVat({ lines, shippingPence, giftOptions, discount }, commerce) } };
+  return { ok: true, snapshot: { lines, subtotalPence, shippingPence, needsShipping, ...(quote?.ok ? { country: deliverTo, shippingZone: quote.zone } : {}), discount, giftOptions, giftCard, totalPence, vat: orderVat({ lines, shippingPence, giftOptions, discount }, commerce) } };
 }

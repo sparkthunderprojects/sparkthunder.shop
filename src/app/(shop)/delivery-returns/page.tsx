@@ -22,11 +22,20 @@ export default async function DeliveryReturnsPage() {
   const countries = c.shippingCountries.map(countryName);
   return (
     <LegalPage title="Delivery and returns" path="/delivery-returns" intro={`How ${name} delivers your order, and what to do if you change your mind or something is not right.`}>
-      <h2>Where we deliver</h2>
-      <p>We currently deliver to: {countries.join(", ")}. Gift cards are sent by email and can be bought from anywhere.</p>
-
-      <h2>Delivery costs</h2>
-      <p>Delivery is {formatPrice(c.shippingFlatPence)} per order.{c.freeShippingPence ? ` Orders of ${formatPrice(c.freeShippingPence)} or more qualify for free delivery.` : ""}{c.giftWrapPence ? ` Gift wrapping is ${formatPrice(c.giftWrapPence)} per order if you choose it at checkout.` : ""} The exact amount is always shown at checkout before you pay.</p>
+      <h2>Where we deliver and what it costs</h2>
+      {c.shippingZones.length ? (
+        <ul>
+          {c.shippingZones.map((z) => (
+            <li key={z.name}><strong>{z.name}</strong> ({z.countries.map(countryName).join(", ")}): {formatPrice(z.firstItemPence)} for the first item{z.extraItemPence ? `, ${formatPrice(z.extraItemPence)} for each extra item` : ", nothing extra for more items"}.{z.freeOverPence ? ` Free on orders of ${formatPrice(z.freeOverPence)} or more.` : ""}</li>
+          ))}
+        </ul>
+      ) : (
+        <>
+          <p>We currently deliver to: {countries.join(", ")}.</p>
+          <p>Delivery is {formatPrice(c.shippingFlatPence)} per order.{c.freeShippingPence ? ` Orders of ${formatPrice(c.freeShippingPence)} or more qualify for free delivery.` : ""}</p>
+        </>
+      )}
+      <p>Gift cards are sent by email and can be bought from anywhere.{c.giftWrapPence ? ` Gift wrapping is ${formatPrice(c.giftWrapPence)} per order if you choose it at checkout.` : ""} The exact amount is always shown in your basket and at checkout before you pay.</p>
 
       <h2>When it will arrive</h2>
       <p>Many of our products are printed to order, so they are made after you buy: allow a few working days for printing before your order is posted, plus the delivery time. Items in one order can be made in different places and arrive in separate parcels. We email you when your order ships, with tracking details where the carrier provides them. If something is out of stock or delayed we will let you know.</p>
