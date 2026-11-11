@@ -5,6 +5,7 @@ import { getAllProducts } from "@/lib/catalog";
 import { publicOrServiceDb } from "@/lib/discount-db";
 import { checkDiscount, describeDiscount, normaliseDiscountCode } from "@/lib/discounts";
 import type { CartInput } from "@/lib/shop/types";
+import { bestPromotions, loadPromotions } from "@/lib/promotions";
 
 export type QuoteResult = { ok: true; code: string; amountPence: number; label: string } | { ok: false; error: string };
 
@@ -25,4 +26,22 @@ export async function quoteDiscountAction(cart: CartInput, rawCode: string): Pro
   const check = await checkDiscount(db, code, lines);
   if (!check.ok) return check;
   return { ok: true, code: check.row.code, amountPence: check.amountPence, label: describeDiscount(check.row) };
+}
+
+export type OffersQuote = { promo: { name: string; amountPence: number; stacks: boolean } | null; freeShippingBy: string | null };
+
+/** The automatic offers a basket qualifies for right now (the same rule checkout uses, so the basket never promises something checkout will not give). */
+export async function quoteOffersAction(cart: CartInput): Promise<OffersQuote> {
+  const db = publicOrServiceDb();
+  if (!db) return { promo: null, freeShippingBy: null };
+  const catalogue = new Map((await getAllProducts()).map((p) => [p.slug, p]));
+  const lines = cart.flatMap((i) => {
+    const p = catalogue.get(String(i.slug).split("::")[0]);
+    if (!p) return [];
+    const v = String(i.slug).split("::")[1];
+    const unit = (p.variants ?? []).find((x) => x.name === v)?.pricePence ?? p.pricePence;
+    return [{ franchiseSlug: p.franchiseSlug, categorySlug: p.categorySlug, unitPence: unit, qty: Math.min(20, Math.max(1, Math.floor(Number(i.qty) || 1))) }];
+  });
+  const r = bestPromotions(await loadPromotions(db), lines);
+  return { promo: r.promo ? { name: r.promo.name, amountPence: r.promo.amountPence, stacks: r.promo.stacks } : null, freeShippingBy: r.freeShipping?.name ?? null };
 }

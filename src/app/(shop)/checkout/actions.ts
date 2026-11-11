@@ -5,6 +5,7 @@ import { rateLimit, LIMITS, wait } from "@/lib/ratelimit";
 import { serviceClient } from "@/lib/db/clients";
 import { isDemo } from "@/lib/db/env";
 import { buildPlan } from "@/lib/shop/plan";
+import { moneyOff } from "@/lib/promotions";
 import { getCommerce } from "@/lib/commerce";
 import { getStripe, hasStripe } from "@/lib/shop/stripe";
 import type { CartInput, GiftOptionsInput } from "@/lib/shop/types";
@@ -66,9 +67,10 @@ export async function startCheckoutAction(cart: CartInput, giftCode: string | nu
     }
     let discounts: { coupon: string }[] | undefined;
     // Stripe takes one coupon per session, so the discount code and gift card are combined into a single amount off.
-    const off = (snap.discount?.appliedPence ?? 0) + (snap.giftCard?.appliedPence ?? 0);
+    const off = moneyOff(snap) + (snap.giftCard?.appliedPence ?? 0);
     if (off > 0) {
-      const name = snap.discount && snap.giftCard ? "Discount code and gift card" : snap.discount ? "Discount code" : `${(await getStore()).name} gift card`;
+      const offers = [snap.discount ? "Discount code" : "", snap.promotion ? snap.promotion.name : ""].filter(Boolean).join(" + ");
+      const name = offers && snap.giftCard ? `${offers} and gift card` : offers || `${(await getStore()).name} gift card`;
       const coupon = await stripe.coupons.create({ amount_off: off, currency: "gbp", duration: "once", max_redemptions: 1, name });
       discounts = [{ coupon: coupon.id }];
     }

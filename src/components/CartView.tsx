@@ -1,8 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { startCheckoutAction } from "@/app/(shop)/checkout/actions";
+import { quoteOffersAction, type OffersQuote } from "@/app/(shop)/checkout/discount";
+import { combineOffers } from "@/lib/promotions";
 import Link from "next/link";
 import { useCart } from "@/components/CartProvider";
 import { FreeShippingBar } from "@/components/FreeShippingBar";
@@ -34,8 +36,15 @@ export function CartView() {
   const [note, setNote] = useState("");
   const wrapPence = physical && gift && wrap ? GIFT_WRAP_PENCE : 0;
   const disc = useDiscount(cartInput);
-  const discount = Math.min(disc.amountPence, payable);
-  const applied = card ? Math.min(card.balancePence, payable - discount) : 0;
+  const [offers, setOffers] = useState<OffersQuote>({ promo: null, freeShippingBy: null });
+  const offerKey = JSON.stringify(cartInput.map((c) => [c.slug, c.qty]));
+  useEffect(() => { let live = true; quoteOffersAction(cartInput).then((o) => { if (live) setOffers(o); }).catch(() => {}); return () => { live = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [offerKey]);
+  const mix = combineOffers(offers.promo?.amountPence ?? 0, offers.promo?.stacks ?? false, disc.amountPence, payable);
+  const discount = mix.codePence;
+  const promoOff = mix.promoPence;
+  const applied = card ? Math.min(card.balancePence, payable - discount - promoOff) : 0;
 
   if (items.length === 0) {
     return (
@@ -70,11 +79,12 @@ export function CartView() {
         <div className="-mx-6 mt-4 border-y border-ink/15 [&>div]:border-b-0"><FreeShippingBar /></div>
         <p className="mt-5 flex justify-between text-lg"><span>Subtotal</span><span className="font-bold">{formatPrice(subtotalPence)}</span></p>
         <DiscountApply code={disc.code} setCode={disc.setCode} quote={disc.quote} />
+        {promoOff > 0 ? <p className="mt-3 flex justify-between"><span>{offers.promo?.name}</span><span className="font-bold">-{formatPrice(promoOff)}</span></p> : null}
         {discount > 0 ? <p className="mt-3 flex justify-between"><span>Discount</span><span className="font-bold">-{formatPrice(discount)}</span></p> : null}
         <GiftCardApply card={card} setCard={setCard} />
         {applied > 0 ? <p className="mt-3 flex justify-between"><span>Gift card</span><span className="font-bold">-{formatPrice(applied)}</span></p> : null}
         {wrapPence > 0 ? <p className="mt-3 flex justify-between"><span>Gift wrap</span><span className="font-bold">{formatPrice(wrapPence)}</span></p> : null}
-        {discount > 0 || applied > 0 || wrapPence > 0 ? <p className="mt-1 flex justify-between text-lg"><span>To pay</span><span className="font-bold">{formatPrice(subtotalPence + wrapPence - discount - applied)}</span></p> : null}
+        {discount > 0 || promoOff > 0 || applied > 0 || wrapPence > 0 ? <p className="mt-1 flex justify-between text-lg"><span>To pay</span><span className="font-bold">{formatPrice(subtotalPence + wrapPence - discount - promoOff - applied)}</span></p> : null}
         {physical ? (
           <div className="mt-5 border-t border-ink/15 pt-4">
             <label className="flex items-center gap-2 font-bold"><input type="checkbox" checked={gift} onChange={(e) => setGift(e.target.checked)} /> This order is a gift</label>
@@ -101,9 +111,10 @@ export function CartView() {
             ) : null}
             {ship?.ok ? (
               <>
-                <p className="mt-3 flex justify-between"><span>Delivery{commerce.shippingZones.length ? ` (${ship.zone})` : ""}</span><span className="font-bold">{ship.pence ? formatPrice(ship.pence) : "Free"}</span></p>
-                {ship.freeOverPence && ship.pence > 0 ? <p className="mt-1 text-sm text-muted">Spend {formatPrice(ship.freeOverPence - payable)} more for free delivery.</p> : null}
-                <p className="mt-1 flex justify-between text-lg"><span>Estimated total</span><span className="font-bold">{formatPrice(subtotalPence + wrapPence + ship.pence - discount - applied)}</span></p>
+                <p className="mt-3 flex justify-between"><span>Delivery{commerce.shippingZones.length ? ` (${ship.zone})` : ""}</span><span className="font-bold">{ship.pence && !offers.freeShippingBy ? formatPrice(ship.pence) : "Free"}</span></p>
+                {offers.freeShippingBy && ship.pence > 0 ? <p className="mt-1 text-sm text-muted">{offers.freeShippingBy}</p> : null}
+                {ship.freeOverPence && ship.pence > 0 && !offers.freeShippingBy ? <p className="mt-1 text-sm text-muted">Spend {formatPrice(ship.freeOverPence - payable)} more for free delivery.</p> : null}
+                <p className="mt-1 flex justify-between text-lg"><span>Estimated total</span><span className="font-bold">{formatPrice(subtotalPence + wrapPence + (offers.freeShippingBy ? 0 : ship.pence) - discount - promoOff - applied)}</span></p>
               </>
             ) : ship ? <p role="alert" className="mt-2 text-sm font-bold text-red-700">{ship.error}</p> : null}
           </div>

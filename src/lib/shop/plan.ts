@@ -5,6 +5,7 @@ import { isGiftCardLine } from "@/lib/giftcards/format";
 import { GIFT_LIMITS, getCardByCode, effectiveStatus } from "@/lib/giftcards/ledger";
 import { isGiftThemeId } from "@/lib/giftcards/themes";
 import { checkDiscount } from "@/lib/discounts";
+import { bestPromotions, combineOffers, loadPromotions, moneyOff } from "@/lib/promotions";
 import { absoluteUrl, formatPrice } from "@/lib/site";
 import { getCommerce, quoteShipping } from "@/lib/commerce";
 import { orderVat } from "@/lib/vat";
@@ -24,6 +25,7 @@ export async function buildPlan(db: Db, cart: CartInput, giftCode: string | null
   const catalogue = new Map((await getAllProducts()).map((p) => [p.slug, p]));
   const lines: SnapshotLine[] = [];
   const franchiseOf = new Map<string, string>(); // product slug -> universe, for universe-only discount codes
+  const categoryOf = new Map<string, string>();
   for (const item of cart) {
     const qty = Math.min(20, Math.max(1, Math.floor(Number(item.qty) || 0)));
     if (isGiftCardLine(item.slug)) {
@@ -51,25 +53,31 @@ export async function buildPlan(db: Db, cart: CartInput, giftCode: string | null
       const left = variant ? variant.stockQty : p.stockQty ?? 0;
       if (left < qty) return { ok: false, error: left <= 0 ? `${label} is sold out.` : `Only ${left} of ${label} left in stock.` };
     }
-    franchiseOf.set(p.slug, p.franchiseSlug);
+    franchiseOf.set(p.slug, p.franchiseSlug); categoryOf.set(p.slug, p.categorySlug);
     lines.push({ type: "product", slug: p.slug, ...(variant ? { variant: variant.name } : {}), name: label, sku: variant?.sku || p.sku, unitPence: variant?.pricePence ?? p.pricePence, qty, image: (variant?.image || p.images[0]) ? ((variant?.image || p.images[0]).startsWith("http") ? (variant?.image || p.images[0]) : absoluteUrl(variant?.image || p.images[0])) : "" });
   }
   const productSubtotal = lines.filter((l) => l.type === "product").reduce((n, l) => n + l.unitPence * l.qty, 0);
   const subtotalPence = lines.reduce((n, l) => n + l.unitPence * l.qty, 0);
   const needsShipping = productSubtotal > 0;
+  // Automatic offers (no code needed): the best one applies, and a free-delivery offer can waive shipping.
+  const promoLines = lines.flatMap((l) => (l.type === "product" ? [{ franchiseSlug: franchiseOf.get(l.slug) ?? "", categorySlug: categoryOf.get(l.slug) ?? "", unitPrice: l.unitPence, qty: l.qty }] : []));
+  const auto = bestPromotions(await loadPromotions(db), promoLines.map((l) => ({ franchiseSlug: l.franchiseSlug, categorySlug: l.categorySlug, unitPence: l.unitPrice, qty: l.qty })));
   const deliverTo = (country ?? commerce.shippingCountries[0] ?? "GB").toUpperCase();
   const itemCount = lines.reduce((n, l) => n + (l.type === "product" ? l.qty : 0), 0);
   const quote = needsShipping ? quoteShipping(commerce, deliverTo, itemCount, productSubtotal) : null;
   if (quote && !quote.ok) return { ok: false, error: quote.error };
-  const shippingPence = quote?.ok ? quote.pence : 0;
+  const shippingPence = quote?.ok && !auto.freeShipping ? quote.pence : 0;
 
   let discount: Snapshot["discount"] = null;
+  let promotion: Snapshot["promotion"] = auto.promo ? { id: auto.promo.id, name: auto.promo.name, appliedPence: auto.promo.amountPence } : null;
   if (discountCode) {
     const check = await checkDiscount(db, discountCode, lines.flatMap((l) => (l.type === "product" ? [{ franchiseSlug: franchiseOf.get(l.slug) ?? "", totalPence: l.unitPence * l.qty }] : [])));
     if (!check.ok) return { ok: false, error: `${check.error} Remove the code from your basket to continue.` };
-    discount = { id: check.row.id, code: check.row.code, appliedPence: check.amountPence };
+    const mix = combineOffers(promotion?.appliedPence ?? 0, auto.promo?.stacks ?? false, check.amountPence, productSubtotal);
+    if (promotion) promotion = mix.promoPence > 0 ? { ...promotion, appliedPence: mix.promoPence } : null;
+    if (mix.codePence > 0) discount = { id: check.row.id, code: check.row.code, appliedPence: mix.codePence };
   }
-  const payableProducts = productSubtotal - (discount?.appliedPence ?? 0);
+  const payableProducts = productSubtotal - moneyOff({ discount, promotion });
 
   let giftCard: Snapshot["giftCard"] = null;
   if (giftCode) {
@@ -83,7 +91,7 @@ export async function buildPlan(db: Db, cart: CartInput, giftCode: string | null
   const giftMessage = needsShipping ? String(giftOpts?.message ?? "").replace(/\s+/g, " ").trim().slice(0, 200) : "";
   const wrap = needsShipping && giftOpts?.wrap === true;
   const giftOptions: Snapshot["giftOptions"] = wrap || giftMessage ? { message: giftMessage, wrap, wrapPence: wrap ? GIFT_WRAP_PENCE : 0 } : null;
-  const totalPence = subtotalPence + shippingPence + (giftOptions?.wrapPence ?? 0) - (discount?.appliedPence ?? 0) - (giftCard?.appliedPence ?? 0);
+  const totalPence = subtotalPence + shippingPence + (giftOptions?.wrapPence ?? 0) - (discount?.appliedPence ?? 0) - (promotion?.appliedPence ?? 0) - (giftCard?.appliedPence ?? 0);
   if (totalPence > 0 && totalPence < MIN_CHARGE_PENCE) return { ok: false, error: `After your discounts the amount left to pay is ${formatPrice(totalPence)}. Card payments must be at least ${formatPrice(MIN_CHARGE_PENCE)}, so add another item or remove the gift card or code.` };
-  return { ok: true, snapshot: { lines, subtotalPence, shippingPence, needsShipping, ...(quote?.ok ? { country: deliverTo, shippingZone: quote.zone } : {}), discount, giftOptions, giftCard, totalPence, vat: orderVat({ lines, shippingPence, giftOptions, discount }, commerce) } };
+  return { ok: true, snapshot: { lines, subtotalPence, shippingPence, needsShipping, ...(quote?.ok ? { country: deliverTo, shippingZone: quote.zone } : {}), discount, promotion, ...(auto.freeShipping && quote?.ok && quote.pence > 0 ? { freeShippingBy: auto.freeShipping.name } : {}), giftOptions, giftCard, totalPence, vat: orderVat({ lines, shippingPence, giftOptions, discount: moneyOff({ discount, promotion }) ? { id: "", code: "", appliedPence: moneyOff({ discount, promotion }) } : null }, commerce) } };
 }

@@ -1,3 +1,4 @@
+import { moneyOff } from "@/lib/promotions";
 import type { Db } from "@/lib/db/clients";
 import type { Snapshot } from "@/lib/shop/types";
 import { normaliseDiscountCode } from "@/lib/discounts";
@@ -15,8 +16,8 @@ export const CODE_VALID_DAYS = 90;
 export type LedgerRow = { id: string; email: string; points: number; reason: "order" | "review" | "redeem" | "adjust"; ref: string; note: string; created_at: string };
 
 /** Points for an order: whole pounds spent on products after any discount code (gift cards and shipping earn nothing). */
-export function pointsForOrder(p: Pick<Snapshot, "lines" | "discount">): number {
-  const spent = p.lines.reduce((n, l) => n + (l.type === "product" ? l.unitPence * l.qty : 0), 0) - (p.discount?.appliedPence ?? 0);
+export function pointsForOrder(p: Pick<Snapshot, "lines" | "discount" | "promotion">): number {
+  const spent = p.lines.reduce((n, l) => n + (l.type === "product" ? l.unitPence * l.qty : 0), 0) - moneyOff(p);
   return Math.max(0, Math.floor(spent / 100)) * POINTS_PER_POUND;
 }
 

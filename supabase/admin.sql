@@ -963,3 +963,28 @@ create index if not exists products_printify_idx on public.products (store_id, p
 alter table public.orders
   add column if not exists printify_order_id text not null default '',
   add column if not exists printify_status text not null default '';
+
+-- ============================================================================
+-- Automatic offers (idempotent): percent off, buy X get Y, free delivery, applied without a code
+-- ============================================================================
+create table if not exists public.promotions (
+  id uuid primary key default gen_random_uuid(),
+  store_id text not null default 'sparkthunder' references public.stores(id) on update cascade,
+  name text not null,
+  kind text not null check (kind in ('percent','buy_x_get_y','free_shipping')),
+  value int not null default 0 check (value between 0 and 100),   -- percent off (or % off the "get" items; 100 = free)
+  buy_qty int not null default 0 check (buy_qty >= 0),
+  get_qty int not null default 0 check (get_qty >= 0),
+  min_spend_pence int not null default 0 check (min_spend_pence >= 0),
+  franchise_slug text not null default '',                          -- '' = every universe
+  category_slug text not null default '',                           -- '' = every category
+  stacks_with_codes boolean not null default false,
+  active boolean not null default true,
+  starts_at timestamptz,
+  expires_at timestamptz,
+  created_at timestamptz not null default now()
+);
+create index if not exists promotions_store_idx on public.promotions (store_id, active);
+alter table public.promotions enable row level security;
+drop policy if exists "admin all promotions" on public.promotions;
+create policy "admin all promotions" on public.promotions for all using (public.can_admin_store(store_id)) with check (public.can_admin_store(store_id));

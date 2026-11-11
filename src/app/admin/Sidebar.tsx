@@ -19,6 +19,7 @@ const NAV: { href: string; label: string; exact?: boolean }[] = [
   { href: "/admin/questions", label: "Questions" },
   { href: "/admin/rewards", label: "Spark points" },
   { href: "/admin/discounts", label: "Discount codes" },
+  { href: "/admin/promotions", label: "Automatic offers" },
   { href: "/admin/stock-alerts", label: "Stock alerts" },
   { href: "/admin/universe-sites", label: "Universe sites" },
 ];

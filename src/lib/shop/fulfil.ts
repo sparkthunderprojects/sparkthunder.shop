@@ -6,6 +6,7 @@ import type { Db } from "@/lib/db/clients";
 import { giftCardEmail, orderEmail } from "@/lib/email/templates";
 import { sendEmail } from "@/lib/email/send";
 import { recordDiscountUse } from "@/lib/discounts";
+import { moneyOff } from "@/lib/promotions";
 import { changeBalance, issueCard } from "@/lib/giftcards/ledger";
 import type { Snapshot } from "./types";
 import { releaseStock, stockItems } from "./stock";
@@ -48,7 +49,7 @@ async function createOrder(db: Db, s: PaidSession, storeId: string, payload: Sna
     const ins = await db.from("orders").insert({
       number, stripe_session_id: s.sessionId, stripe_payment_intent: s.paymentIntent, status: "paid", email: s.email, name: s.name, phone: s.phone,
       shipping_address: s.address, items: payload?.lines ?? [], subtotal_pence: payload?.subtotalPence ?? 0, shipping_pence: payload?.shippingPence ?? 0,
-      discount_code: payload?.discount?.code ?? "", discount_pence: payload?.discount?.appliedPence ?? 0,
+      discount_code: payload?.discount?.code ?? payload?.promotion?.name ?? "", discount_pence: payload ? moneyOff(payload) : 0,
       gift_message: payload?.giftOptions?.message ?? "", gift_wrap: payload?.giftOptions?.wrap ?? false, gift_wrap_pence: payload?.giftOptions?.wrapPence ?? 0,
       gift_card_pence: payload?.giftCard?.appliedPence ?? 0, total_pence: payload?.totalPence ?? 0, gift_card_code: payload?.giftCard?.code ?? "",
       vat_pence: payload?.vat?.pence ?? 0, vat_rate: payload?.vat?.ratePercent ?? 0, vat_number: payload?.vat?.number ?? "",
@@ -196,7 +197,7 @@ export async function fulfilOrder(db: Db, s: PaidSession): Promise<{ order: Orde
 
       // 5. Confirmation email.
       if (!state.emailed) {
-        const mail = orderEmail({ number, name: s.name, lines: payload.lines, subtotalPence: payload.subtotalPence, shippingPence: payload.shippingPence, discountPence: payload.discount?.appliedPence ?? 0, discountCode: payload.discount?.code ?? "", giftWrapPence: payload.giftOptions?.wrapPence ?? 0, giftMessage: payload.giftOptions?.message ?? "", giftCardPence: payload.giftCard?.appliedPence ?? 0, totalPence: payload.totalPence, address: s.address, giftCardsIssued: issued.size, vat: payload.vat ?? null });
+        const mail = orderEmail({ number, name: s.name, lines: payload.lines, subtotalPence: payload.subtotalPence, shippingPence: payload.shippingPence, discountPence: moneyOff(payload), discountCode: payload.discount?.code ?? payload.promotion?.name ?? "", giftWrapPence: payload.giftOptions?.wrapPence ?? 0, giftMessage: payload.giftOptions?.message ?? "", giftCardPence: payload.giftCard?.appliedPence ?? 0, totalPence: payload.totalPence, address: s.address, giftCardsIssued: issued.size, vat: payload.vat ?? null });
         const sent = s.email ? await sendEmail({ to: s.email, ...mail }) : { ok: false as const, error: "no email address" };
         if (sent.ok) state.emailed = true; else problems.add(`Order confirmation email not sent: ${sent.error}`);
       }
