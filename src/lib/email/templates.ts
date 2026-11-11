@@ -61,6 +61,18 @@ export function refundEmail(o: { number: string; name: string; cardPence: number
   return { subject: `Your ${B} refund for order ${o.number}`, html, text: `We have refunded order ${o.number}:\n- ${parts.join("\n- ")}\n${o.reason ? `\nNote: ${o.reason}\n` : ""}\nIf you have any questions, just reply to this email.\n` };
 }
 
+export function returnStatusEmail(o: { number: string; name: string; status: "approved" | "rejected" | "received" | "refunded"; note?: string }) {
+  const head = { approved: "Your return is approved", rejected: "About your return request", received: "We have received your return", refunded: "Your return has been refunded" }[o.status];
+  const line = {
+    approved: `we have approved your return for order <b>${esc(o.number)}</b>. ${o.note ? "What to do next is below." : "We will email you shortly with what to do next."}`,
+    rejected: `we are not able to approve the return you asked for on order <b>${esc(o.number)}</b>.`,
+    received: `we have received the items you sent back for order <b>${esc(o.number)}</b>. We will be in touch about your refund shortly.`,
+    refunded: `we have refunded your return for order <b>${esc(o.number)}</b>. You will get a separate email with the details.`,
+  }[o.status];
+  const html = shell(head, `<p style="margin:0 0 12px">${o.name ? `Hi ${esc(o.name)}, ` : ""}${line}</p>${o.note ? `<p style="margin:0 0 12px;padding:12px;background:#f4f4f5">${esc(o.note).replace(/\n/g, "<br>")}</p>` : ""}<p style="margin:0">If you have any questions, just reply to this email.</p>`);
+  return { subject: `${head} (order ${o.number})`, html, text: `${head}: order ${o.number}.\n${o.note ? `\n${o.note}\n` : ""}\nIf you have any questions, just reply to this email.\n` };
+}
+
 export function backInStockEmail(o: { name: string; variant: string; url: string }) {
   const what = o.variant ? `${o.name} (${o.variant})` : o.name;
   const html = shell("Good news: it's back in stock", `<p style="margin:0 0 16px"><b>${esc(what)}</b> is available again at ${B}.</p><p style="margin:0 0 20px;color:#6a6a70">Stock can go quickly, so we would not wait.</p><p style="margin:0"><a href="${esc(o.url)}" style="background:{{accent}};color:{{onAccent}};padding:12px 22px;text-decoration:none;font-weight:700">Shop it now</a></p><p style="margin:24px 0 0;font-size:12px;color:#6a6a70">You asked us to email you when this came back. This is a one-off message and we will not email you about it again.</p>`);

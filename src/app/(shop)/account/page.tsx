@@ -12,6 +12,8 @@ import { BuyAgain, type AgainLine } from "@/components/BuyAgain";
 import { getAllProducts } from "@/lib/catalog";
 import { isUpcoming } from "@/lib/launch";
 import { productImagePath } from "@/lib/card";
+import { ReturnRequest } from "@/components/ReturnRequest";
+import { RETURN_LABEL, returnEligibility, type ReturnRow } from "@/lib/returns";
 import { RedeemPoints } from "@/components/RedeemPoints";
 import { balanceOf, ledgerFor, REDEEM_OPTIONS, REVIEW_BONUS, POINTS_PER_POUND } from "@/lib/rewards";
 
@@ -40,6 +42,8 @@ export default async function AccountPage() {
     }
     return { lines, missing };
   };
+  const { data: retRows } = await db.from("return_requests").select("*").order("created_at", { ascending: false });
+  const returns = (retRows ?? []) as ReturnRow[];
   const ledger = await ledgerFor(db, user.email ?? "");
   const balance = balanceOf(ledger);
   const admin = await getAdmin();
@@ -72,6 +76,11 @@ export default async function AccountPage() {
                 <OrderTimeline order={o} />
                 <p className="mt-3 text-sm">{o.items.map((l) => `${l.name} × ${l.qty}`).join(", ")}</p>
                 {o.status !== "cancelled" && o.items.some((l) => l.type === "product") ? (() => { const a = again(o); return <BuyAgain lines={a.lines} missing={a.missing} />; })() : null}
+                {returns.filter((r) => r.order_id === o.id).map((r) => (
+                  <p key={r.id} className="mt-3 text-sm"><b>Return:</b> {r.items.map((i) => `${i.name} × ${i.qty}`).join(", ")} · {RETURN_LABEL[r.status]}{r.admin_note ? <span className="block text-muted">{r.admin_note}</span> : null}</p>
+                ))}
+                {returnEligibility(o, returns.filter((r) => r.order_id === o.id && ["requested", "approved", "received"].includes(r.status)).length).ok
+                  ? <ReturnRequest orderId={o.id} lines={o.items.flatMap((l, i) => (l.type === "product" ? [{ line: i, name: l.name, qty: l.qty }] : []))} /> : null}
               </li>
             ))}
           </ul>

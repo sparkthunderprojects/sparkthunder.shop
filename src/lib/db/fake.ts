@@ -23,7 +23,7 @@ function store(): Store {
       products: seedCatalog.products.map((p) => ({ ...productToRow(p), updated_at: `${p.createdAt}T00:00:00.000Z` })),
       media: [], redirects: [], settings: [], subscribers: [], admin_users: [], gift_cards: [], gift_card_ledger: [], orders: [], checkout_snapshots: [],
       collections: (seedCatalog.collections ?? []).map((c) => ({ slug: c.slug, name: c.name, description: c.description, image: c.image, launch_at: c.launchAt ?? null, product_slugs: c.productSlugs, sort_order: c.sortOrder, published: c.published })),
-      stock_alerts: [], discount_codes: [], promotions: [], reviews: [], reward_points: [], product_questions: [],
+      stock_alerts: [], discount_codes: [], promotions: [], return_requests: [], reviews: [], reward_points: [], product_questions: [],
       store_secrets: [], order_refunds: [], refund_restocks: [], audit_log: [], system_events: [],
       stores: [
         { id: "sparkthunder", name: "Sparkthunder Shop", domains: ["localhost", "127.0.0.1", "sparkthunder.shop"], is_default: true, created_at: now },

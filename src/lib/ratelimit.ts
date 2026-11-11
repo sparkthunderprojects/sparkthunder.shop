@@ -15,6 +15,7 @@ export const LIMITS = {
   stockAlert: { limit: 10, windowSec: 600 },
   newsletter: { limit: 8, windowSec: 3600 },
   points: { limit: 10, windowSec: 3600 },
+  returns: { limit: 5, windowSec: 3600 },
 } as const;
 
 type Rule = { limit: number; windowSec: number };

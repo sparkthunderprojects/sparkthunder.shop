@@ -988,3 +988,29 @@ create index if not exists promotions_store_idx on public.promotions (store_id, 
 alter table public.promotions enable row level security;
 drop policy if exists "admin all promotions" on public.promotions;
 create policy "admin all promotions" on public.promotions for all using (public.can_admin_store(store_id)) with check (public.can_admin_store(store_id));
+
+-- ============================================================================
+-- Returns (idempotent): customers ask to return items; the store approves, receives and refunds
+-- ============================================================================
+create table if not exists public.return_requests (
+  id uuid primary key default gen_random_uuid(),
+  store_id text not null default 'sparkthunder' references public.stores(id) on update cascade,
+  order_id uuid not null references public.orders(id) on delete cascade,
+  order_number text not null default '',
+  email text not null,
+  name text not null default '',
+  items jsonb not null default '[]',                    -- [{"line":0,"name":"Tee (M)","qty":1}]
+  reason text not null default '',
+  details text not null default '',
+  status text not null default 'requested' check (status in ('requested','approved','rejected','received','refunded')),
+  admin_note text not null default '',
+  created_at timestamptz not null default now(),
+  resolved_at timestamptz
+);
+create index if not exists return_requests_store_idx on public.return_requests (store_id, status, created_at desc);
+create index if not exists return_requests_order_idx on public.return_requests (order_id);
+alter table public.return_requests enable row level security;
+drop policy if exists "admin all return_requests" on public.return_requests;
+create policy "admin all return_requests" on public.return_requests for all using (public.can_admin_store(store_id)) with check (public.can_admin_store(store_id));
+drop policy if exists "customers read own returns" on public.return_requests;
+create policy "customers read own returns" on public.return_requests for select using (lower(email) = lower(coalesce(auth.jwt() ->> 'email', '')));
