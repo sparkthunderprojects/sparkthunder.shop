@@ -1,5 +1,6 @@
 "use server";
 
+import { dbSetupProblem } from "@/lib/db/env";
 import { logActivity as audit } from "@/lib/admin/activity";
 
 import { revalidatePath } from "next/cache";
@@ -38,7 +39,7 @@ export async function saveSecretsAction(input: { stripeSecret: string; stripeWeb
     await requireAdminAction();
     const storeId = await currentStoreId();
     const svc = serviceClient(storeId);
-    if (!svc) return { ok: false, error: "The database is not configured." };
+    if (!svc) return { ok: false, error: dbSetupProblem() };
     const patch: Record<string, string> = {};
     const take = (k: string, v: string, ok: (x: string) => boolean, msg: string) => { const t = v.trim(); if (!t) return; if (!ok(t)) throw new Error(msg); patch[k] = t; };
     if (input.clear) { Object.assign(patch, { stripe_secret: "", stripe_webhook_secret: "", resend_key: "", email_from: "" }); }

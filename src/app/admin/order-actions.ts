@@ -1,5 +1,6 @@
 "use server";
 
+import { dbSetupProblem } from "@/lib/db/env";
 import { log } from "@/lib/log";
 import { logActivity as audit } from "@/lib/admin/activity";
 import { getCommerce } from "@/lib/commerce";
@@ -43,7 +44,7 @@ export async function finishOrderAction(id: string): Promise<Result> {
     if (!o) return { ok: false, error: "Order not found." };
     if (o.fulfilled_at) return { ok: true, note: "This order is already complete." };
     const svc = serviceClient();
-    if (!svc) return { ok: false, error: "The database is not configured." };
+    if (!svc) return { ok: false, error: dbSetupProblem() };
     await svc.from("orders").update({ fulfil_attempts: 0, fulfilment_lock_until: null }).eq("id", id); // a fresh start: the owner is asking for it
     const r = await fulfilOrder(svc, { storeId: await currentStoreId(), sessionId: o.stripe_session_id ?? "", paymentIntent: o.stripe_payment_intent, email: o.email, name: o.name, phone: o.phone, address: o.shipping_address });
     revalidatePath(`/admin/orders/${id}`); revalidatePath("/admin/orders");
@@ -92,7 +93,7 @@ export async function refundOrderAction(input: Omit<RefundInput, "by">): Promise
   try {
     const { email } = await requireAdminAction();
     const svc = serviceClient();
-    if (!svc) return { ok: false, error: "The database is not configured." };
+    if (!svc) return { ok: false, error: dbSetupProblem() };
     const { data } = await svc.from("orders").select("id").eq("id", input.orderId).maybeSingle();   // scoped to this store's host/admin store
     if (!data) return { ok: false, error: "Order not found." };
     const r = await createRefund(svc, await refundStripe(), await currentStoreId(), { ...input, key: String(input.key).slice(0, 80), by: email });
@@ -108,7 +109,7 @@ export async function retryRefundAction(refundId: string): Promise<Result> {
   try {
     await requireAdminAction();
     const svc = serviceClient();
-    if (!svc) return { ok: false, error: "The database is not configured." };
+    if (!svc) return { ok: false, error: dbSetupProblem() };
     const r = await processRefund(svc, await refundStripe(), await currentStoreId(), refundId);
     revalidatePath("/admin/orders");
     if (r.ok) await audit("order.refund.retry", "Finished an unfinished refund", { type: "refund", id: refundId });

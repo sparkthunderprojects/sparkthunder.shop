@@ -1,5 +1,6 @@
 "use server";
 
+import { dbSetupProblem } from "@/lib/db/env";
 import { randomBytes } from "node:crypto";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
@@ -34,7 +35,7 @@ export async function connectPrintifyAction(input: { token: string; shopId: stri
     if (!shopId && shops.length === 1) shopId = String(shops[0].id);
     if (shopId && !shops.some((s) => String(s.id) === shopId)) return { ok: false, error: "That shop id is not in this Printify account." };
     const svc = serviceClient(storeId);
-    if (!svc) return { ok: false, error: "The database is not configured." };
+    if (!svc) return { ok: false, error: dbSetupProblem() };
     const { error } = await svc.from("store_secrets").upsert({ store_id: storeId, ...(token ? { printify_token: token } : {}), printify_shop_id: shopId }, { onConflict: "store_id" });
     if (error) return { ok: false, error: `${error.message}. Run the latest supabase/admin.sql.` };
     forgetStoreSecrets(storeId);
@@ -48,7 +49,7 @@ export async function disconnectPrintifyAction(): Promise<R> {
   try {
     await requireAdminAction();
     const storeId = await currentStoreId(), svc = serviceClient(storeId);
-    if (!svc) return { ok: false, error: "The database is not configured." };
+    if (!svc) return { ok: false, error: dbSetupProblem() };
     await svc.from("store_secrets").upsert({ store_id: storeId, printify_token: "", printify_shop_id: "", printify_webhook_secret: "" }, { onConflict: "store_id" });
     forgetStoreSecrets(storeId);
     await audit("printify.disconnect", "Disconnected Printify. New orders will no longer be sent for printing.");
@@ -81,7 +82,7 @@ export async function connectPrintifyWebhookAction(): Promise<R<{ url: string }>
     if (!host || /^(localhost|127\.)/.test(host)) return { ok: false, error: "Printify can only reach a public address. Do this from your live site, not from localhost." };
     const url = `https://${host}/api/printify/webhook`;
     const svc = serviceClient(storeId);
-    if (!svc) return { ok: false, error: "The database is not configured." };
+    if (!svc) return { ok: false, error: dbSetupProblem() };
     const topics = ["order:shipment:created", "order:shipment:delivered", "order:sent-to-production"];
     const have = new Set((await api.listWebhooks(secrets.printifyShopId).catch(() => [])).filter((w) => w.url === url).map((w) => w.topic));
     // Hooks already made for this address keep their signing secret; only missing ones are added, so a half-finished earlier try can be completed.

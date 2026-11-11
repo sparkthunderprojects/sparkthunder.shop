@@ -1,5 +1,6 @@
 "use server";
 
+import { dbSetupProblem } from "@/lib/db/env";
 import { logActivity as audit } from "@/lib/admin/activity";
 
 import { cookies } from "next/headers";
@@ -64,7 +65,7 @@ export async function cloneStoreAction(input: { fromId: string; id: string; name
     if (!made.ok) return made;
     const to = input.id.trim().toLowerCase();
     const from = serviceClient(input.fromId), dest = serviceClient(to);
-    if (!from || !dest) return { ok: false, error: "The database is not configured." };
+    if (!from || !dest) return { ok: false, error: dbSetupProblem() };
     const { data: settings } = await from.from("settings").select("key,value").in("key", ["store", "site", "commerce"]);
     for (const s of (settings ?? []) as { key: string; value: Record<string, unknown> }[]) {
       // The copy starts under its own name and domain, not the original's.

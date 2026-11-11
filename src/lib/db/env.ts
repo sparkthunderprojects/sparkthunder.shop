@@ -14,3 +14,9 @@ export const isDemo =
 
 // Some hosts (e.g. Bolt) refuse secret names starting with SUPABASE_, so SPARK_SERVICE_KEY is accepted as an alternative name.
 export const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SPARK_SERVICE_KEY ?? "";
+
+/** Says exactly which setting is missing (names only, never values), so a wrong host setup is easy to spot. */
+export const dbSetupProblem = () =>
+  !SUPABASE_URL ? "The database is not configured: NEXT_PUBLIC_SUPABASE_URL is missing on the server."
+  : !SUPABASE_SERVICE_KEY ? "The database is not configured: the service key is missing on the server. Add a secret named SPARK_SERVICE_KEY (or SUPABASE_SERVICE_ROLE_KEY) to the host, then publish again."
+  : "The database is not configured.";
