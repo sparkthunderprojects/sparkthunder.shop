@@ -1068,3 +1068,55 @@ begin
 end $$;
 revoke all on function public.set_store_staff(text, text, boolean, text) from public;
 grant execute on function public.set_store_staff(text, text, boolean, text) to authenticated;
+
+-- ============================================================================
+-- API keys and outgoing webhooks (idempotent)
+-- ============================================================================
+create table if not exists public.api_keys (
+  id uuid primary key default gen_random_uuid(),
+  store_id text not null default 'sparkthunder' references public.stores(id) on update cascade,
+  name text not null,
+  key_hash text not null unique,                      -- sha256 of the key; the key itself is shown once and never stored
+  prefix text not null,                               -- first characters, so you can tell keys apart
+  scopes text[] not null default '{read}',            -- read, write
+  created_by text not null default '',
+  created_at timestamptz not null default now(),
+  last_used_at timestamptz,
+  revoked_at timestamptz
+);
+create index if not exists api_keys_store_idx on public.api_keys (store_id);
+alter table public.api_keys enable row level security;
+drop policy if exists "admin read api_keys" on public.api_keys;
+create policy "admin read api_keys" on public.api_keys for select using (public.can_admin_store(store_id));
+
+create table if not exists public.webhook_endpoints (
+  id uuid primary key default gen_random_uuid(),
+  store_id text not null default 'sparkthunder' references public.stores(id) on update cascade,
+  url text not null,
+  secret text not null,                               -- signs every delivery (HMAC-SHA256)
+  events text[] not null default '{}',                -- empty = every event
+  active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+create index if not exists webhook_endpoints_store_idx on public.webhook_endpoints (store_id, active);
+alter table public.webhook_endpoints enable row level security;
+drop policy if exists "admin all webhook_endpoints" on public.webhook_endpoints;
+create policy "admin all webhook_endpoints" on public.webhook_endpoints for all using (public.can_admin_store(store_id)) with check (public.can_admin_store(store_id));
+
+create table if not exists public.webhook_deliveries (
+  id uuid primary key default gen_random_uuid(),
+  store_id text not null default 'sparkthunder' references public.stores(id) on update cascade,
+  endpoint_id uuid not null references public.webhook_endpoints(id) on delete cascade,
+  event text not null,
+  payload jsonb not null,
+  status text not null default 'pending' check (status in ('pending','ok','failed')),
+  attempts int not null default 0,
+  next_attempt_at timestamptz not null default now(),
+  last_status int,
+  last_error text not null default '',
+  created_at timestamptz not null default now()
+);
+create index if not exists webhook_deliveries_due_idx on public.webhook_deliveries (store_id, status, next_attempt_at);
+alter table public.webhook_deliveries enable row level security;
+drop policy if exists "admin read webhook_deliveries" on public.webhook_deliveries;
+create policy "admin read webhook_deliveries" on public.webhook_deliveries for select using (public.can_admin_store(store_id));
