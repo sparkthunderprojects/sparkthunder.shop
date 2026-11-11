@@ -83,3 +83,10 @@ Never set `SPARKTHUNDER_DEMO` in production: it replaces the database with a fak
 - If an order shows "Sending the order to Printify" under attention, fix the cause (address, product removed at Printify) and press Finish processing on the order. It resumes without creating a second Printify order.
 - A full refund tries to cancel the Printify order. Printify only allows that before production starts; if it refuses, the order is flagged "needs attention" so you cancel it in the Printify dashboard.
 - Prices come from Printify. After changing a price or switching options on/off there, press Import / refresh. Edited wording is kept.
+
+## Scheduled emails (basket reminders and review requests)
+- Set `CRON_SECRET` (a long random string) on the host, and add the same value as a GitHub Actions secret named `CRON_SECRET`. Add a GitHub Actions variable `CRON_URLS` with your store addresses, comma separated. The "Scheduled emails" workflow then runs every 30 minutes.
+- Basket reminders go only to people who ticked the consent box in their basket: one email, at least an hour later, never if they have ordered since or unsubscribed. Saved baskets are deleted after 30 days.
+- Review requests go once per shipped order, 7 to 30 days after dispatch.
+- Every one of these emails has an unsubscribe link (no login needed). Order and shipping emails are not affected.
+- Run the workflow by hand from the GitHub Actions tab to test.

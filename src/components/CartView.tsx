@@ -5,6 +5,7 @@ import { useEffect, useState, useTransition } from "react";
 import { startCheckoutAction } from "@/app/(shop)/checkout/actions";
 import { quoteOffersAction, type OffersQuote } from "@/app/(shop)/checkout/discount";
 import { combineOffers } from "@/lib/promotions";
+import { BasketReminder } from "@/components/BasketReminder";
 import Link from "next/link";
 import { useCart } from "@/components/CartProvider";
 import { FreeShippingBar } from "@/components/FreeShippingBar";
@@ -125,6 +126,7 @@ export function CartView() {
           if (r.ok) window.location.href = r.url; else setErr(r.error);
         }); }}>{busy ? "Starting checkout..." : "Checkout"}</button>
         {err ? <p role="alert" className="mt-3 text-sm font-bold text-red-700">{err}</p> : null}
+        <BasketReminder cart={cartInput} />
       </aside>
     </div>
   );

@@ -1014,3 +1014,33 @@ drop policy if exists "admin all return_requests" on public.return_requests;
 create policy "admin all return_requests" on public.return_requests for all using (public.can_admin_store(store_id)) with check (public.can_admin_store(store_id));
 drop policy if exists "customers read own returns" on public.return_requests;
 create policy "customers read own returns" on public.return_requests for select using (lower(email) = lower(coalesce(auth.jwt() ->> 'email', '')));
+
+-- ============================================================================
+-- Lifecycle emails (idempotent): consented basket reminders, review requests, unsubscribes
+-- ============================================================================
+create table if not exists public.basket_saves (
+  id uuid primary key default gen_random_uuid(),
+  store_id text not null default 'sparkthunder' references public.stores(id) on update cascade,
+  email text not null,
+  cart jsonb not null default '[]',                    -- [{"slug","name","qty","pricePence","image"}]
+  subtotal_pence int not null default 0,
+  consent_text text not null default '',               -- the exact wording the customer agreed to
+  created_at timestamptz not null default now(),
+  reminded_at timestamptz
+);
+create index if not exists basket_saves_store_idx on public.basket_saves (store_id, reminded_at, created_at);
+alter table public.basket_saves enable row level security;
+drop policy if exists "admin read basket_saves" on public.basket_saves;
+create policy "admin read basket_saves" on public.basket_saves for select using (public.can_admin_store(store_id));
+
+create table if not exists public.email_unsubscribes (
+  store_id text not null default 'sparkthunder' references public.stores(id) on update cascade,
+  email text not null,
+  created_at timestamptz not null default now(),
+  primary key (store_id, email)
+);
+alter table public.email_unsubscribes enable row level security;
+drop policy if exists "admin read email_unsubscribes" on public.email_unsubscribes;
+create policy "admin read email_unsubscribes" on public.email_unsubscribes for select using (public.can_admin_store(store_id));
+
+alter table public.orders add column if not exists review_requested_at timestamptz;

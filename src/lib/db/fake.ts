@@ -23,7 +23,7 @@ function store(): Store {
       products: seedCatalog.products.map((p) => ({ ...productToRow(p), updated_at: `${p.createdAt}T00:00:00.000Z` })),
       media: [], redirects: [], settings: [], subscribers: [], admin_users: [], gift_cards: [], gift_card_ledger: [], orders: [], checkout_snapshots: [],
       collections: (seedCatalog.collections ?? []).map((c) => ({ slug: c.slug, name: c.name, description: c.description, image: c.image, launch_at: c.launchAt ?? null, product_slugs: c.productSlugs, sort_order: c.sortOrder, published: c.published })),
-      stock_alerts: [], discount_codes: [], promotions: [], return_requests: [], reviews: [], reward_points: [], product_questions: [],
+      stock_alerts: [], discount_codes: [], promotions: [], return_requests: [], basket_saves: [], email_unsubscribes: [], reviews: [], reward_points: [], product_questions: [],
       store_secrets: [], order_refunds: [], refund_restocks: [], audit_log: [], system_events: [],
       stores: [
         { id: "sparkthunder", name: "Sparkthunder Shop", domains: ["localhost", "127.0.0.1", "sparkthunder.shop"], is_default: true, created_at: now },
@@ -90,6 +90,7 @@ class Query implements PromiseLike<Result> {
   order(col: string, opts?: { ascending?: boolean }) { this.orders.push({ col, asc: opts?.ascending !== false }); return this; }
   gte(col: string, val: unknown) { this.filters.push((r) => String(r[col] ?? "") >= String(val)); return this; }
   lte(col: string, val: unknown) { this.filters.push((r) => String(r[col] ?? "") <= String(val)); return this; }
+  is(col: string, val: null | boolean) { this.filters.push((r) => (val === null ? r[col] == null : r[col] === val)); return this; }
   limit(n: number) { this.lim = n; return this; }
   single() { this.one = "single"; return this; }
   maybeSingle() { this.one = "maybe"; return this; }

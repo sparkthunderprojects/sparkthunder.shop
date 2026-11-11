@@ -1,0 +1,26 @@
+name: Scheduled emails
+# Sends basket reminders and review requests. Runs every 30 minutes; each email is only ever sent once.
+# Setup (GitHub: Settings > Secrets and variables > Actions):
+#   secret   CRON_SECRET  the same value you set as CRON_SECRET on the host
+#   variable CRON_URLS    comma-separated store addresses, e.g. https://sparkthunder.shop,https://misspetty.com
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call each store
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          CRON_URLS: ${{ vars.CRON_URLS }}
+        run: |
+          if [ -z "$CRON_SECRET" ] || [ -z "$CRON_URLS" ]; then echo "CRON_SECRET or CRON_URLS not set; nothing to do."; exit 0; fi
+          fail=0
+          for url in $(echo "$CRON_URLS" | tr ',' ' '); do
+            code=$(curl -s -o /tmp/out -w "%{http_code}" -X POST -H "Authorization: Bearer $CRON_SECRET" "${url%/}/api/cron/lifecycle")
+            echo "$url -> $code $(cat /tmp/out)"
+            [ "$code" = "200" ] || fail=1
+          done
+          exit $fail

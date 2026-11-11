@@ -8,11 +8,11 @@ const B = BRAND_TOKEN, ORIGIN = ORIGIN_TOKEN;
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
-function shell(title: string, body: string) {
+function shell(title: string, body: string, foot = "") {
   return `<!doctype html><html><body style="margin:0;background:#f4f4f5;font-family:Arial,Helvetica,sans-serif;color:#0b0b0c"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px">
 <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#fff"><tr><td style="background:{{dark}};padding:20px 28px;color:#fff;font-weight:800;font-size:20px;letter-spacing:.02em;text-transform:uppercase">${B}</td></tr>
 <tr><td style="padding:28px"><h1 style="margin:0 0 16px;font-size:22px">${esc(title)}</h1>${body}</td></tr>
-<tr><td style="padding:16px 28px;font-size:12px;color:#6a6a70;border-top:1px solid #e5e5e5">${B} · <a href="${ORIGIN}" style="color:#6a6a70">${ORIGIN.replace(/^https?:\/\//, "")}</a></td></tr></table></td></tr></table></body></html>`;
+<tr><td style="padding:16px 28px;font-size:12px;color:#6a6a70;border-top:1px solid #e5e5e5">${foot ? `${foot}<br>` : ""}${B} · <a href="${ORIGIN}" style="color:#6a6a70">${ORIGIN.replace(/^https?:\/\//, "")}</a></td></tr></table></td></tr></table></body></html>`;
 }
 
 export function giftCardEmail(card: Pick<GiftCard, "code" | "initial_pence" | "recipient_name" | "sender_name" | "message" | "theme" | "expires_at">, prefix = "SPK") {
@@ -71,6 +71,20 @@ export function returnStatusEmail(o: { number: string; name: string; status: "ap
   }[o.status];
   const html = shell(head, `<p style="margin:0 0 12px">${o.name ? `Hi ${esc(o.name)}, ` : ""}${line}</p>${o.note ? `<p style="margin:0 0 12px;padding:12px;background:#f4f4f5">${esc(o.note).replace(/\n/g, "<br>")}</p>` : ""}<p style="margin:0">If you have any questions, just reply to this email.</p>`);
   return { subject: `${head} (order ${o.number})`, html, text: `${head}: order ${o.number}.\n${o.note ? `\n${o.note}\n` : ""}\nIf you have any questions, just reply to this email.\n` };
+}
+
+const unsubFoot = (url: string) => `You are getting this because you asked us to, or you bought from us. <a href="${esc(url)}" style="color:#6a6a70">Unsubscribe</a> from reminders and review requests.`;
+
+export function basketReminderEmail(o: { lines: { name: string; qty: number; pricePence: number }[]; subtotalPence: number; basketUrl: string; unsubscribeUrl: string }) {
+  const rows = o.lines.map((l) => `<tr><td style="padding:6px 0">${esc(l.name)} × ${l.qty}</td><td align="right" style="padding:6px 0">${formatPrice(l.pricePence * l.qty)}</td></tr>`).join("");
+  const html = shell("You left something in your basket", `<p style="margin:0 0 12px">You asked us to remind you about your basket. Here is what you chose:</p><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px;border-top:1px solid #e5e5e5;border-bottom:1px solid #e5e5e5">${rows}<tr><td style="padding:8px 0;font-weight:700">Subtotal</td><td align="right" style="padding:8px 0;font-weight:700">${formatPrice(o.subtotalPence)}</td></tr></table><p style="margin:0"><a href="${esc(o.basketUrl)}" style="display:inline-block;background:{{accent}};color:{{onAccent}};padding:12px 20px;font-weight:700;text-decoration:none">Back to my basket</a></p><p style="margin:16px 0 0;color:#6a6a70">This is a one-off reminder. We will not send another about this basket.</p>`, unsubFoot(o.unsubscribeUrl));
+  return { subject: `You left something in your ${B} basket`, html, text: `You asked us to remind you about your basket:\n${o.lines.map((l) => `- ${l.name} × ${l.qty}`).join("\n")}\nSubtotal ${formatPrice(o.subtotalPence)}\n\nBack to your basket: ${o.basketUrl}\n\nThis is a one-off reminder. Unsubscribe: ${o.unsubscribeUrl}\n` };
+}
+
+export function reviewRequestEmail(o: { number: string; name: string; products: { name: string; url: string }[]; unsubscribeUrl: string }) {
+  const links = o.products.map((p) => `<li style="margin:6px 0"><a href="${esc(p.url)}" style="color:#0b0b0c;font-weight:700">${esc(p.name)}</a></li>`).join("");
+  const html = shell("How did we do?", `<p style="margin:0 0 12px">${o.name ? `Hi ${esc(o.name)}, ` : ""}your order <b>${esc(o.number)}</b> should have arrived by now. If you have a minute, a short review helps other fans (and earns you Spark points).</p><ul style="margin:0 0 12px;padding-left:20px">${links}</ul><p style="margin:0;color:#6a6a70">Something not right? Just reply to this email and we will sort it out.</p>`, unsubFoot(o.unsubscribeUrl));
+  return { subject: `How is your ${B} order ${o.number}?`, html, text: `Your order ${o.number} should have arrived. We would love a quick review:\n${o.products.map((p) => `- ${p.name}: ${p.url}`).join("\n")}\n\nSomething not right? Reply to this email.\nUnsubscribe: ${o.unsubscribeUrl}\n` };
 }
 
 export function backInStockEmail(o: { name: string; variant: string; url: string }) {
