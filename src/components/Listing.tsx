@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ProductCard } from "@/components/ProductCard";
-import { formatPrice } from "@/lib/site";
+import { useMoney } from "@/components/Currency";
 import type { Product } from "@/lib/types";
 
 type Sort = "featured" | "newest" | "price-asc" | "price-desc" | "name";
@@ -52,6 +52,7 @@ export function Listing({ products, franchiseNames, categoryNames = {}, priority
   /** Edge-to-edge catalogue grid with hairline dividers (used for search results). */
   flush?: boolean;
 }) {
+  const money = useMoney();
   const [sort, setSort] = useState<Sort>("featured");
   const [franchise, setFranchise] = useState("all");
   const [category, setCategory] = useState("all");
@@ -147,7 +148,7 @@ export function Listing({ products, franchiseNames, categoryNames = {}, priority
   const chips: { label: string; clear: () => void }[] = [
     ...(franchise !== "all" ? [{ label: franchiseNames[franchise] ?? franchise, clear: () => setFranchise("all") }] : []),
     ...(category !== "all" ? [{ label: categoryNames[category] ?? category, clear: () => setCategory("all") }] : []),
-    ...(priceActive ? [{ label: `${formatPrice(lo)} to ${formatPrice(hi)}`, clear: () => setRange(null) }] : []),
+    ...(priceActive ? [{ label: `${money(lo)} to ${money(hi)}`, clear: () => setRange(null) }] : []),
     ...(inStock ? [{ label: "In stock only", clear: () => setInStock(false) }] : []),
   ];
 
@@ -242,13 +243,13 @@ export function Listing({ products, franchiseNames, categoryNames = {}, priority
                     <div className="price-range">
                       <span className="track" />
                       <span className="fill" style={{ left: `${((lo - bounds[0]) / (bounds[1] - bounds[0])) * 100}%`, right: `${100 - ((hi - bounds[0]) / (bounds[1] - bounds[0])) * 100}%` }} />
-                      <input type="range" aria-label="Minimum price" min={bounds[0]} max={bounds[1]} step={STEP} value={lo} onChange={(e) => setLo(Number(e.target.value))} aria-valuetext={formatPrice(lo)} style={{ zIndex: lo > bounds[0] + (bounds[1] - bounds[0]) / 2 ? 2 : 1 }} />
-                      <input type="range" aria-label="Maximum price" min={bounds[0]} max={bounds[1]} step={STEP} value={hi} onChange={(e) => setHi(Number(e.target.value))} aria-valuetext={formatPrice(hi)} />
+                      <input type="range" aria-label="Minimum price" min={bounds[0]} max={bounds[1]} step={STEP} value={lo} onChange={(e) => setLo(Number(e.target.value))} aria-valuetext={money(lo)} style={{ zIndex: lo > bounds[0] + (bounds[1] - bounds[0]) / 2 ? 2 : 1 }} />
+                      <input type="range" aria-label="Maximum price" min={bounds[0]} max={bounds[1]} step={STEP} value={hi} onChange={(e) => setHi(Number(e.target.value))} aria-valuetext={money(hi)} />
                     </div>
                     <div className="mt-2 flex items-center justify-between text-sm font-bold" aria-live="polite">
-                      <span className="border border-ink/20 px-2.5 py-1">{formatPrice(lo)}</span>
+                      <span className="border border-ink/20 px-2.5 py-1">{money(lo)}</span>
                       <span aria-hidden className="text-muted">to</span>
-                      <span className="border border-ink/20 px-2.5 py-1">{formatPrice(hi)}</span>
+                      <span className="border border-ink/20 px-2.5 py-1">{money(hi)}</span>
                     </div>
                   </div>
                 </fieldset>

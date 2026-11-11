@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState, useTransition } from "react";
 import { quoteDiscountAction, type QuoteResult } from "@/app/(shop)/checkout/discount";
 import type { CartInput } from "@/lib/shop/types";
-import { formatPrice } from "@/lib/site";
+import { useMoney } from "@/components/Currency";
 
 const KEY = "sparkthunder-discount-v1";
 
@@ -35,6 +35,7 @@ export function useDiscount(cart: CartInput) {
 }
 
 export function DiscountApply({ code, setCode, quote }: { code: string | null; setCode: (c: string | null) => void; quote: QuoteResult | null }) {
+  const money = useMoney();
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
   const [err, setErr] = useState("");
@@ -45,7 +46,7 @@ export function DiscountApply({ code, setCode, quote }: { code: string | null; s
     return (
       <div className="mt-4 border border-ink/20 bg-paper px-3 py-2 text-sm">
         <p className="flex items-center justify-between gap-3">
-          <span><b>Discount code</b> <span className="font-mono">{quote?.ok ? quote.code : code}</span>{quote?.ok ? <><br />{quote.label}: you save {formatPrice(quote.amountPence)}</> : null}</span>
+          <span><b>Discount code</b> <span className="font-mono">{quote?.ok ? quote.code : code}</span>{quote?.ok ? <><br />{quote.label}: you save {money(quote.amountPence)}</> : null}</span>
           <button onClick={() => setCode(null)} className="underline underline-offset-4">Remove</button>
         </p>
         {quote && !quote.ok ? <p role="alert" className="mt-1 font-bold text-red-700">{quote.error}</p> : null}

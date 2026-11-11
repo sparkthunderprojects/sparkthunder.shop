@@ -7,10 +7,11 @@ import { BuyBox } from "@/components/BuyBox";
 import { SlideOver } from "@/components/SlideOver";
 import { useShopUi } from "@/components/ShopUi";
 import { isPlaceholderArt, type QuickProduct } from "@/lib/card";
-import { formatPrice } from "@/lib/site";
+import { useMoney } from "@/components/Currency";
 
 /** Large frosted slide-out from the right: photos, price, option pickers and add to basket. */
 export function QuickViewModal() {
+  const money = useMoney();
   const { quick, closeQuick } = useShopUi();
   const [last, setLast] = useState<QuickProduct | null>(null);
   const [idx, setIdx] = useState(0);
@@ -39,8 +40,8 @@ export function QuickViewModal() {
               {p.franchiseName ? <p className="font-bold text-muted">{p.franchiseName}</p> : null}
               <h3 className="display mt-1 text-4xl sm:text-5xl">{p.name}</h3>
               <p className="mt-4 flex items-baseline gap-3">
-                <span className="display text-4xl">{formatPrice(p.pricePence)}</span>
-                {p.comparePricePence ? <s className="text-muted">{formatPrice(p.comparePricePence)}</s> : null}
+                <span className="display text-4xl">{money(p.pricePence)}</span>
+                {p.comparePricePence ? <s className="text-muted">{money(p.comparePricePence)}</s> : null}
               </p>
               <p className="mt-4 text-lg leading-relaxed">{p.shortDescription}</p>
               <div className="mt-6"><BuyBox key={p.slug} product={p} onAdded={closeQuick} /></div>

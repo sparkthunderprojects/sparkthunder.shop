@@ -4,7 +4,7 @@ import { ProductImage } from "@/components/ProductImage";
 import { QuickAdd } from "@/components/QuickAdd";
 import { QuickViewOverlay } from "@/components/QuickViewOverlay";
 import { discountPercent, toQuick } from "@/lib/card";
-import { formatPrice } from "@/lib/site";
+import { Price } from "@/components/Currency";
 import { isUpcoming } from "@/lib/launch";
 import { priceRange } from "@/lib/variants";
 import type { Product } from "@/lib/types";
@@ -30,8 +30,8 @@ export function ProductCard({ product, franchiseName, priority = false, variant 
           </div>
           <h3 className="mx-auto mt-4 max-w-[26ch] px-3 text-center font-bold leading-snug group-hover:underline group-hover:underline-offset-4">{product.name}</h3>
           <p className="mb-5 mt-1 flex items-baseline justify-center gap-2 px-3 text-center">
-            {product.comparePricePence && range.max === range.min && <s className="text-sm text-muted">{formatPrice(product.comparePricePence)}</s>}
-            <span className="font-bold">{range.max > range.min ? "From " : ""}{formatPrice(range.min)}</span>
+            {product.comparePricePence && range.max === range.min && <s className="text-sm text-muted"><Price pence={product.comparePricePence} /></s>}
+            <span className="font-bold">{range.max > range.min ? "From " : ""}<Price pence={range.min} /></span>
           </p>
         </Link>
         <CardActions quick={quick} hideQuick />
@@ -51,8 +51,8 @@ export function ProductCard({ product, franchiseName, priority = false, variant 
         <p className="mt-1 flex items-baseline justify-between gap-3 text-sm">
           <span className="text-muted">{franchiseName}</span>
           <span className="flex items-baseline gap-2">
-            {product.comparePricePence && range.max === range.min && <s className="text-muted">{formatPrice(product.comparePricePence)}</s>}
-            <span className="text-base font-bold">{range.max > range.min ? "From " : ""}{formatPrice(range.min)}</span>
+            {product.comparePricePence && range.max === range.min && <s className="text-muted"><Price pence={product.comparePricePence} /></s>}
+            <span className="text-base font-bold">{range.max > range.min ? "From " : ""}<Price pence={range.min} /></span>
           </span>
         </p>
       </Link>

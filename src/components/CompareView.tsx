@@ -5,10 +5,11 @@ import Link from "next/link";
 import { useShopUi } from "@/components/ShopUi";
 import { productImagePath, toQuick } from "@/lib/card";
 import { useAddToBasket } from "@/components/useAddToBasket";
-import { formatPrice } from "@/lib/site";
+import { useMoney } from "@/components/Currency";
 import type { Product } from "@/lib/types";
 
 export function CompareView({ products, franchiseNames, categoryNames }: { products: Product[]; franchiseNames: Record<string, string>; categoryNames: Record<string, string> }) {
+  const money = useMoney();
   const { compare, removeCompare, clearCompare } = useShopUi();
   const addOrChoose = useAddToBasket();
   const picked = compare.map((c) => products.find((p) => p.slug === c.slug)).filter((p): p is Product => Boolean(p));
@@ -28,7 +29,7 @@ export function CompareView({ products, franchiseNames, categoryNames }: { produ
     { label: "Franchise", cell: (p) => franchiseNames[p.franchiseSlug] ?? "-" },
     { label: "Type", cell: (p) => categoryNames[p.categorySlug] ?? "-" },
     { label: "Price", cell: (p) => (
-      <span className="flex items-baseline gap-2"><span className="text-lg font-bold">{formatPrice(p.pricePence)}</span>{p.comparePricePence && <s className="text-muted">{formatPrice(p.comparePricePence)}</s>}</span>
+      <span className="flex items-baseline gap-2"><span className="text-lg font-bold">{money(p.pricePence)}</span>{p.comparePricePence && <s className="text-muted">{money(p.comparePricePence)}</s>}</span>
     ) },
     { label: "Availability", cell: (p) => (p.inStock ? "In stock" : "Sold out") },
     { label: "SKU", cell: (p) => p.sku },

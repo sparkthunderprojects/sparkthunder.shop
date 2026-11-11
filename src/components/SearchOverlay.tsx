@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import { useShopUi } from "@/components/ShopUi";
 import { useDialogBehaviour, useTransitionMount } from "@/components/SlideOver";
-import { formatPrice } from "@/lib/site";
+import { useMoney } from "@/components/Currency";
 
 type Hit = { slug: string; name: string; pricePence: number; image: string; franchise: string; inStock: boolean };
 type LinkHit = { label: string; href: string; kind: string };
@@ -17,6 +17,7 @@ const EMPTY: Data = { products: [], links: [], suggest: [], total: 0, corrected:
 
 /** Full-width search drop-down: predictive text in the field, with matching products and their images beneath as you type. */
 export function SearchOverlay({ popular }: { popular: { label: string; href: string }[] }) {
+  const money = useMoney();
   const { panel, closePanel } = useShopUi();
   const open = panel === "search";
   const { mounted, shown } = useTransitionMount(open, 350);
@@ -177,7 +178,7 @@ export function SearchOverlay({ popular }: { popular: { label: string; href: str
                             </div>
                             <p className="mt-2 truncate text-sm font-bold group-hover:underline group-hover:underline-offset-4">{h.name}</p>
                             <p className="text-sm text-muted">{h.franchise}</p>
-                            <p className="text-sm font-bold">{h.inStock ? formatPrice(h.pricePence) : "Sold out"}</p>
+                            <p className="text-sm font-bold">{h.inStock ? money(h.pricePence) : "Sold out"}</p>
                           </Link>
                         </li>
                       ); })}

@@ -9,7 +9,7 @@ import { SearchTrigger } from "@/components/SearchTrigger";
 import { WishlistLink } from "@/components/WishlistLink";
 import { getAllProducts, getCategories, getFranchises } from "@/lib/catalog";
 import { getStore } from "@/lib/store";
-import { formatPrice } from "@/lib/site";
+import { Price } from "@/components/Currency";
 import type { Product } from "@/lib/types";
 
 const topLink = "flex h-full items-center border-b-4 border-transparent px-1 font-bold group-hover:border-bolt group-focus-within:border-bolt";
@@ -23,7 +23,7 @@ function MiniProduct({ p }: { p: Product }) {
         <Image src={p.images[0] ?? `/art/${p.slug}`} alt="" width={240} height={240} unoptimized={!p.images[0]} className="aspect-square w-full object-cover" />
       </div>
       <p className="mt-2 text-sm font-bold leading-snug hover:underline hover:underline-offset-4">{p.name}</p>
-      <p className="text-sm text-muted">{formatPrice(p.pricePence)}</p>
+      <p className="text-sm text-muted"><Price pence={p.pricePence} /></p>
     </Link>
   );
 }

@@ -1,6 +1,7 @@
 import { currentStoreId, DEFAULT_STORE_ID } from "@/lib/db/stores";
 import Link from "next/link";
 import Image from "next/image";
+import { CurrencySwitcher } from "@/components/Currency";
 import { PaymentBadges } from "@/components/PaymentBadges";
 import { getCategories, getFranchises } from "@/lib/catalog";
 import { getStore } from "@/lib/store";
@@ -63,7 +64,7 @@ export async function Footer() {
             </ul>
           </nav>
         </div>
-        <PaymentBadges />
+        <div className="flex flex-wrap items-center gap-x-8 gap-y-3"><CurrencySwitcher /><PaymentBadges /></div>
       </div>
     </footer>
   );

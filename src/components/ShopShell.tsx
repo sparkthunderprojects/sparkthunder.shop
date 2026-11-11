@@ -16,6 +16,7 @@ import { WishlistProvider } from "@/components/WishlistProvider";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { CommerceProvider } from "@/components/CommerceProvider";
+import { CurrencyProvider } from "@/components/Currency";
 import { getCommerce } from "@/lib/commerce";
 import { JsonLd } from "@/components/JsonLd";
 import { getAllProducts, getCategories, getFranchises, getSiteSettings } from "@/lib/catalog";
@@ -43,6 +44,7 @@ export async function ShopShell({ children }: { children: React.ReactNode }) {
     <>
       <JsonLd data={[organizationLd([...SITE.sameAs, ...settings.sameAs], { name: store.legalName, logo: store.logoUrl }), websiteLd({ name: store.name, description: store.description })]} />
       <CommerceProvider value={{ freeShippingPence: commerce.freeShippingPence, giftWrapPence: commerce.giftWrapPence, codePrefix: commerce.codePrefix, shippingZones: commerce.shippingZones, shippingFlatPence: commerce.shippingFlatPence, shippingCountries: commerce.shippingCountries }}>
+      <CurrencyProvider base={SITE.currency} options={commerce.currencies}>
       <CartProvider>
         <WishlistProvider>
           <ShopUiProvider>
@@ -65,6 +67,7 @@ export async function ShopShell({ children }: { children: React.ReactNode }) {
           </ShopUiProvider>
         </WishlistProvider>
       </CartProvider>
+      </CurrencyProvider>
       </CommerceProvider>
     </>
   );

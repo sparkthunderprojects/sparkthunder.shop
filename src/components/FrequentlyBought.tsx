@@ -3,12 +3,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { useCart } from "@/components/CartProvider";
-import { formatPrice } from "@/lib/site";
+import { useMoney } from "@/components/Currency";
 
 export type FbtItem = { slug: string; name: string; pricePence: number; image: string };
 
 /** "Customers often buy these together", built from real orders. Adds every item in one tap. */
 export function FrequentlyBought({ main, partners }: { main: FbtItem; partners: FbtItem[] }) {
+  const money = useMoney();
   const { add } = useCart();
   const [picked, setPicked] = useState<Set<string>>(() => new Set(partners.map((p) => p.slug)));
   const [done, setDone] = useState(false);
@@ -26,14 +27,14 @@ export function FrequentlyBought({ main, partners }: { main: FbtItem; partners: 
               <Image src={p.image} alt="" width={144} height={144} unoptimized className="h-36 w-36 border border-ink/15 object-cover" />
               <label className="mt-2 flex items-start gap-2 text-sm">
                 {i > 0 ? <input type="checkbox" checked={picked.has(p.slug)} onChange={() => toggle(p.slug)} className="mt-1" /> : <input type="checkbox" checked disabled className="mt-1" />}
-                <span><Link href={`/products/${p.slug}`} className="underline underline-offset-4">{i === 0 ? "This item" : p.name}</Link><br /><b>{formatPrice(p.pricePence)}</b></span>
+                <span><Link href={`/products/${p.slug}`} className="underline underline-offset-4">{i === 0 ? "This item" : p.name}</Link><br /><b>{money(p.pricePence)}</b></span>
               </label>
             </div>
           </div>
         ))}
         <div className="ml-auto min-w-48">
           <p className="text-sm text-muted">Total for {chosen.length} {chosen.length === 1 ? "item" : "items"}</p>
-          <p className="display text-3xl">{formatPrice(total)}</p>
+          <p className="display text-3xl">{money(total)}</p>
           <button className="btn mt-3" onClick={() => { chosen.forEach((p) => add({ slug: p.slug, name: p.name, pricePence: p.pricePence, image: p.image, href: `/products/${p.slug}` }, 1)); setDone(true); setTimeout(() => setDone(false), 2000); }}>{done ? "Added ✓" : `Add ${chosen.length === 1 ? "item" : "all " + chosen.length} to basket`}</button>
         </div>
       </div>

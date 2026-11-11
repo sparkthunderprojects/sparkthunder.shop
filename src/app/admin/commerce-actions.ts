@@ -7,6 +7,8 @@ import { revalidatePath } from "next/cache";
 import { requireAdminAction } from "@/lib/admin/auth";
 import { serviceClient } from "@/lib/db/clients";
 import { currentStoreId } from "@/lib/db/stores";
+import { fetchRates } from "@/lib/currency";
+import { SITE } from "@/lib/site";
 import { normaliseCommerce, type CommerceSettings } from "@/lib/commerce-config";
 import { forgetStoreSecrets, getStoreSecrets } from "@/lib/secrets";
 import { bustTag } from "@/lib/tags";
@@ -55,5 +57,13 @@ export async function saveSecretsAction(input: { stripeSecret: string; stripeWeb
     forgetStoreSecrets(storeId);
     await audit("secrets.save", input.clear ? "Removed this store's payment and email keys" : "Changed this store's payment/email keys (values are never logged)");
     return { ok: true };
+  } catch (e) { return { ok: false, error: e instanceof Error ? e.message : "Something went wrong." }; }
+}
+
+/** Today's reference exchange rates for the currencies you listed (European Central Bank figures). Nothing is saved until you press Save. */
+export async function fetchRatesAction(codes: string[]): Promise<{ ok: true; rates: Record<string, number> } | { ok: false; error: string }> {
+  try {
+    await requireAdminAction("settings");
+    return await fetchRates(SITE.currency, codes);
   } catch (e) { return { ok: false, error: e instanceof Error ? e.message : "Something went wrong." }; }
 }

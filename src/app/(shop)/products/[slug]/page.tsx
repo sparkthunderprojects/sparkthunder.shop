@@ -25,7 +25,7 @@ import { getReviews } from "@/lib/reviews";
 import { breadcrumbLd, productLd } from "@/lib/seo";
 import { autoLink } from "@/lib/seo/autolink";
 import { buildMetadata } from "@/lib/seo-metadata";
-import { formatPrice } from "@/lib/site";
+import { Price } from "@/components/Currency";
 import { worldStyle } from "@/lib/theme";
 
 export const revalidate = 300;
@@ -111,8 +111,8 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
           )}
           <h1 className="display mt-3 text-[clamp(2rem,3.4vw,2.75rem)]">{nb(product.name)}</h1>
           <p className="mt-6 flex items-baseline gap-3">
-            <span className="display text-3xl">{formatPrice(product.pricePence)}</span>
-            {product.comparePricePence && <s className="text-lg text-muted">{formatPrice(product.comparePricePence)}</s>}
+            <span className="display text-3xl"><Price pence={product.pricePence} /></span>
+            {product.comparePricePence && <s className="text-lg text-muted"><Price pence={product.comparePricePence} /></s>}
           </p>
           <p className="mt-1 text-sm text-muted">
             {product.bestSeller ? <b className="mr-2 bg-bolt px-2 py-0.5 text-(--color-on-accent)">Best seller</b> : null}{!product.inStock ? "Currently sold out" : lowCount !== null ? <b className="text-amber-600">Only {lowCount} left</b> : "In stock"} · SKU {product.sku}
@@ -127,7 +127,7 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
           {bundleParts.length > 0 && (
             <section className="mt-10 border border-ink/20 bg-paper-2 p-5" aria-labelledby="bundle-h">
               <h2 id="bundle-h" className="display text-3xl">What&apos;s in the bundle</h2>
-              {bundleSaving > 0 && <p className="mt-1 font-bold">Buying these separately costs {formatPrice(separatePence)}. Save {formatPrice(bundleSaving)}.</p>}
+              {bundleSaving > 0 && <p className="mt-1 font-bold">Buying these separately costs <Price pence={separatePence} />. Save <Price pence={bundleSaving} />.</p>}
               <ul className="mt-4 divide-y divide-ink/15">
                 {bundleParts.map(({ part, qty }) => (
                   <li key={part.slug}>
@@ -135,7 +135,7 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={productImagePath(part)} alt="" width={56} height={56} className="h-14 w-14 border border-ink/20 object-cover" />
                       <span className="flex-1 font-bold">{part.name}{qty > 1 ? ` × ${qty}` : ""}</span>
-                      <span className="text-muted">{formatPrice(part.pricePence * qty)}</span>
+                      <span className="text-muted"><Price pence={part.pricePence * qty} /></span>
                     </Link>
                   </li>
                 ))}

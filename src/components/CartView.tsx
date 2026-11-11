@@ -12,13 +12,16 @@ import { FreeShippingBar } from "@/components/FreeShippingBar";
 import { DiscountApply, useDiscount } from "@/components/DiscountApply";
 import { GiftCardApply, useAppliedGiftCard } from "@/components/GiftCardApply";
 import { isGiftCardLine } from "@/lib/giftcards/format";
-import { formatPrice } from "@/lib/site";
+import { useCurrency, useMoney } from "@/components/Currency";
+import { formatMoney } from "@/lib/currency";
 import { useCommerce } from "@/components/CommerceProvider";
 import { quoteShipping } from "@/lib/commerce-config";
 
 const countryName = (code: string) => { try { return new Intl.DisplayNames(["en"], { type: "region" }).of(code) ?? code; } catch { return code; } };
 
 export function CartView() {
+  const money = useMoney();
+  const cur = useCurrency();
   const { items, subtotalPence, setQty, remove } = useCart();
   const { card, setCard } = useAppliedGiftCard();
   // A gift card cannot pay for another gift card.
@@ -64,34 +67,34 @@ export function CartView() {
             <div className="flex-1">
               <Link href={i.href ?? `/products/${i.slug}`} className="font-bold hover:underline hover:underline-offset-4">{i.name}</Link>
               {i.note ? <p className="text-sm text-muted">{i.note}</p> : null}
-              <p className="text-sm text-muted">{formatPrice(i.pricePence)} each</p>
+              <p className="text-sm text-muted">{money(i.pricePence)} each</p>
               <div className="mt-3 flex items-center gap-4">
                 <label className="sr-only" htmlFor={`q-${i.slug}`}>Quantity for {i.name}</label>
                 <input id={`q-${i.slug}`} type="number" min={1} max={20} value={i.qty} onChange={(e) => setQty(i.slug, Number(e.target.value) || 1)} className="w-20 border border-ink/20 bg-paper px-3 py-1.5 font-bold" />
                 <button onClick={() => remove(i.slug)} className="text-sm underline underline-offset-4 hover:text-muted">Remove</button>
               </div>
             </div>
-            <p className="font-bold">{formatPrice(i.pricePence * i.qty)}</p>
+            <p className="font-bold">{money(i.pricePence * i.qty)}</p>
           </li>
         ))}
       </ul>
       <aside className="h-fit border border-ink/20 bg-paper-2 p-6">
         <h2 className="display text-3xl">Order summary</h2>
         <div className="-mx-6 mt-4 border-y border-ink/15 [&>div]:border-b-0"><FreeShippingBar /></div>
-        <p className="mt-5 flex justify-between text-lg"><span>Subtotal</span><span className="font-bold">{formatPrice(subtotalPence)}</span></p>
+        <p className="mt-5 flex justify-between text-lg"><span>Subtotal</span><span className="font-bold">{money(subtotalPence)}</span></p>
         <DiscountApply code={disc.code} setCode={disc.setCode} quote={disc.quote} />
-        {promoOff > 0 ? <p className="mt-3 flex justify-between"><span>{offers.promo?.name}</span><span className="font-bold">-{formatPrice(promoOff)}</span></p> : null}
-        {discount > 0 ? <p className="mt-3 flex justify-between"><span>Discount</span><span className="font-bold">-{formatPrice(discount)}</span></p> : null}
+        {promoOff > 0 ? <p className="mt-3 flex justify-between"><span>{offers.promo?.name}</span><span className="font-bold">-{money(promoOff)}</span></p> : null}
+        {discount > 0 ? <p className="mt-3 flex justify-between"><span>Discount</span><span className="font-bold">-{money(discount)}</span></p> : null}
         <GiftCardApply card={card} setCard={setCard} />
-        {applied > 0 ? <p className="mt-3 flex justify-between"><span>Gift card</span><span className="font-bold">-{formatPrice(applied)}</span></p> : null}
-        {wrapPence > 0 ? <p className="mt-3 flex justify-between"><span>Gift wrap</span><span className="font-bold">{formatPrice(wrapPence)}</span></p> : null}
-        {discount > 0 || promoOff > 0 || applied > 0 || wrapPence > 0 ? <p className="mt-1 flex justify-between text-lg"><span>To pay</span><span className="font-bold">{formatPrice(subtotalPence + wrapPence - discount - promoOff - applied)}</span></p> : null}
+        {applied > 0 ? <p className="mt-3 flex justify-between"><span>Gift card</span><span className="font-bold">-{money(applied)}</span></p> : null}
+        {wrapPence > 0 ? <p className="mt-3 flex justify-between"><span>Gift wrap</span><span className="font-bold">{money(wrapPence)}</span></p> : null}
+        {discount > 0 || promoOff > 0 || applied > 0 || wrapPence > 0 ? <p className="mt-1 flex justify-between text-lg"><span>To pay</span><span className="font-bold">{money(subtotalPence + wrapPence - discount - promoOff - applied)}</span></p> : null}
         {physical ? (
           <div className="mt-5 border-t border-ink/15 pt-4">
             <label className="flex items-center gap-2 font-bold"><input type="checkbox" checked={gift} onChange={(e) => setGift(e.target.checked)} /> This order is a gift</label>
             {gift ? (
               <div className="mt-3 grid gap-3">
-                <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={wrap} onChange={(e) => setWrap(e.target.checked)} /> Gift wrap it ({GIFT_WRAP_PENCE ? `+${formatPrice(GIFT_WRAP_PENCE)}` : "free"})</label>
+                <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={wrap} onChange={(e) => setWrap(e.target.checked)} /> Gift wrap it ({GIFT_WRAP_PENCE ? `+${money(GIFT_WRAP_PENCE)}` : "free"})</label>
                 <label className="grid gap-1 text-sm font-bold">Gift message (optional, we print it, no prices)
                   <textarea value={note} onChange={(e) => setNote(e.target.value.slice(0, 200))} rows={3} maxLength={200} className="border border-ink/30 bg-paper px-3 py-2 font-normal" />
                   <span className="text-xs font-normal text-muted">{note.length}/200</span>
@@ -112,15 +115,16 @@ export function CartView() {
             ) : null}
             {ship?.ok ? (
               <>
-                <p className="mt-3 flex justify-between"><span>Delivery{commerce.shippingZones.length ? ` (${ship.zone})` : ""}</span><span className="font-bold">{ship.pence && !offers.freeShippingBy ? formatPrice(ship.pence) : "Free"}</span></p>
+                <p className="mt-3 flex justify-between"><span>Delivery{commerce.shippingZones.length ? ` (${ship.zone})` : ""}</span><span className="font-bold">{ship.pence && !offers.freeShippingBy ? money(ship.pence) : "Free"}</span></p>
                 {offers.freeShippingBy && ship.pence > 0 ? <p className="mt-1 text-sm text-muted">{offers.freeShippingBy}</p> : null}
-                {ship.freeOverPence && ship.pence > 0 && !offers.freeShippingBy ? <p className="mt-1 text-sm text-muted">Spend {formatPrice(ship.freeOverPence - payable)} more for free delivery.</p> : null}
-                <p className="mt-1 flex justify-between text-lg"><span>Estimated total</span><span className="font-bold">{formatPrice(subtotalPence + wrapPence + (offers.freeShippingBy ? 0 : ship.pence) - discount - promoOff - applied)}</span></p>
+                {ship.freeOverPence && ship.pence > 0 && !offers.freeShippingBy ? <p className="mt-1 text-sm text-muted">Spend {money(ship.freeOverPence - payable)} more for free delivery.</p> : null}
+                <p className="mt-1 flex justify-between text-lg"><span>Estimated total</span><span className="font-bold">{money(subtotalPence + wrapPence + (offers.freeShippingBy ? 0 : ship.pence) - discount - promoOff - applied)}</span></p>
+                {cur.code !== cur.base ? <p className="mt-1 flex justify-between text-sm"><span>You will be charged</span><span className="font-bold">{formatMoney(subtotalPence + wrapPence + (offers.freeShippingBy ? 0 : ship.pence) - discount - promoOff - applied, cur.base)}</span></p> : null}
               </>
             ) : ship ? <p role="alert" className="mt-2 text-sm font-bold text-red-700">{ship.error}</p> : null}
           </div>
         ) : null}
-        <p className="mt-1 text-sm text-muted">Taxes are included in prices where they apply.</p>
+        <p className="mt-1 text-sm text-muted">Taxes are included in prices where they apply.{cur.code !== cur.base ? ` Prices in ${cur.code} are approximate: you pay in ${cur.base}, and the exact amount is shown at checkout.` : ""}</p>
         <button className="btn mt-6 w-full" disabled={busy} onClick={() => { setErr(""); start(async () => {
           const r = await startCheckoutAction(cartInput, applied > 0 && card ? card.code : null, disc.code, physical && gift ? { message: note, wrap } : null, physical ? country : null);
           if (r.ok) window.location.href = r.url; else setErr(r.error);

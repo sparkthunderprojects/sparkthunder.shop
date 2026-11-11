@@ -1,9 +1,10 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { saveCommerceAction, saveSecretsAction } from "../../commerce-actions";
+import { fetchRatesAction, saveCommerceAction, saveSecretsAction } from "../../commerce-actions";
 import type { CommerceSettings } from "@/lib/commerce-config";
 import { Toggle } from "../../ui";
+import { SITE } from "@/lib/site";
 
 const Field = ({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) => (
   <label style={{ display: "grid", gap: 4 }}><span>{label}</span>{children}{hint ? <small style={{ opacity: 0.7 }}>{hint}</small> : null}</label>
@@ -23,12 +24,20 @@ export function CommerceForm({ commerce, status }: { commerce: CommerceSettings;
   type ZoneForm = { name: string; countries: string; first: string; extra: string; free: string };
   const [zones, setZones] = useState<ZoneForm[]>(commerce.shippingZones.map((z) => ({ name: z.name, countries: z.countries.join(", "), first: pounds(z.firstItemPence), extra: pounds(z.extraItemPence), free: pounds(z.freeOverPence) })));
   const setZone = (i: number, patch: Partial<ZoneForm>) => setZones((zs) => zs.map((z, j) => (j === i ? { ...z, ...patch } : z)));
+  const [currencies, setCurrencies] = useState(commerce.currencies.map((c) => ({ code: c.code, rate: String(c.rate) })));
+  const setCur = (i: number, patch: Partial<{ code: string; rate: string }>) => setCurrencies((cs) => cs.map((c, j) => (j === i ? { ...c, ...patch } : c)));
+  const getRates = async () => {
+    const r = await fetchRatesAction(currencies.map((c) => c.code));
+    if (!r.ok) { setMsg(r.error); return; }
+    setCurrencies((cs) => cs.map((c) => (r.rates[c.code.toUpperCase()] ? { ...c, rate: String(r.rates[c.code.toUpperCase()]) } : c)));
+    setMsg("Today's rates filled in. Press Save to keep them.");
+  };
   const [msg, setMsg] = useState("");
   const [sk, setSk] = useState(""), [wh, setWh] = useState(""), [rk, setRk] = useState(""), [from, setFrom] = useState(status.emailFrom);
   const [pmsg, setPmsg] = useState("");
 
   const saveCommerce = async () => {
-    const r = await saveCommerceAction({ shippingZones: zones.map((z) => ({ name: z.name, countries: z.countries.split(/[\s,]+/).filter(Boolean), firstItemPence: toPence(z.first) ?? 0, extraItemPence: toPence(z.extra) ?? 0, freeOverPence: toPence(z.free) })), shippingFlatPence: toPence(ship) ?? 0, freeShippingPence: toPence(free), giftWrapPence: toPence(wrap) ?? 0, shippingCountries: countries.split(/[\s,]+/).filter(Boolean), supportEmail: support, codePrefix: prefix, vatEnabled: vatOn, vatRatePercent: Number(vatRate) || 0, vatNumber: vatNo });
+    const r = await saveCommerceAction({ shippingZones: zones.map((z) => ({ name: z.name, countries: z.countries.split(/[\s,]+/).filter(Boolean), firstItemPence: toPence(z.first) ?? 0, extraItemPence: toPence(z.extra) ?? 0, freeOverPence: toPence(z.free) })), shippingFlatPence: toPence(ship) ?? 0, freeShippingPence: toPence(free), giftWrapPence: toPence(wrap) ?? 0, shippingCountries: countries.split(/[\s,]+/).filter(Boolean), supportEmail: support, codePrefix: prefix, vatEnabled: vatOn, vatRatePercent: Number(vatRate) || 0, vatNumber: vatNo, currencies: currencies.map((c) => ({ code: c.code.trim().toUpperCase(), rate: Number(c.rate) })).filter((c) => c.code && Number.isFinite(c.rate)) });
     setMsg(r.ok ? "Saved." : r.error); if (r.ok) router.refresh();
   };
   const saveSecrets = async (clear = false) => {
@@ -70,6 +79,21 @@ export function CommerceForm({ commerce, status }: { commerce: CommerceSettings;
         {zones.length === 0 ? <Field label="Ships to (country codes)" hint="For example GB, IE, US."><input className="adm-in" value={countries} onChange={(e) => setCountries(e.target.value)} /></Field> : null}
         <Toggle label="This store is VAT registered" checked={vatOn} onChange={setVatOn} hint="Your prices already include VAT. This works out the VAT part and shows it on order emails and in the admin. Leave off until you are registered." />
         {vatOn ? <div className="adm-grid adm-g2"><Field label="VAT rate (%)" hint="20 is the UK standard rate."><input className="adm-in" inputMode="decimal" value={vatRate} onChange={(e) => setVatRate(e.target.value)} /></Field><Field label="VAT number" hint="Shown on order emails, e.g. GB123456789."><input className="adm-in" value={vatNo} onChange={(e) => setVatNo(e.target.value)} /></Field></div> : null}
+        <div style={{ display: "grid", gap: 10 }}>
+          <b>Display currencies</b>
+          <small style={{ opacity: 0.7 }}>Optional. Shoppers can choose to view prices in these currencies. It is display only: orders are always charged in {SITE.currency}, and converted amounts are shown as approximate. Rate = how many of that currency equal 1 {SITE.currency}.</small>
+          {currencies.map((c, i) => (
+            <div key={i} className="adm-grid adm-g3" style={{ alignItems: "end" }}>
+              <Field label="Currency code"><input className="adm-in" maxLength={3} value={c.code} onChange={(e) => setCur(i, { code: e.target.value.toUpperCase() })} placeholder="USD" /></Field>
+              <Field label={`Rate (per 1 ${SITE.currency})`}><input className="adm-in" inputMode="decimal" value={c.rate} onChange={(e) => setCur(i, { rate: e.target.value })} placeholder="1.27" /></Field>
+              <div><button type="button" className="adm-btn" onClick={() => setCurrencies((cs) => cs.filter((_, j) => j !== i))}>Remove</button></div>
+            </div>
+          ))}
+          <div style={{ display: "flex", gap: 8 }}>
+            <button type="button" className="adm-btn" onClick={() => setCurrencies((cs) => [...cs, { code: "", rate: "" }])}>Add a currency</button>
+            {currencies.length ? <button type="button" className="adm-btn" onClick={getRates}>Fill in today&rsquo;s rates</button> : null}
+          </div>
+        </div>
         <Field label="Support email"><input className="adm-in" type="email" value={support} onChange={(e) => setSupport(e.target.value)} /></Field>
         <Field label="Order and gift card prefix" hint={`Letters at the start of order numbers and gift card codes, e.g. ${prefix || "SPK"}-1001. 2 to 5 letters or numbers.`}><input className="adm-in" maxLength={5} value={prefix} onChange={(e) => setPrefix(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))} /></Field>
         <div><button type="button" className="adm-btn" onClick={saveCommerce}>Save</button> <span role="status">{msg}</span></div>

@@ -4,7 +4,7 @@ import { useEffect, useId, useMemo, useState } from "react";
 import { useCart } from "@/components/CartProvider";
 import type { QuickProduct } from "@/lib/card";
 import { findVariant, optionGroups, partsOf } from "@/lib/variants";
-import { formatPrice } from "@/lib/site";
+import { useMoney } from "@/components/Currency";
 import { SizeGuide } from "@/components/SizeGuide";
 import { StockAlertForm } from "@/components/StockAlertForm";
 import { Countdown, useNow } from "@/components/Countdown";
@@ -12,6 +12,7 @@ import { isUpcoming } from "@/lib/launch";
 
 /** Option pickers (size, colour...), quantity and add-to-basket for one product. Used by quick view and the product page. */
 export function BuyBox({ product, onAdded }: { product: QuickProduct; onAdded?: () => void }) {
+  const money = useMoney();
   const { add } = useCart();
   const id = useId();
   const vs = product.variants;
@@ -81,7 +82,7 @@ export function BuyBox({ product, onAdded }: { product: QuickProduct; onAdded?: 
           </div>
         </fieldset>
       )) : null}
-      {chosen && (chosen.pricePence !== undefined && chosen.pricePence !== product.pricePence || (compare && compare > price)) ? <p className="mb-3 text-sm text-muted">Price for this option: <b className="text-ink">{formatPrice(price)}</b>{compare && compare > price ? <s className="ml-2">{formatPrice(compare)}</s> : null}</p> : null}
+      {chosen && (chosen.pricePence !== undefined && chosen.pricePence !== product.pricePence || (compare && compare > price)) ? <p className="mb-3 text-sm text-muted">Price for this option: <b className="text-ink">{money(price)}</b>{compare && compare > price ? <s className="ml-2">{money(compare)}</s> : null}</p> : null}
       {warn ? <p role="alert" className="mb-3 font-bold text-red-600">Please choose {og.labels.map((l) => l.toLowerCase()).join(" and ")} first.</p> : null}
       {chosen && !avail(chosen) ? <div className="mb-4"><p className="mb-3 font-bold text-red-600">That option is sold out.</p><StockAlertForm slug={product.slug} variant={chosen.name} label={`${product.name} (${chosen.name})`} /></div> : chosen && product.trackStock && chosen.stockQty <= product.lowStockThreshold ? <p className="mb-3 text-sm font-bold text-amber-500">Only {chosen.stockQty} left</p> : null}
       <div className="flex gap-3">
