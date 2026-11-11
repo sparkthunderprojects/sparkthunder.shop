@@ -26,7 +26,7 @@ export default async function DeliveryReturnsPage() {
       {c.shippingZones.length ? (
         <ul>
           {c.shippingZones.map((z) => (
-            <li key={z.name}><strong>{z.name}</strong> ({z.countries.map(countryName).join(", ")}): {formatPrice(z.firstItemPence)} for the first item{z.extraItemPence ? `, ${formatPrice(z.extraItemPence)} for each extra item` : ", nothing extra for more items"}.{z.freeOverPence ? ` Free on orders of ${formatPrice(z.freeOverPence)} or more.` : ""}</li>
+            <li key={z.name}><strong>{z.name}</strong> ({z.countries.map(countryName).join(", ")}): {z.bands?.length ? `by the weight of your order: ${z.bands.map((b, i) => `up to ${b.upToGrams >= 1000 ? `${b.upToGrams / 1000} kg` : `${b.upToGrams} g`} ${formatPrice(b.pence)}${i === z.bands!.length - 1 && z.extraPerKgPence ? `, then ${formatPrice(z.extraPerKgPence)} for each extra kg` : ""}`).join(", ")}` : `${formatPrice(z.firstItemPence)} for the first item${z.extraItemPence ? `, ${formatPrice(z.extraItemPence)} for each extra item` : ", nothing extra for more items"}`}.{z.freeOverPence ? ` Free on orders of ${formatPrice(z.freeOverPence)} or more.` : ""}</li>
           ))}
         </ul>
       ) : (

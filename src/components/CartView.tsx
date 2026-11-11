@@ -36,11 +36,11 @@ export function CartView() {
   const GIFT_WRAP_PENCE = commerce.giftWrapPence;
   const [country, setCountry] = useState(commerce.shippingCountries[0] ?? "GB");
   const physicalItems = items.filter((i) => !isGiftCardLine(i.slug));
-  const ship = physical ? quoteShipping(commerce, country, physicalItems.reduce((n, i) => n + i.qty, 0), payable) : null;
   const [note, setNote] = useState("");
   const wrapPence = physical && gift && wrap ? GIFT_WRAP_PENCE : 0;
   const disc = useDiscount(cartInput);
-  const [offers, setOffers] = useState<OffersQuote>({ promo: null, freeShippingBy: null });
+  const [offers, setOffers] = useState<OffersQuote>({ promo: null, freeShippingBy: null, grams: 0 });
+  const ship = physical ? quoteShipping(commerce, country, physicalItems.reduce((n, i) => n + i.qty, 0), payable, offers.grams) : null;
   const offerKey = JSON.stringify(cartInput.map((c) => [c.slug, c.qty]));
   useEffect(() => { let live = true; quoteOffersAction(cartInput).then((o) => { if (live) setOffers(o); }).catch(() => {}); return () => { live = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps

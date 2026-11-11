@@ -33,3 +33,40 @@ describe("shipping quotes", () => {
     expect(normaliseCommerce({ shippingZones: zones, shippingCountries: ["US"] }).shippingCountries).toEqual(["GB", "IE", "FR"]);
   });
 });
+
+import { normaliseWeights, weightOf } from "@/lib/commerce-config";
+describe("delivery by weight", () => {
+  const z = normaliseZones([{ name: "UK", countries: ["GB"], firstItemPence: 0, extraItemPence: 0, freeOverPence: 8000, bands: [{ upToGrams: 2000, pence: 600 }, { upToGrams: 500, pence: 350 }, { upToGrams: 1000, pence: 450 }, { upToGrams: 1000, pence: 999 }, { upToGrams: 0, pence: 1 }], extraPerKgPence: 200 }]);
+  const c = { ...base, shippingZones: z };
+  it("tidies the bands: sorted, no repeats, no empty ones", () => {
+    expect(z[0].bands).toEqual([{ upToGrams: 500, pence: 350 }, { upToGrams: 1000, pence: 450 }, { upToGrams: 2000, pence: 600 }]);
+  });
+  it("charges the first band the basket fits under", () => {
+    expect(quoteShipping(c, "GB", 1, 2000, 300)).toMatchObject({ ok: true, pence: 350 });
+    expect(quoteShipping(c, "GB", 1, 2000, 500)).toMatchObject({ pence: 350 });
+    expect(quoteShipping(c, "GB", 5, 2000, 501)).toMatchObject({ pence: 450 });
+    expect(quoteShipping(c, "GB", 5, 2000, 2000)).toMatchObject({ pence: 600 });
+  });
+  it("adds per kilogram above the heaviest band, and the heaviest price if no per-kg price", () => {
+    expect(quoteShipping(c, "GB", 9, 2000, 2001)).toMatchObject({ pence: 800 });   // one started kg over
+    expect(quoteShipping(c, "GB", 9, 2000, 4000)).toMatchObject({ pence: 1000 });  // two kg over
+    const flat = normaliseZones([{ name: "UK", countries: ["GB"], firstItemPence: 0, extraItemPence: 0, freeOverPence: null, bands: [{ upToGrams: 1000, pence: 450 }] }]);
+    expect(quoteShipping({ ...base, shippingZones: flat }, "GB", 9, 2000, 9000)).toMatchObject({ pence: 450 });
+  });
+  it("still honours free delivery over a spend, and zones without bands count items as before", () => {
+    expect(quoteShipping(c, "GB", 5, 8000, 3000)).toMatchObject({ pence: 0 });
+    expect(quoteShipping({ ...base, shippingZones: zones }, "GB", 3, 2000, 99999)).toMatchObject({ pence: 599 });
+  });
+  it("finds a weight: the product's own, then its category's, then the default", () => {
+    const w = normaliseWeights({ defaultGrams: 300, byCategory: { mugs: 450, "bad key!": 5 }, byProduct: { tee: 220, junk: -5 } });
+    expect(w).toEqual({ defaultGrams: 300, byCategory: { mugs: 450 }, byProduct: { tee: 220 } });
+    expect(weightOf(w, "tee", "apparel")).toBe(220);
+    expect(weightOf(w, "big-mug", "mugs")).toBe(450);
+    expect(weightOf(w, "poster", "prints")).toBe(300);
+    expect(normaliseWeights(undefined).defaultGrams).toBe(300);
+  });
+  it("is saved with the commerce settings", () => {
+    const s = normaliseCommerce({ shippingZones: z, weights: { defaultGrams: 250, byCategory: {}, byProduct: {} } });
+    expect(s.weights.defaultGrams).toBe(250); expect(s.shippingZones[0].bands).toHaveLength(3);
+  });
+});

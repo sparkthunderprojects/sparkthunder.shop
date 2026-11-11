@@ -8,6 +8,7 @@ import { checkDiscount } from "@/lib/discounts";
 import { bestPromotions, combineOffers, loadPromotions, moneyOff } from "@/lib/promotions";
 import { absoluteUrl, formatPrice } from "@/lib/site";
 import { getCommerce, quoteShipping } from "@/lib/commerce";
+import { weightOf } from "@/lib/commerce-config";
 import { orderVat } from "@/lib/vat";
 import { getStore } from "@/lib/store";
 import type { CartInput, GiftOptionsInput, Snapshot, SnapshotLine } from "./types";
@@ -64,7 +65,8 @@ export async function buildPlan(db: Db, cart: CartInput, giftCode: string | null
   const auto = bestPromotions(await loadPromotions(db), promoLines.map((l) => ({ franchiseSlug: l.franchiseSlug, categorySlug: l.categorySlug, unitPence: l.unitPrice, qty: l.qty })));
   const deliverTo = (country ?? commerce.shippingCountries[0] ?? "GB").toUpperCase();
   const itemCount = lines.reduce((n, l) => n + (l.type === "product" ? l.qty : 0), 0);
-  const quote = needsShipping ? quoteShipping(commerce, deliverTo, itemCount, productSubtotal) : null;
+  const totalGrams = lines.reduce((n, l) => n + (l.type === "product" ? weightOf(commerce.weights, l.slug, categoryOf.get(l.slug) ?? "") * l.qty : 0), 0);
+  const quote = needsShipping ? quoteShipping(commerce, deliverTo, itemCount, productSubtotal, totalGrams) : null;
   if (quote && !quote.ok) return { ok: false, error: quote.error };
   const shippingPence = quote?.ok && !auto.freeShipping ? quote.pence : 0;
 
