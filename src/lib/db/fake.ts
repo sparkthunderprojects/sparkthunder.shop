@@ -290,7 +290,7 @@ export function createFakeClient() {
       signOut: async () => ({ error: null }),
     },
     storage: {
-      from: (_bucket: string) => ({
+      from: () => ({
         upload: async (p: string, body: Blob | ArrayBuffer | Buffer) => {
           const file = path.join(process.cwd(), "public", "uploads", p);
           await mkdir(path.dirname(file), { recursive: true });
@@ -298,7 +298,7 @@ export function createFakeClient() {
           await writeFile(file, buf);
           return { data: { path: p }, error: null };
         },
-        remove: async (_paths: string[]) => ({ data: [], error: null }),
+        remove: async () => ({ data: [], error: null }),
         getPublicUrl: (p: string) => ({ data: { publicUrl: `/uploads/${p}` } }),
       }),
     },

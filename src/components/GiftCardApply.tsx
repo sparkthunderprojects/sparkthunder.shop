@@ -23,7 +23,7 @@ export function useAppliedGiftCard() {
   }, []);
   const setCard = (c: AppliedCard | null) => {
     setCardState(c);
-    try { c ? localStorage.setItem(KEY, JSON.stringify(c)) : localStorage.removeItem(KEY); } catch {}
+    try { if (c) localStorage.setItem(KEY, JSON.stringify(c)); else localStorage.removeItem(KEY); } catch {}
   };
   return { card, setCard };
 }

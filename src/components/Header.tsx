@@ -9,7 +9,7 @@ import { SearchTrigger } from "@/components/SearchTrigger";
 import { WishlistLink } from "@/components/WishlistLink";
 import { getAllProducts, getCategories, getFranchises } from "@/lib/catalog";
 import { getStore } from "@/lib/store";
-import { SITE, formatPrice } from "@/lib/site";
+import { formatPrice } from "@/lib/site";
 import type { Product } from "@/lib/types";
 
 const topLink = "flex h-full items-center border-b-4 border-transparent px-1 font-bold group-hover:border-bolt group-focus-within:border-bolt";

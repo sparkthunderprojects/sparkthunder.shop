@@ -5,6 +5,7 @@ import { overviewByStore, type OrderLite } from "@/lib/admin/reporting";
 import { serviceClient } from "@/lib/db/clients";
 import { listStores } from "@/lib/db/stores";
 import { formatPrice } from "@/lib/site";
+import { nowMs } from "@/lib/time";
 
 export const metadata = { title: "All stores" };
 const RANGES = [["7", "7 days"], ["30", "30 days"], ["90", "90 days"]] as const;
@@ -16,7 +17,7 @@ export default async function OverviewPage({ searchParams }: PageProps<"/admin/o
   const days = Number(RANGES.find(([k]) => k === sp.range)?.[0] ?? 30);
   const stores = await listStores();
   const db = serviceClient("*");
-  const since = new Date(Date.now() - 90 * 86_400_000).toISOString();
+  const since = new Date(nowMs() - 90 * 86_400_000).toISOString();
   const { data } = db ? await db.from("orders").select("store_id, status, total_pence, discount_pence, email, items, created_at, refunded_card_pence, fulfilled_at").gte("created_at", since) : { data: [] };
   const rows = overviewByStore(stores.map((s) => s.id), (data ?? []) as (OrderLite & { store_id: string })[], days);
   const name = new Map(stores.map((s) => [s.id, s.name]));

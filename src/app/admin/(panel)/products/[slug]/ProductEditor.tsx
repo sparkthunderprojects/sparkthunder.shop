@@ -31,7 +31,7 @@ export function ProductEditor({ initial, isNew, franchises, categories, media, b
   const result = useMemo(() => scoreSeo(productInput(live, franchise)), [live, franchise]);
   const originalSlug = isNew ? null : initial.slug;
   const slugChanged = !isNew && p.slug !== initial.slug;
-  const variants = p.variants ?? [];
+  const variants = useMemo(() => p.variants ?? [], [p.variants]);
   const optionNames = p.optionNames ?? [];
   const swatches = p.swatches ?? {};
   const setOptionName = (i: number, v: string) => { const n = [...optionNames]; while (n.length <= i) n.push(""); n[i] = v; set("optionNames", n); };

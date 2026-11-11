@@ -17,7 +17,7 @@ export function AnnouncementBar({ items }: { items: { text: string; href?: strin
     if (reduce) return;
     const t = setInterval(() => setI((n) => (n + 1) % ANNOUNCEMENTS.length), 6000);
     return () => clearInterval(t);
-  }, [hidden]);
+  }, [hidden]); // eslint-disable-line react-hooks/exhaustive-deps -- the list is a constant
 
   if (hidden || ANNOUNCEMENTS.length === 0) return null;
   const msg = ANNOUNCEMENTS[i];

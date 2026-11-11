@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @next/next/no-img-element -- these show images at addresses the store owner or a customer supplied, which next/image cannot optimise */
 import { useState } from "react";
 import { saveStoreAction } from "../../store-actions";
 import { MediaPicker } from "../../MediaPicker";

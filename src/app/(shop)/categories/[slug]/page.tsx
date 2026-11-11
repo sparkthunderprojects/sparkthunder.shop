@@ -5,8 +5,8 @@ import type { Metadata } from "next";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { JsonLd } from "@/components/JsonLd";
 import { Listing } from "@/components/Listing";
-import { getCategories, getCategory, getFranchises, getProducts } from "@/lib/catalog";
-import { breadcrumbLd, clip, itemListLd } from "@/lib/seo";
+import { getCategory, getFranchises, getProducts } from "@/lib/catalog";
+import { breadcrumbLd, itemListLd } from "@/lib/seo";
 import { buildMetadata } from "@/lib/seo-metadata";
 
 export async function generateMetadata(props: PageProps<"/categories/[slug]">): Promise<Metadata> {

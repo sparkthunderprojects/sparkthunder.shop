@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element -- these show images at addresses the store owner or a customer supplied, which next/image cannot optimise */
 import { ReviewForm } from "@/components/ReviewForm";
 import { Stars } from "@/components/Stars";
 import type { ReviewSummary } from "@/lib/reviews";

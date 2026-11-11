@@ -3,7 +3,7 @@ import { CardActions } from "@/components/CardActions";
 import { ProductImage } from "@/components/ProductImage";
 import { QuickAdd } from "@/components/QuickAdd";
 import { QuickViewOverlay } from "@/components/QuickViewOverlay";
-import { discountPercent, productImagePath, toQuick } from "@/lib/card";
+import { discountPercent, toQuick } from "@/lib/card";
 import { formatPrice } from "@/lib/site";
 import { isUpcoming } from "@/lib/launch";
 import { priceRange } from "@/lib/variants";

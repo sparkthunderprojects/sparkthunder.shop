@@ -5,6 +5,7 @@ import { productFromRow, type ProductRow } from "@/lib/db/mappers";
 import type { OrderRow } from "@/lib/shop/fulfil";
 import { formatPrice } from "@/lib/site";
 import { summariseSales, type SnapshotLite } from "@/lib/admin/reporting";
+import { nowMs } from "@/lib/time";
 
 export const metadata = { title: "Sales" };
 const RANGES = [["7", "7 days"], ["30", "30 days"], ["90", "90 days"], ["all", "All time"]] as const;
@@ -16,15 +17,15 @@ export default async function SalesPage({ searchParams }: PageProps<"/admin/sale
   const [{ data: o }, { data: p }, { data: sn }] = await Promise.all([db.from("orders").select("*").order("created_at", { ascending: false }), db.from("products").select("*"), db.from("checkout_snapshots").select("created_at, fulfilled_at")]);
   const everyOrder = (o ?? []) as OrderRow[];
   const all = everyOrder.filter((x) => x.status !== "cancelled");
-  const since = r === "all" ? 0 : Date.now() - Number(r) * 86400000;
+  const since = r === "all" ? 0 : nowMs() - Number(r) * 86400000;
   const orders = all.filter((x) => new Date(x.created_at).getTime() >= since);
 
   const sum = summariseSales(everyOrder, (sn ?? []) as SnapshotLite[], since);
 
   // daily series
-  const days = r === "all" ? Math.min(90, Math.max(7, Math.ceil((Date.now() - Math.min(Date.now(), ...orders.map((x) => new Date(x.created_at).getTime()))) / 86400000) + 1)) : Number(r);
+  const days = r === "all" ? Math.min(90, Math.max(7, Math.ceil((nowMs() - Math.min(nowMs(), ...orders.map((x) => new Date(x.created_at).getTime()))) / 86400000) + 1)) : Number(r);
   const series: { d: string; v: number }[] = [];
-  for (let i = days - 1; i >= 0; i--) { const dt = new Date(Date.now() - i * 86400000); series.push({ d: dt.toISOString().slice(0, 10), v: 0 }); }
+  for (let i = days - 1; i >= 0; i--) { const dt = new Date(nowMs() - i * 86400000); series.push({ d: dt.toISOString().slice(0, 10), v: 0 }); }
   for (const x of orders) { const k = x.created_at.slice(0, 10); const s = series.find((y) => y.d === k); if (s) s.v += x.total_pence - (x.refunded_card_pence ?? 0); }
   const max = Math.max(1, ...series.map((s) => s.v));
 

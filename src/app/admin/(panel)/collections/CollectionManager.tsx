@@ -4,6 +4,7 @@ import { useState } from "react";
 import { deleteCollectionAction, saveCollectionAction } from "../../collection-actions";
 import { Field, useAction } from "../../ui";
 import type { Collection } from "@/lib/types";
+import { nowMs } from "@/lib/time";
 
 type Form = { slug: string; name: string; description: string; image: string; launchAt: string; productSlugs: string[]; sortOrder: string; published: boolean; isNew: boolean };
 const blank: Form = { slug: "", name: "", description: "", image: "", launchAt: "", productSlugs: [], sortOrder: "0", published: true, isNew: true };
@@ -50,7 +51,7 @@ export function CollectionManager({ collections, products }: { collections: Coll
       <section className="adm-card" style={{ padding: 0, overflowX: "auto" }}>
         {collections.length === 0 ? <p style={{ padding: 18 }} className="adm-hint">No collections yet.</p> : (
           <table className="adm-table"><thead><tr><th>Collection</th><th>Launch</th><th>Products</th><th>Status</th><th /></tr></thead><tbody>
-            {collections.map((c) => { const up = c.launchAt && Date.parse(c.launchAt) > Date.now(); return (
+            {collections.map((c) => { const up = c.launchAt && Date.parse(c.launchAt) > nowMs(); return (
               <tr key={c.slug}>
                 <td><b>{c.name}</b><div className="adm-hint">/collections/{c.slug}</div></td>
                 <td>{c.launchAt ? new Date(c.launchAt).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }) : <span className="adm-hint">On sale now</span>}</td>

@@ -1,6 +1,5 @@
 import type { MetadataRoute } from "next";
 import { getStore } from "@/lib/store";
-import { readableOn } from "@/lib/store-config";
 
 export default async function manifest(): Promise<MetadataRoute.Manifest> {
   const store = await getStore();

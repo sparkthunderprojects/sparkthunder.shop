@@ -44,8 +44,7 @@ export function EmbedBuilder({ franchises }: { franchises: F[] }) {
 
       <strong>Live preview</strong>
       <div style={{ marginTop: 8 }} key={html}>
-        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
-        <PreviewFrame html={html} origin={origin} />
+                <PreviewFrame html={html} origin={origin} />
       </div>
     </div>
   );

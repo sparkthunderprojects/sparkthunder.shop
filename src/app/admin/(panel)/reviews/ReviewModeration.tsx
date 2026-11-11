@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @next/next/no-img-element -- these show images at addresses the store owner or a customer supplied, which next/image cannot optimise */
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { deleteReviewAction, moderateReviewAction } from "../../review-actions";

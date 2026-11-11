@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @next/next/no-img-element -- these show images at addresses the store owner or a customer supplied, which next/image cannot optimise */
 import { useState } from "react";
 import { descPx, DESC_PX, titlePx, TITLE_PX } from "@/lib/seo/text";
 import type { SeoResult } from "@/lib/seo/score";
@@ -47,7 +48,7 @@ export function SerpPreview({ title, description, path }: { title: string; descr
 export function SocialPreview({ title, description, image }: { title: string; description: string; image?: string }) {
   return (
     <div className="adm-og" aria-label="Social share preview">
-      {image ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={image} alt="" /> : <div className="ph" />}
+      {image ? <img src={image} alt="" /> : <div className="ph" />}
       <div className="t"><small>{SITE.url.replace(/^https?:\/\//, "")}</small><strong>{title || "Untitled"}</strong><span>{description.slice(0, 110)}</span></div>
     </div>
   );

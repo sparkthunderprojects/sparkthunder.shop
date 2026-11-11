@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import { BRAND_TOKEN, SITE, absoluteUrl } from "@/lib/site";
 import type { Category, Franchise, Product } from "@/lib/types";
 

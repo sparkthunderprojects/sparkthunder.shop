@@ -29,7 +29,7 @@ export function useDiscount(cart: CartInput) {
 
   const setCode = (c: string | null) => {
     setCodeState(c);
-    try { c ? localStorage.setItem(KEY, c) : localStorage.removeItem(KEY); } catch {}
+    try { if (c) localStorage.setItem(KEY, c); else localStorage.removeItem(KEY); } catch {}
   };
   return { code, setCode, quote, amountPence: quote?.ok ? quote.amountPence : 0 };
 }

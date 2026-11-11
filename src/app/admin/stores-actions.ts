@@ -77,7 +77,7 @@ export async function cloneStoreAction(input: { fromId: string; id: string; name
     if (input.copyTaxonomy) {
       for (const table of ["franchises", "categories"] as const) {
         const { data } = await from.from(table).select("*");
-        const rows = ((data ?? []) as Record<string, unknown>[]).map(({ store_id: _s, updated_at: _u, ...r }) => r);
+        const rows = ((data ?? []) as Record<string, unknown>[]).map((r) => { const o = { ...r }; delete o.store_id; delete o.updated_at; return o; });
         if (rows.length) await dest.from(table).insert(rows);
       }
     }

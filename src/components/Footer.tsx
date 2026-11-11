@@ -4,7 +4,7 @@ import Image from "next/image";
 import { PaymentBadges } from "@/components/PaymentBadges";
 import { getCategories, getFranchises } from "@/lib/catalog";
 import { getStore } from "@/lib/store";
-import { LEGAL_PAGES, SITE, outbound } from "@/lib/site";
+import { LEGAL_PAGES, outbound } from "@/lib/site";
 import { CookieSettingsLink } from "@/components/CookieSettingsLink";
 
 export async function Footer() {
@@ -18,9 +18,9 @@ export async function Footer() {
         <div className="flex w-[min(34rem,100%)] flex-col items-center gap-3">
           {store.logoUrl ? <Image src={store.logoUrl} alt={store.legalName} width={store.logoWidth} height={store.logoHeight} unoptimized className="h-auto w-full" /> : <span className="display text-4xl">{store.name}</span>}
           {store.logoLabel ? (
-            <span aria-label={store.logoLabel} className="flex w-full items-center gap-4 text-bolt">
+            <span className="flex w-full items-center gap-4 text-bolt">
               <span className="h-px flex-1 bg-bolt/50" />
-              <span aria-hidden className="logo-shop pl-[0.6em] text-[clamp(0.9rem,2.6vw,1.4rem)] tracking-[0.6em]">{store.logoLabel}</span>
+              <span className="logo-shop pl-[0.6em] text-[clamp(0.9rem,2.6vw,1.4rem)] tracking-[0.6em]">{store.logoLabel}</span>
               <span className="h-px flex-1 bg-bolt/50" />
             </span>
           ) : null}
