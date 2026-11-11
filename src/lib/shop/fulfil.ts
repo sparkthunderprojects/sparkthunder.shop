@@ -12,6 +12,7 @@ import type { Snapshot } from "./types";
 import { releaseStock, stockItems } from "./stock";
 import { getStoreSecrets } from "@/lib/secrets";
 import { Printify } from "@/lib/printify/api";
+import { emitEvent, publicOrder } from "@/lib/webhooks/outbound";
 import { PrintifyProblem, sendToPrintify, type PrintifyState } from "@/lib/printify/order";
 
 /** Which fulfilment steps have been completed for an order. Saved after every step so a crash can be picked up where it stopped. */
@@ -213,7 +214,9 @@ export async function fulfilOrder(db: Db, s: PaidSession): Promise<{ order: Orde
       await log.warn("order.attention", `Order ${number} needs attention`, { order: number, problems: list }, { storeId });
       await notifyOwner(`Order ${number} needs your attention`, `${list.join("\n")}`, `order:${orderId}`);
     } else if (list.length) await log.warn("order.email_failed", `Order ${number}: ${list.join(" ")}`, { order: number }, { storeId });
-    return { order: { ...order, ...done, fulfilment: done.fulfilment } as OrderRow, created };
+    const finished = { ...order, ...done, fulfilment: done.fulfilment } as OrderRow;
+    await emitEvent(db, "order.created", publicOrder(finished)); // once: an order that is already finished returns earlier
+    return { order: finished, created };
   } catch (e) {
     await db.from("orders").update({ fulfilment_lock_until: null }).eq("id", orderId); // let the retry start straight away
     throw e;

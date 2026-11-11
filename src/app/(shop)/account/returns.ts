@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { emitEvent } from "@/lib/webhooks/outbound";
 import { notifyOwner } from "@/lib/alerts";
 import { serviceClient, sessionClient } from "@/lib/db/clients";
 import { rateLimit, LIMITS, wait } from "@/lib/ratelimit";
@@ -25,6 +26,7 @@ export async function requestReturnAction(orderId: string, input: ReturnInput): 
     const r = await createReturn(svc, order, input);
     if (!r.ok) return r;
     await notifyOwner(`New return request for order ${order.number}`, `${order.name || order.email} asked to return: ${r.row.items.map((i) => `${i.name} × ${i.qty}`).join(", ")}.\nReason: ${r.row.reason}${r.row.details ? `\n${r.row.details}` : ""}`, `return:${r.row.id}`);
+    await emitEvent(svc, "return.requested", { id: r.row.id, order: order.number, email: order.email, reason: r.row.reason, details: r.row.details ?? "", items: r.row.items });
     revalidatePath("/account");
     return { ok: true };
   } catch { return { ok: false, error: "We could not send your request. Please try again." }; }

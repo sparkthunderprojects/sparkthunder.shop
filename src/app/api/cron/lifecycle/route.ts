@@ -3,6 +3,7 @@ import { log } from "@/lib/log";
 import { serviceClient } from "@/lib/db/clients";
 import { currentStoreId } from "@/lib/db/stores";
 import { sendEmail } from "@/lib/email/send";
+import { runDeliveries } from "@/lib/webhooks/outbound";
 import { runLifecycle } from "@/lib/lifecycle";
 
 export const runtime = "nodejs";
@@ -24,7 +25,8 @@ async function handle(req: Request) {
   try {
     const result = await runLifecycle(db, { storeId, send: sendEmail });
     if (result.reminders || result.reviewRequests) await log.info("lifecycle.sent", `Sent ${result.reminders} basket reminders and ${result.reviewRequests} review requests`, result as never, { storeId });
-    return Response.json(result);
+    const hooks = await runDeliveries(db);
+    return Response.json({ ...result, webhooks: hooks });
   } catch (e) {
     await log.error("lifecycle.failed", "The scheduled emails failed", { error: e }, { storeId });
     return new Response("Failed", { status: 500 });

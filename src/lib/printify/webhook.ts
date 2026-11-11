@@ -2,6 +2,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import type { Db } from "@/lib/db/clients";
 import { sendEmail } from "@/lib/email/send";
 import { shippedEmail } from "@/lib/email/templates";
+import { emitEvent, publicOrder } from "@/lib/webhooks/outbound";
 import type { OrderRow } from "@/lib/shop/fulfil";
 
 /** Printify signs the raw body: `X-Pfy-Signature: sha256=<hex hmac>`. */
@@ -34,6 +35,7 @@ export async function handlePrintifyEvent(db: Db, ev: Event): Promise<"shipped" 
     if (o.status === "cancelled") return "ignored";
     await db.from("orders").update({ status: "shipped", tracking_carrier: carrier, tracking_number: tracking, shipped_at: new Date().toISOString(), printify_status: "shipped", attention_reason: "" }).eq("id", o.id);
     if (o.email) await sendEmail({ to: o.email, ...shippedEmail({ number: o.number, name: o.name, carrier, tracking }) });
+    await emitEvent(db, "order.shipped", publicOrder({ ...o, status: "shipped", tracking_carrier: carrier, tracking_number: tracking, shipped_at: new Date().toISOString() }));
     return "shipped";
   }
   const status = ev.resource?.data?.status;

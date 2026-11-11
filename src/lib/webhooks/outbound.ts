@@ -79,3 +79,15 @@ export async function runDeliveries(db: Db, o: { now?: number; fetchImpl?: typeo
   }
   return { retried: due.length, ok };
 }
+
+/** What an order looks like to the outside world: the same in webhooks and in the API. Never includes payment or internal fields. */
+export type PublicOrder = ReturnType<typeof publicOrder>;
+export function publicOrder(o: { id: string; number: string; status: string; email: string; name: string; phone?: string; shipping_address?: unknown; items?: unknown; subtotal_pence: number; shipping_pence: number; discount_code?: string; discount_pence?: number; total_pence: number; vat_pence?: number; tracking_carrier?: string; tracking_number?: string; shipped_at?: string | null; created_at: string; refunded_card_pence?: number; refunded_gift_pence?: number }) {
+  return {
+    id: o.id, number: o.number, status: o.status, created_at: o.created_at, shipped_at: o.shipped_at ?? null,
+    customer: { email: o.email, name: o.name, phone: o.phone ?? "" }, shipping_address: o.shipping_address ?? null, items: o.items ?? [],
+    subtotal_pence: o.subtotal_pence, shipping_pence: o.shipping_pence, discount_code: o.discount_code ?? "", discount_pence: o.discount_pence ?? 0,
+    vat_pence: o.vat_pence ?? 0, total_pence: o.total_pence, refunded_pence: (o.refunded_card_pence ?? 0) + (o.refunded_gift_pence ?? 0),
+    tracking: { carrier: o.tracking_carrier ?? "", number: o.tracking_number ?? "" },
+  };
+}

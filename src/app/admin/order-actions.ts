@@ -1,5 +1,6 @@
 "use server";
 
+import { emitEvent, publicOrder } from "@/lib/webhooks/outbound";
 import { dbSetupProblem } from "@/lib/db/env";
 import { log } from "@/lib/log";
 import { logActivity as audit } from "@/lib/admin/activity";
@@ -29,6 +30,7 @@ export async function markShippedAction(id: string, carrier = "", tracking = "")
     if (error) return { ok: false, error: error.message };
     revalidatePath(`/admin/orders/${id}`); revalidatePath("/admin/orders");
     await audit("order.ship", `Marked order ${o.number} as shipped`, { type: "order", id });
+    await emitEvent(db, "order.shipped", publicOrder({ ...o, status: "shipped", tracking_carrier: carrier.trim(), tracking_number: tracking.trim(), shipped_at: new Date().toISOString() }));
     if (!o.email) return { ok: true, note: "Marked as shipped. There is no email address on this order." };
     const sent = await sendEmail({ to: o.email, ...shippedEmail({ number: o.number, name: o.name, carrier: carrier.trim(), tracking: tracking.trim() }) });
     return { ok: true, note: sent.ok ? "Marked as shipped and the customer was emailed." : `Marked as shipped, but the email failed: ${sent.error}` };

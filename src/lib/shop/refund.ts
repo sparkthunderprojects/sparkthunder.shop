@@ -1,3 +1,4 @@
+import { emitEvent, publicOrder } from "@/lib/webhooks/outbound";
 import type { Db } from "@/lib/db/clients";
 import { refundEmail } from "@/lib/email/templates";
 import { sendEmail } from "@/lib/email/send";
@@ -167,6 +168,7 @@ export async function processRefund(db: Db, stripe: RefundStripe | null, storeId
   if (f.status === "paid" && fullyRefunded) await db.from("orders").update({ status: "cancelled" }).eq("id", o.id);
   if (fullyRefunded && f.printify_order_id && f.status !== "shipped") await cancelAtPrintify(db, storeId, f);
   const { data: done } = await db.from("order_refunds").select("*").eq("id", refundId).maybeSingle();
+  if (r.status !== "done") await emitEvent(db, "order.refunded", { order: publicOrder(f), refund: { id: refundId, card_pence: r.card_pence, gift_pence: r.gift_pence, reason: r.reason } });
   return { ok: true, refund: done as RefundRow, problems: [...problems] };
 }
 

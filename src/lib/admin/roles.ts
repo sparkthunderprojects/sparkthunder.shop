@@ -22,7 +22,7 @@ const PATHS: [string, Permission][] = [
   ["/admin/stock-alerts", "catalogue"], ["/admin/redirects", "catalogue"], ["/admin/seo", "catalogue"], ["/admin/universe-sites", "catalogue"],
   ["/admin/reviews", "content"], ["/admin/questions", "content"],
   ["/admin/discounts", "marketing"], ["/admin/promotions", "marketing"], ["/admin/gift-cards", "marketing"], ["/admin/rewards", "marketing"],
-  ["/admin/commerce", "settings"], ["/admin/store", "settings"], ["/admin/settings", "settings"], ["/admin/printify", "settings"], ["/admin/health", "settings"], ["/admin/activity", "settings"],
+  ["/admin/commerce", "settings"], ["/admin/store", "settings"], ["/admin/settings", "settings"], ["/admin/printify", "settings"], ["/admin/developers", "settings"], ["/admin/health", "settings"], ["/admin/activity", "settings"],
   ["/admin/sales", "reports"], ["/admin/overview", "reports"],
 ];
 /** The permission a admin page needs (null = every signed-in staff member, like the dashboard). Longest prefix wins, so /admin/store never matches /admin/stores. */

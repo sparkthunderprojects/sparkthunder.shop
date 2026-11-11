@@ -90,6 +90,7 @@ class Query implements PromiseLike<Result> {
   order(col: string, opts?: { ascending?: boolean }) { this.orders.push({ col, asc: opts?.ascending !== false }); return this; }
   gte(col: string, val: unknown) { this.filters.push((r) => String(r[col] ?? "") >= String(val)); return this; }
   lte(col: string, val: unknown) { this.filters.push((r) => String(r[col] ?? "") <= String(val)); return this; }
+  lt(col: string, val: unknown) { this.filters.push((r) => String(r[col] ?? "") < String(val)); return this; }
   is(col: string, val: null | boolean) { this.filters.push((r) => (val === null ? r[col] == null : r[col] === val)); return this; }
   limit(n: number) { this.lim = n; return this; }
   single() { this.one = "single"; return this; }
