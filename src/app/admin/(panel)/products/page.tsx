@@ -17,7 +17,7 @@ export default async function ProductsPage() {
   }));
   return (
     <>
-      <div className="adm-h"><div><h1>Products</h1><p>{rows.length} products</p></div><div style={{ display: "flex", gap: 8 }}><a className="adm-btn" href="/admin/export/products" download>Download CSV</a><Link className="adm-btn adm-bolt" href="/admin/products/new">Add product</Link></div></div>
+      <div className="adm-h"><div><h1>Products</h1><p>{rows.length} products</p></div><div style={{ display: "flex", gap: 8 }}><a className="adm-btn" href="/admin/export/products" download>Download CSV</a><Link className="adm-btn" href="/admin/products/import">Import / bulk edit</Link><Link className="adm-btn adm-bolt" href="/admin/products/new">Add product</Link></div></div>
       <ProductTable rows={rows} franchises={audit.franchises.map((f) => f.name)} />
     </>
   );
