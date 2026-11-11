@@ -29,7 +29,7 @@ export default async function DeliveryReturnsPage() {
       <p>Delivery is {formatPrice(c.shippingFlatPence)} per order.{c.freeShippingPence ? ` Orders of ${formatPrice(c.freeShippingPence)} or more qualify for free delivery.` : ""}{c.giftWrapPence ? ` Gift wrapping is ${formatPrice(c.giftWrapPence)} per order if you choose it at checkout.` : ""} The exact amount is always shown at checkout before you pay.</p>
 
       <h2>When it will arrive</h2>
-      <p>We email you when your order ships, with tracking details where the carrier provides them. If something is out of stock or delayed we will let you know.</p>
+      <p>Many of our products are printed to order, so they are made after you buy: allow a few working days for printing before your order is posted, plus the delivery time. Items in one order can be made in different places and arrive in separate parcels. We email you when your order ships, with tracking details where the carrier provides them. If something is out of stock or delayed we will let you know.</p>
 
       <h2>Changing your mind</h2>
       <p>If you are buying as a consumer, you can cancel your order and return the goods for any reason within 14 days of receiving them. To cancel, tell us clearly (an email is fine) at <Contact />, then send the goods back to us within a further 14 days. We refund the price of the goods, and the standard delivery charge, within 14 days of getting the goods back or of you showing us proof of postage, using the same payment method you used. You pay the cost of sending items back unless we tell you otherwise.</p>

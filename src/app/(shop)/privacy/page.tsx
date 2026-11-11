@@ -47,6 +47,7 @@ export default async function PrivacyPage() {
         <li>Stripe, to take payments.</li>
         <li>Supabase, to store our database and handle sign-in.</li>
         <li>Resend, to send order, gift card and account emails.</li>
+        <li>Printify and its print partners, who make and post items printed to order. They receive your name, delivery address, email and phone number for your delivery only.</li>
         <li>Our hosting provider, to serve the website.</li>
         <li>Delivery carriers, who receive your name, address and phone number to deliver your parcel.</li>
       </ul>
