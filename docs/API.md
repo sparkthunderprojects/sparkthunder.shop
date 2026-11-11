@@ -3,13 +3,16 @@
 Everything is per store: use the store's own address (for example `https://sparkthunder.shop`). Make keys and webhooks in **Admin > Developers**.
 
 ## API (v1)
-Send `Authorization: Bearer spk_...` with every request. Responses are JSON. Limit: 120 requests a minute per key (then `429` with `Retry-After`). Money is in pence.
+Send `Authorization: Bearer spk_...` with every request. A key is **read** (see data), **read and change** (also mark shipped, edit price and stock) or **read, change and refund** (also send money back). Give each system the least it needs. Responses are JSON. Limit: 120 requests a minute per key (then `429` with `Retry-After`). Money is in pence.
 
 | Method and path | Needs | What it does |
 |---|---|---|
-| `GET /api/v1/orders?status=&limit=&before=` | read | Orders, newest first. `status`: paid, shipped, cancelled, attention. `limit` up to 100. When `has_more` is true, pass `next_before` as `before` for the next page. |
+| `GET /api/v1/orders?status=&email=&limit=&before=` | read | Orders, newest first. `status`: paid, shipped, cancelled, attention. `email` finds one customer's orders. `limit` up to 100. When `has_more` is true, pass `next_before` as `before` for the next page. |
 | `GET /api/v1/orders/{id or number}` | read | One order. |
 | `POST /api/v1/orders/{id or number}/ship` `{"carrier":"","tracking":""}` | write | Marks it shipped, emails the customer. Sending it again does nothing. |
+| `POST /api/v1/orders/{id or number}/refund` | refund | Sends money back. Needs an `Idempotency-Key` header (8 to 80 characters you make up, one per refund; repeating it never refunds twice). Body: `{"card_pence":500,"gift_pence":0,"reason":"Damaged","restock":[{"line":0,"qty":1}],"take_points":false}`. Returns `502` with `"retry": true` if the payment provider could not be reached: send the same request again. |
+| `GET /api/v1/returns?status=&limit=&before=` | read | Return requests. `status`: requested, approved, rejected, received, refunded. |
+| `GET /api/v1/returns/{id}` | read | One return request. |
 | `GET /api/v1/products?limit=&before=` | read | Products (including unpublished). |
 | `GET /api/v1/products/{slug}` | read | One product. |
 | `PATCH /api/v1/products/{slug}` | write | Change only `price_pence`, `stock_qty`, `in_stock`, `published`. Anything else is refused. |

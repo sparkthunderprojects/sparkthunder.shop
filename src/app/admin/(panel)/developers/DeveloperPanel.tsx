@@ -12,7 +12,7 @@ const when = (s: string | null) => (s ? new Date(s).toLocaleString("en-GB", { da
 export function DeveloperPanel({ keys, endpoints, deliveries, events }: { keys: ApiKeyRow[]; endpoints: Endpoint[]; deliveries: Delivery[]; events: string[] }) {
   const router = useRouter();
   const { pending, run, toast } = useAction();
-  const [name, setName] = useState(""), [write, setWrite] = useState(false);
+  const [name, setName] = useState(""), [level, setLevel] = useState<"read" | "write" | "refund">("read");
   const [url, setUrl] = useState(""), [picked, setPicked] = useState<string[]>([]);
   const [shown, setShown] = useState<{ label: string; value: string } | null>(null);
   const host = (u: string) => { try { return new URL(u).host; } catch { return u; } };
@@ -33,16 +33,16 @@ export function DeveloperPanel({ keys, endpoints, deliveries, events }: { keys: 
       <section className="adm-card">
         <h2>API keys</h2>
         <p className="adm-hint">Send a key as <code>Authorization: Bearer &lt;key&gt;</code> to <code>/api/v1/orders</code> and <code>/api/v1/products</code> on your store&rsquo;s own address. 120 requests a minute per key. Full details are in docs/API.md.</p>
-        <form onSubmit={(e) => { e.preventDefault(); run(() => createApiKeyAction(name, write), "Key created", (r) => { setShown({ label: "Your new API key", value: r.key }); setName(""); setWrite(false); router.refresh(); }); }}>
+        <form onSubmit={(e) => { e.preventDefault(); run(() => createApiKeyAction(name, level), "Key created", (r) => { setShown({ label: "Your new API key", value: r.key }); setName(""); setLevel("read"); router.refresh(); }); }}>
           <div className="adm-grid adm-g3">
             <Field label="Name"><input className="adm-in" value={name} onChange={(e) => setName(e.target.value)} placeholder="Warehouse system" required /></Field>
-            <Field label="Permission"><select className="adm-sel" value={write ? "write" : "read"} onChange={(e) => setWrite(e.target.value === "write")}><option value="read">Read only</option><option value="write">Read and change (mark shipped, edit price and stock)</option></select></Field>
+            <Field label="Permission"><select className="adm-sel" value={level} onChange={(e) => setLevel(e.target.value as typeof level)}><option value="read">Read only</option><option value="write">Read and change (mark shipped, edit price and stock)</option><option value="refund">Read, change and refund (can send money back to customers)</option></select></Field>
           </div>
           <p style={{ marginTop: 12 }}><button className="adm-btn adm-btn-primary" disabled={pending}>Create key</button></p>
         </form>
         <table className="adm-table"><thead><tr><th>Name</th><th>Key</th><th>Permission</th><th>Last used</th><th /></tr></thead><tbody>
           {keys.length ? keys.map((k) => (
-            <tr key={k.id}><td>{k.name}</td><td><code>{k.prefix}…</code></td><td>{k.scopes.includes("write") ? "Read and change" : "Read only"}</td><td>{k.revoked_at ? <span className="adm-bad">Revoked</span> : when(k.last_used_at)}</td>
+            <tr key={k.id}><td>{k.name}</td><td><code>{k.prefix}…</code></td><td>{k.scopes.includes("refund") ? "Read, change and refund" : k.scopes.includes("write") ? "Read and change" : "Read only"}</td><td>{k.revoked_at ? <span className="adm-bad">Revoked</span> : when(k.last_used_at)}</td>
               <td>{k.revoked_at ? null : <button className="adm-btn" disabled={pending} onClick={() => { if (confirm(`Revoke "${k.name}"? Anything using it stops working straight away.`)) run(() => revokeApiKeyAction(k.id), "Key revoked", () => router.refresh()); }}>Revoke</button>}</td></tr>
           )) : <tr><td colSpan={5}>No keys yet.</td></tr>}
         </tbody></table>

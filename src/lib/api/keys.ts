@@ -1,7 +1,9 @@
 import { createHash, randomBytes } from "node:crypto";
 import type { Db } from "@/lib/db/clients";
 
-export type Scope = "read" | "write";
+/** read = see data; write = also mark orders shipped and change product price and stock; refund = also send money back to customers. */
+export type Scope = "read" | "write" | "refund";
+export const SCOPES_FOR_LEVEL: Record<"read" | "write" | "refund", Scope[]> = { read: ["read"], write: ["read", "write"], refund: ["read", "write", "refund"] };
 export type ApiKeyRow = { id: string; name: string; prefix: string; scopes: Scope[]; created_by: string; created_at: string; last_used_at: string | null; revoked_at: string | null };
 
 export const hashKey = (key: string) => createHash("sha256").update(key).digest("hex");

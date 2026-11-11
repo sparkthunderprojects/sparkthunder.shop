@@ -10,6 +10,8 @@ vi.mock("@/lib/ratelimit", () => ({ rateLimit: async () => ({ ok: true }) }));
 vi.mock("@/lib/email/send", () => ({ sendEmail: async (m: unknown) => { hoisted.sent.push(m); return { ok: true }; } }));
 vi.mock("@/lib/tags", () => ({ bustTag: async (t: string) => { hoisted.busted.push(t); } }));
 vi.mock("@/lib/catalog", () => ({ CATALOG_TAG: "catalog" }));
+vi.mock("@/lib/commerce", () => ({ getCommerce: async () => ({ codePrefix: "SPK" }) }));
+vi.mock("@/lib/shop/refund-stripe", () => ({ refundStripe: async () => ({ refunds: { create: async (_p: unknown, o?: { idempotencyKey?: string }) => ({ id: `re_${o?.idempotencyKey}` }) } }) }));
 vi.mock("@/lib/log", () => ({ log: { warn: async () => {}, info: async () => {}, error: async () => {} } }));
 
 import { applyProductPatch } from "@/lib/api/products";
@@ -167,5 +169,62 @@ describe("the REST API", () => {
     expect((await (await call(getProduct, "/api/v1/products/tee", { key: readKey }, { slug: "tee" })).json()).data).toMatchObject({ price_pence: 2500, stock_qty: 7 });
     expect((await patch({ name: "Hacked" })).status).toBe(400);
     expect((await patch({ price_pence: 1 }, readKey)).status).toBe(403);
+  });
+});
+
+describe("refunds, returns and customer lookup through the API", () => {
+  let refundKey = "", writeKey = "";
+  beforeEach(async () => {
+    const db = fresh();
+    await db.from("products").insert({ slug: "tee", sku: "T1", name: "Tee", franchise_slug: "k", category_slug: "a", price_pence: 2000, short_description: "", description: "", images: [], in_stock: true, track_stock: true, stock_qty: 1, variants: [], bundle_items: [] });
+    await db.from("orders").insert({ ...order(1), id: "o-1", stripe_payment_intent: "pi_1", total_pence: 3000, subtotal_pence: 2700, shipping_pence: 300, items: [{ type: "product", slug: "tee", name: "Tee", sku: "T1", unitPence: 2700, qty: 1, image: "" }], fulfilled_at: new Date().toISOString() });
+    await db.from("orders").insert(order(2, { email: "Other_Person@x.co" }));
+    await db.from("return_requests").insert({ id: "r-1", order_id: "o-1", order_number: "SP-1", email: "a@b.co", name: "Ann", items: [{ line: 0, name: "Tee", qty: 1 }], reason: "Damaged", details: "", status: "requested", admin_note: "secret note", created_at: "2026-11-02T10:00:00Z", resolved_at: null });
+    const a = await createApiKey(db, { name: "refunder", scopes: ["read", "write", "refund"], by: "" }), b = await createApiKey(db, { name: "w", scopes: ["read", "write"], by: "" });
+    if (!a.ok || !b.ok) throw new Error("keys");
+    refundKey = a.key; writeKey = b.key;
+  });
+  const refund = async (body: object, key: string, idem: string | null = "refund-key-0001") => {
+    const { POST } = await import("@/app/api/v1/orders/[id]/refund/route");
+    const headers: Record<string, string> = { Authorization: `Bearer ${key}`, "Content-Type": "application/json", ...(idem ? { "Idempotency-Key": idem } : {}) };
+    return POST(new Request("https://shop.test/api/v1/orders/SP-1/refund", { method: "POST", headers, body: JSON.stringify(body) }), { params: Promise.resolve({ id: "SP-1" }) });
+  };
+  it("needs the refund permission and an idempotency key, and checks the amounts", async () => {
+    expect((await refund({ card_pence: 100 }, writeKey)).status).toBe(403);
+    expect((await refund({ card_pence: 100 }, refundKey, null)).status).toBe(400);
+    expect((await refund({ card_pence: 0 }, refundKey)).status).toBe(400);
+    expect((await refund({ card_pence: -5 }, refundKey)).status).toBe(400);
+    expect((await refund({ card_pence: 1.5 }, refundKey)).status).toBe(400);
+  });
+  it("refunds once however many times the same request is sent, and restocks", async () => {
+    const r1 = await refund({ card_pence: 1000, reason: "Damaged", restock: [{ line: 0, qty: 1 }] }, refundKey);
+    expect(r1.status).toBe(200);
+    const d1 = (await r1.json()).data;
+    expect(d1).toMatchObject({ order: "SP-1", card_pence: 1000, status: "done" });
+    const r2 = await refund({ card_pence: 1000, reason: "Damaged", restock: [{ line: 0, qty: 1 }] }, refundKey);
+    expect((await r2.json()).data.id).toBe(d1.id);
+    const refunds = ((await (hoisted.db as Db).from("order_refunds").select("*")).data ?? []) as { card_pence: number }[];
+    expect(refunds).toHaveLength(1);
+    const tee = ((await (hoisted.db as Db).from("products").select("*").eq("slug", "tee")).data as { stock_qty: number }[])[0];
+    expect(tee.stock_qty).toBe(2);
+    expect((await (await call(getOrder, "/api/v1/orders/SP-1", { key: refundKey }, { id: "SP-1" })).json()).data.refunded_pence).toBe(1000);
+  });
+  it("refuses to refund more than was paid", async () => {
+    const r = await refund({ card_pence: 999999 }, refundKey, "refund-key-0002");
+    expect(r.status).toBe(422);
+  });
+  it("lists returns without internal notes, filters by status, and finds one", async () => {
+    const { GET: listReturns } = await import("@/app/api/v1/returns/route");
+    const { GET: oneReturn } = await import("@/app/api/v1/returns/[id]/route");
+    const list = await (await call(listReturns, "/api/v1/returns?status=requested", { key: refundKey })).json();
+    expect(list.data).toHaveLength(1); expect(JSON.stringify(list)).not.toContain("secret note");
+    expect((await (await call(listReturns, "/api/v1/returns?status=refunded", { key: refundKey })).json()).data).toHaveLength(0);
+    expect((await call(listReturns, "/api/v1/returns?status=bogus", { key: refundKey })).status).toBe(400);
+    expect((await (await call(oneReturn, "/api/v1/returns/r-1", { key: refundKey }, { id: "r-1" })).json()).data).toMatchObject({ order: "SP-1", status: "requested" });
+    expect((await call(oneReturn, "/api/v1/returns/zzz", { key: refundKey }, { id: "zzz" })).status).toBe(404);
+  });
+  it("finds a customer's orders by email, ignoring case", async () => {
+    const mine = await (await call(listOrders, "/api/v1/orders?email=A@B.CO", { key: refundKey })).json();
+    expect(mine.data.map((o: { number: string }) => o.number)).toEqual(["SP-1"]);
   });
 });

@@ -4,15 +4,17 @@ import { publicOrder } from "@/lib/webhooks/outbound";
 export const runtime = "nodejs";
 const STATUSES = ["paid", "shipped", "cancelled", "attention"];
 
-/** GET /api/v1/orders?status=paid&limit=25&before=<created_at of the last order you saw> : newest first. */
+/** GET /api/v1/orders?status=paid&email=customer@example.com&limit=25&before=<created_at of the last order you saw> : newest first. */
 export const GET = endpoint("read", async ({ db, req }) => {
   const u = new URL(req.url);
   const limit = clampLimit(u.searchParams.get("limit"));
-  const status = u.searchParams.get("status"), before = u.searchParams.get("before");
+  const status = u.searchParams.get("status"), before = u.searchParams.get("before"), email = (u.searchParams.get("email") ?? "").trim().toLowerCase();
   if (status && !STATUSES.includes(status)) return fail(400, `status must be one of: ${STATUSES.join(", ")}`);
   if (before && Number.isNaN(Date.parse(before))) return fail(400, "before must be a date, e.g. the created_at of the last order you received.");
   let q = db.from("orders").select("*").order("created_at", { ascending: false }).limit(limit + 1);
   if (status) q = q.eq("status", status);
+  // case-insensitive, with the pattern characters taken literally
+  if (email) q = q.ilike("email", email.replace(/[\\%_]/g, "\\$&"));
   if (before) q = q.lt("created_at", before);
   const { data, error } = await q;
   if (error) return fail(500, "Could not read orders.");

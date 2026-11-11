@@ -6,7 +6,7 @@ import { currentStoreId } from "@/lib/db/stores";
 import { revalidatePath } from "next/cache";
 import { logActivity as audit } from "@/lib/admin/activity";
 import { requireAdminAction } from "@/lib/admin/auth";
-import { createApiKey, type Scope } from "@/lib/api/keys";
+import { createApiKey, SCOPES_FOR_LEVEL } from "@/lib/api/keys";
 import { checkWebhookUrl, EVENTS, newSecret, runDeliveries, send } from "@/lib/webhooks/outbound";
 
 type Result<T = object> = ({ ok: true } & T) | { ok: false; error: string };
@@ -18,11 +18,12 @@ async function svc(): Promise<Db> {
 }
 const message = (e: unknown) => (e instanceof Error ? e.message : "Something went wrong.");
 
-export async function createApiKeyAction(name: string, write: boolean): Promise<Result<{ key: string }>> {
+export async function createApiKeyAction(name: string, level: "read" | "write" | "refund"): Promise<Result<{ key: string }>> {
   try {
     const { email } = await requireAdminAction("settings");
     const db = await svc();
-    const scopes: Scope[] = write ? ["read", "write"] : ["read"];
+    if (!(level in SCOPES_FOR_LEVEL)) return { ok: false, error: "Choose what this key may do." };
+    const scopes = SCOPES_FOR_LEVEL[level];
     const r = await createApiKey(db, { name, scopes, by: email });
     if (!r.ok) return r;
     revalidatePath("/admin/developers");

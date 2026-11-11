@@ -13,9 +13,8 @@ import { getCard } from "@/lib/giftcards/ledger";
 import { fulfilOrder, type OrderRow } from "@/lib/shop/fulfil";
 import { serviceClient } from "@/lib/db/clients";
 import { currentStoreId } from "@/lib/db/stores";
-import { isDemo } from "@/lib/db/env";
-import { getStripe, hasStripe } from "@/lib/shop/stripe";
-import { createRefund, processRefund, type RefundInput, type RefundStripe } from "@/lib/shop/refund";
+import { refundStripe } from "@/lib/shop/refund-stripe";
+import { createRefund, processRefund, type RefundInput } from "@/lib/shop/refund";
 
 type Result = { ok: true; note?: string } | { ok: false; error: string };
 const message = (e: unknown) => (e instanceof Error ? e.message : "Something went wrong.");
@@ -81,13 +80,6 @@ export async function emailGiftCardAction(id: string, toOverride?: string): Prom
     revalidatePath(`/admin/gift-cards/${id}`);
     return { ok: true, note: `Emailed to ${to}.` };
   } catch (e) { return { ok: false, error: message(e) }; }
-}
-
-/** Stripe for refunds. In demo mode a stand-in answers, so the whole flow can be tried without a payment account. */
-async function refundStripe(): Promise<RefundStripe | null> {
-  if (isDemo) return { refunds: { create: async (_p, o) => ({ id: `re_demo_${o?.idempotencyKey ?? Date.now()}` }) } };
-  if (!(await hasStripe())) return null;
-  return (await getStripe()) as unknown as RefundStripe;
 }
 
 /** Refund all or part of an order: money back to the card and/or gift card, optionally restocking and taking back points. */
