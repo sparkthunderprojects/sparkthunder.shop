@@ -66,6 +66,8 @@ export class Printify {
   getOrder(shopId: string, orderId: string) { return this.call<{ id: string; status: string; app_order_id?: string; shipments?: unknown[] }>("GET", `/shops/${encodeURIComponent(shopId)}/orders/${encodeURIComponent(orderId)}.json`); }
   /** Recent orders, newest first, used to find an order we created but did not get the id of. */
   listOrders(shopId: string, page = 1) { return this.call<{ data: { id: string; app_order_id?: string; external_id?: string; label?: string; status: string }[] }>("GET", `/shops/${encodeURIComponent(shopId)}/orders.json?limit=50&page=${page}`); }
+  /** Printify only accepts this while the order is on-hold or payment-not-received (i.e. before it has gone to production). */
+  cancelOrder(shopId: string, orderId: string) { return this.call<{ id: string; status: string }>("POST", `/shops/${encodeURIComponent(shopId)}/orders/${encodeURIComponent(orderId)}/cancel.json`, {}); }
   createWebhook(shopId: string, topic: string, url: string, secret: string) { return this.call<{ id: string }>("POST", `/shops/${encodeURIComponent(shopId)}/webhooks.json`, { topic, url, secret }); }
   listWebhooks(shopId: string) { return this.call<{ id: string; topic: string; url: string }[]>("GET", `/shops/${encodeURIComponent(shopId)}/webhooks.json`); }
 }

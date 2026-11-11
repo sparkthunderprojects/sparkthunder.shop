@@ -170,3 +170,25 @@ describe("ordering through fulfilment", () => {
     vi.unstubAllGlobals();
   });
 });
+
+describe("cancel at Printify on refund", () => {
+  const orderRow = { id: "o9", number: "SPK-9", status: "paid", printify_order_id: "PO9", attention_reason: "", email: "", items: [] };
+  it("cancels when Printify allows it", async () => {
+    await db.from("orders").insert(orderRow);
+    const { cancelAtPrintify } = await import("@/lib/shop/refund");
+    expect(await cancelAtPrintify(db, "sparkthunder", orderRow, { cancelOrder: async () => ({ id: "PO9", status: "canceled" }) })).toBe("cancelled");
+    expect(((await db.from("orders").select("*").eq("id", "o9").maybeSingle()).data as Record<string, string>).printify_status).toBe("canceled");
+  });
+  it("flags the order for the owner when Printify refuses (already in production)", async () => {
+    await db.from("orders").insert(orderRow);
+    const { cancelAtPrintify } = await import("@/lib/shop/refund");
+    const r = await cancelAtPrintify(db, "sparkthunder", orderRow, { cancelOrder: async () => { throw new PrintifyError("not allowed", 400, false); } });
+    expect(r).toBe("refused");
+    const o = (await db.from("orders").select("*").eq("id", "o9").maybeSingle()).data as Record<string, string>;
+    expect(o.status).toBe("attention"); expect(o.attention_reason).toContain("Cancel it in the Printify dashboard");
+  });
+  it("does nothing for orders that never went to Printify", async () => {
+    const { cancelAtPrintify } = await import("@/lib/shop/refund");
+    expect(await cancelAtPrintify(db, "sparkthunder", { ...orderRow, printify_order_id: "" }, { cancelOrder: async () => { throw new Error("should not be called"); } })).toBe("skipped");
+  });
+});

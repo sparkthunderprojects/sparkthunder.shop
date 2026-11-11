@@ -81,5 +81,5 @@ Never set `SPARKTHUNDER_DEMO` in production: it replaces the database with a fak
 - Connect under Admin > Printify: paste the API token (Printify: Account > Connections > API tokens), press Connect, import products, then Connect tracking from the live site.
 - Paid orders containing Printify products are created at Printify (external id = our order number) and sent to production automatically. Repeats are safe.
 - If an order shows "Sending the order to Printify" under attention, fix the cause (address, product removed at Printify) and press Finish processing on the order. It resumes without creating a second Printify order.
-- Refunds do NOT cancel the Printify order. If you refund before production starts, cancel it in the Printify dashboard yourself.
+- A full refund tries to cancel the Printify order. Printify only allows that before production starts; if it refuses, the order is flagged "needs attention" so you cancel it in the Printify dashboard.
 - Prices come from Printify. After changing a price or switching options on/off there, press Import / refresh. Edited wording is kept.

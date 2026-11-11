@@ -5,6 +5,8 @@ import { changeBalance, getCardByCode } from "@/lib/giftcards/ledger";
 import { awardPoints } from "@/lib/rewards";
 import type { OrderRow } from "./fulfil";
 import { stockItems } from "./stock";
+import { getStoreSecrets } from "@/lib/secrets";
+import { Printify, PrintifyError } from "@/lib/printify/api";
 
 /** The slice of the Stripe client refunds need (so tests can stand in for Stripe). */
 export type RefundStripe = { refunds: { create(p: { payment_intent: string; amount: number; metadata?: Record<string, string> }, o?: { idempotencyKey?: string }): Promise<{ id: string }> } };
@@ -161,7 +163,9 @@ export async function processRefund(db: Db, stripe: RefundStripe | null, storeId
   await save({ status: "done", error: "" });
   const { data: fresh } = await db.from("orders").select("*").eq("id", o.id).maybeSingle();
   const f = fresh as OrderRow;
-  if (f.status === "paid" && (f.refunded_card_pence ?? 0) >= f.total_pence && (f.refunded_gift_pence ?? 0) >= f.gift_card_pence) await db.from("orders").update({ status: "cancelled" }).eq("id", o.id);
+  const fullyRefunded = (f.refunded_card_pence ?? 0) >= f.total_pence && (f.refunded_gift_pence ?? 0) >= f.gift_card_pence;
+  if (f.status === "paid" && fullyRefunded) await db.from("orders").update({ status: "cancelled" }).eq("id", o.id);
+  if (fullyRefunded && f.printify_order_id && f.status !== "shipped") await cancelAtPrintify(db, storeId, f);
   const { data: done } = await db.from("order_refunds").select("*").eq("id", refundId).maybeSingle();
   return { ok: true, refund: done as RefundRow, problems: [...problems] };
 }
@@ -188,4 +192,23 @@ export async function recordExternalRefunds(db: Db, storeId: string, paymentInte
     recorded++;
   }
   return recorded;
+}
+
+/**
+ * A fully refunded order that Printify is making should not be printed and posted for free. Printify only lets us cancel an order that has not
+ * gone to production yet, so if it refuses we say so on the order for the owner to cancel by hand (or contact Printify support).
+ */
+export async function cancelAtPrintify(db: Db, storeId: string, o: Pick<OrderRow, "id" | "number" | "printify_order_id" | "attention_reason">, api?: Pick<Printify, "cancelOrder">): Promise<"cancelled" | "refused" | "skipped"> {
+  const sec = await getStoreSecrets(storeId);
+  if (!o.printify_order_id || !sec.printifyShopId || (!api && !sec.printifyToken)) return "skipped";
+  const note = (t: string) => db.from("orders").update({ attention_reason: [o.attention_reason, t].filter(Boolean).join("\n"), status: "attention", printify_status: "cancel-needed" }).eq("id", o.id);
+  try {
+    await (api ?? new Printify(sec.printifyToken)).cancelOrder(sec.printifyShopId, o.printify_order_id);
+    await db.from("orders").update({ printify_status: "canceled" }).eq("id", o.id);
+    return "cancelled";
+  } catch (e) {
+    const why = e instanceof PrintifyError && !e.retryable ? "Printify would not cancel it, most likely because it is already in production" : "Printify could not be reached to cancel it";
+    await note(`Order ${o.number} was fully refunded but its Printify order (${o.printify_order_id}) is still active. ${why}. Cancel it in the Printify dashboard or contact Printify support so it is not printed and posted.`);
+    return "refused";
+  }
 }
