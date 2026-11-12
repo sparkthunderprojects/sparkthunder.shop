@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { GiftCardHero } from "@/components/GiftCardHero";
 import { JsonLd } from "@/components/JsonLd";
 import { breadcrumbLd } from "@/lib/seo";
 import { buildMetadata } from "@/lib/seo-metadata";
@@ -38,43 +39,23 @@ export default async function GiftCardsPage() {
       <JsonLd data={[breadcrumbLd([{ name: "Home", path: "/" }, { name: "Gift cards", path: "/gift-cards" }]), pageLd, faqLd]} />
       <div className="pt-8"><Breadcrumbs items={[{ name: "Home", href: "/" }, { name: "Gift cards" }]} /></div>
 
-      {/* Hero banner: the store's own card designs fanned out */}
-      <section className="theme-dark -mx-(--gutter) mt-6 overflow-hidden px-(--gutter) py-14 md:py-20" data-giftcards="hero">
-        <div className="grid items-center gap-10 md:grid-cols-[1fr_1fr]">
-          <div>
-            <h1 className="display text-[clamp(2.25rem,5vw,4.25rem)]">{store.name} gift cards</h1>
-            <p className="mt-5 max-w-lg text-lg leading-relaxed text-ink/75">Not sure what they would love? Let them choose. Delivered by email in minutes and spendable on everything in the shop{original ? ", from Knightverge to Occult Inc" : ""}.</p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/gift-cards/send" className="btn">Send a gift card</Link>
-              <Link href="/gift-cards/balance" className="btn btn-ink">Check your balance</Link>
-            </div>
-          </div>
-          <ul className="grid grid-cols-2 gap-3 sm:gap-4" aria-hidden>
-            {themes.slice(0, 4).map((t, i) => (
-              <li key={t.id} className={`aspect-[1.6/1] rounded-xl p-4 shadow-xl ring-1 ring-white/20 ${i % 2 ? "translate-y-4 rotate-2" : "-rotate-2"}`} style={{ background: t.bg }}>
-                <span className="block text-[0.65rem] font-bold uppercase tracking-[0.2em]" style={{ color: t.accent }}>Gift card</span>
-                <span className="mt-1 block text-lg font-extrabold text-white sm:text-2xl">£{AMOUNTS[(i + 1) % AMOUNTS.length]}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
+      <GiftCardHero store={{ name: store.name, logoUrl: store.logoUrl, logoWidth: store.logoWidth, logoHeight: store.logoHeight, dark: store.dark, accent: store.accent }} card={themes[0]} />
 
-      {/* Two ways in */}
-      <section className="mt-12" aria-labelledby="ways-h">
+      {/* Two ways in: overlap the bottom of the banner on wide screens */}
+      <section className="relative z-10 -mt-12 md:-mt-40" aria-labelledby="ways-h">
         <h2 id="ways-h" className="sr-only">Choose how to start</h2>
-        <ul className="grid gap-4 md:grid-cols-2">
+        <ul className="grid max-w-md gap-3">
           <li>
-            <Link href="/gift-cards/send" className="group flex h-full flex-col gap-3 border border-ink/15 p-8 transition-colors hover:bg-paper-2" data-giftcards="send">
-              <span className="text-xs font-bold uppercase tracking-widest text-muted">Quickest delivery</span>
+            <Link href="/gift-cards/send" className="group flex h-full flex-col gap-2 border border-ink/15 bg-paper p-6 shadow-lg transition-colors hover:bg-paper-2" data-giftcards="send">
+              <span className="self-start bg-paper-2 px-3 py-1 text-xs font-bold uppercase tracking-widest">Quickest delivery</span>
               <span className="display text-3xl">Send by email</span>
               <span className="text-muted">Pick an amount and a design, add a message and we email the card with a unique code, now or on the day.</span>
               <span className="btn btn-sm mt-2 self-start">Shop now <span aria-hidden>&rarr;</span></span>
             </Link>
           </li>
           <li>
-            <Link href="/gift-cards/balance" className="group flex h-full flex-col gap-3 border border-ink/15 p-8 transition-colors hover:bg-paper-2" data-giftcards="balance">
-              <span className="text-xs font-bold uppercase tracking-widest text-muted">Got a code?</span>
+            <Link href="/gift-cards/balance" className="group flex h-full flex-col gap-2 border border-ink/15 bg-paper p-6 shadow-lg transition-colors hover:bg-paper-2" data-giftcards="balance">
+              <span className="self-start bg-paper-2 px-3 py-1 text-xs font-bold uppercase tracking-widest">Got a code?</span>
               <span className="display text-3xl">Check your balance</span>
               <span className="text-muted">Enter your gift card code to see what is left, then spend it at checkout.</span>
               <span className="btn btn-sm btn-ink mt-2 self-start">Check balance <span aria-hidden>&rarr;</span></span>
