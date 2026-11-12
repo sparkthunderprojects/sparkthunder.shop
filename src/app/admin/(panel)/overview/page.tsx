@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/admin/auth";
 import { overviewByStore, type OrderLite } from "@/lib/admin/reporting";
 import { serviceClient } from "@/lib/db/clients";
 import { listStores } from "@/lib/db/stores";
+import { loadLaunch } from "@/lib/store-launch-data";
 import { formatPrice } from "@/lib/site";
 import { nowMs } from "@/lib/time";
 
@@ -21,6 +22,7 @@ export default async function OverviewPage({ searchParams }: PageProps<"/admin/o
   const { data } = db ? await db.from("orders").select("store_id, status, total_pence, discount_pence, email, items, created_at, refunded_card_pence, fulfilled_at").gte("created_at", since) : { data: [] };
   const rows = overviewByStore(stores.map((s) => s.id), (data ?? []) as (OrderLite & { store_id: string })[], days);
   const name = new Map(stores.map((s) => [s.id, s.name]));
+  const launch = new Map((await Promise.all(stores.map(async (s) => [s.id, (await loadLaunch(s.id, s.domains))?.score] as const))));
   const total = rows.reduce((n, r) => ({ orders: n.orders + r.orders, revenue: n.revenue + r.revenue, refunded: n.refunded + r.refunded }), { orders: 0, revenue: 0, refunded: 0 });
   return (
     <>
@@ -30,12 +32,13 @@ export default async function OverviewPage({ searchParams }: PageProps<"/admin/o
         {[[formatPrice(total.revenue), "Revenue, all stores"], [String(total.orders), "Orders, all stores"], [formatPrice(total.refunded), "Refunded"]].map(([v, l]) => <div key={l} className="adm-card" style={{ margin: 0 }}><div className="adm-stat">{v}</div><div className="adm-stat-l">{l}</div></div>)}
       </div>
       <div className="adm-card" style={{ padding: 0, overflowX: "auto" }}>
-        <table className="adm-table"><thead><tr><th>Store</th><th>Orders</th><th>Revenue</th><th>Refunded</th><th>Problems</th></tr></thead><tbody>
+        <table className="adm-table"><thead><tr><th>Store</th><th>Orders</th><th>Revenue</th><th>Refunded</th><th>Problems</th><th>Launch</th></tr></thead><tbody>
           {rows.map((r) => (
             <tr key={r.storeId}>
               <td><b>{name.get(r.storeId) ?? r.storeId}</b><div className="adm-hint">{r.storeId}</div></td>
               <td>{r.orders}</td><td><b>{formatPrice(r.revenue)}</b></td><td>{r.refunded ? formatPrice(r.refunded) : <span className="adm-hint">-</span>}</td>
               <td>{r.attention + r.unfinished ? <span className="adm-badge adm-bad">{r.attention + r.unfinished}</span> : <span className="adm-badge adm-ok">0</span>}</td>
+              <td>{(() => { const l = launch.get(r.storeId); return l ? <span className={`adm-badge ${l.ready ? "adm-ok" : "adm-warn"}`}>{l.ready ? "Ready" : `${l.requiredDone}/${l.requiredTotal} required`}</span> : <span className="adm-hint">-</span>; })()}</td>
             </tr>
           ))}
         </tbody></table>

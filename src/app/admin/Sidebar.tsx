@@ -31,6 +31,7 @@ const NAV: { href: string; label: string; exact?: boolean }[] = [
 const SEO: typeof NAV = [
   { href: "/admin/seo", label: "SEO audit" },
   { href: "/admin/redirects", label: "Redirects" },
+  { href: "/admin/launch", label: "Launch checklist" },
   { href: "/admin/theme", label: "Theme and layout" },
   { href: "/admin/store", label: "Brand and design" },
   { href: "/admin/commerce", label: "Shipping and payments" },
