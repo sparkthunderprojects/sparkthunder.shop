@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { currenciesForCountries } from "@/lib/regions";
 import { fetchRatesAction, saveCommerceAction, saveSecretsAction } from "../../commerce-actions";
 import type { CommerceSettings } from "@/lib/commerce-config";
 import { Toggle } from "../../ui";
@@ -37,6 +38,17 @@ export function CommerceForm({ commerce, categories, status }: { commerce: Comme
     if (!r.ok) { setMsg(r.error); return; }
     setCurrencies((cs) => cs.map((c) => (r.rates[c.code.toUpperCase()] ? { ...c, rate: String(r.rates[c.code.toUpperCase()]) } : c)));
     setMsg("Today's rates filled in. Press Save to keep them.");
+  };
+  /** One click: add a currency for every country we deliver to, then fill in today's rates. */
+  const addForCountries = async () => {
+    const list = zones.length ? zones.flatMap((z) => z.countries.split(/[\s,]+/)) : countries.split(/[\s,]+/);
+    const need = currenciesForCountries(list.map((c) => c.toUpperCase()).filter(Boolean), SITE.currency).filter((c) => !currencies.some((x) => x.code.toUpperCase() === c));
+    const merged = [...currencies, ...need.map((code) => ({ code, rate: "" }))];
+    if (!need.length) { setMsg("Every country you deliver to already has its currency."); return; }
+    const r = await fetchRatesAction(merged.map((c) => c.code));
+    if (!r.ok) { setCurrencies(merged); setMsg(r.error); return; }
+    setCurrencies(merged.map((c) => (r.rates[c.code.toUpperCase()] ? { ...c, rate: String(r.rates[c.code.toUpperCase()]) } : c)));
+    setMsg(`Added ${need.join(", ")} with today's rates. Press Save to keep them.`);
   };
   const [defGrams, setDefGrams] = useState(String(commerce.weights.defaultGrams));
   const [catGrams, setCatGrams] = useState<Record<string, string>>(Object.fromEntries(Object.entries(commerce.weights.byCategory).map(([k, v]) => [k, String(v)])));
@@ -119,6 +131,7 @@ export function CommerceForm({ commerce, categories, status }: { commerce: Comme
           ))}
           <div style={{ display: "flex", gap: 8 }}>
             <button type="button" className="adm-btn" onClick={() => setCurrencies((cs) => [...cs, { code: "", rate: "" }])}>Add a currency</button>
+            <button type="button" className="adm-btn" onClick={addForCountries}>Add currencies for my delivery countries</button>
             {currencies.length ? <button type="button" className="adm-btn" onClick={getRates}>Fill in today&rsquo;s rates</button> : null}
           </div>
         </div>

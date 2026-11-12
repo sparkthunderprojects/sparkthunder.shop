@@ -8,7 +8,7 @@ const KNOWN: Set<string> | null = typeof Intl.supportedValuesOf === "function" ?
 export function normaliseCurrencies(raw: unknown, base: string): DisplayCurrency[] {
   if (!Array.isArray(raw)) return [];
   const seen = new Set<string>([base.toUpperCase()]), out: DisplayCurrency[] = [];
-  for (const c of raw.slice(0, 12) as Partial<DisplayCurrency>[]) {
+  for (const c of raw.slice(0, 40) as Partial<DisplayCurrency>[]) {
     const code = String(c?.code ?? "").trim().toUpperCase(), rate = Number(c?.rate);
     if (!/^[A-Z]{3}$/.test(code) || seen.has(code) || !Number.isFinite(rate) || rate <= 0 || rate > 100000) continue;
     if (KNOWN && !KNOWN.has(code)) continue;

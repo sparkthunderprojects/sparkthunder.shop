@@ -44,7 +44,7 @@ export async function ShopShell({ children }: { children: React.ReactNode }) {
     <>
       <JsonLd data={[organizationLd([...SITE.sameAs, ...settings.sameAs], { name: store.legalName, logo: store.logoUrl }), websiteLd({ name: store.name, description: store.description })]} />
       <CommerceProvider value={{ freeShippingPence: commerce.freeShippingPence, giftWrapPence: commerce.giftWrapPence, codePrefix: commerce.codePrefix, shippingZones: commerce.shippingZones, shippingFlatPence: commerce.shippingFlatPence, shippingCountries: commerce.shippingCountries }}>
-      <CurrencyProvider base={SITE.currency} options={commerce.currencies}>
+      <CurrencyProvider base={SITE.currency} options={commerce.currencies} countries={commerce.shippingCountries}>
       <CartProvider>
         <WishlistProvider>
           <ShopUiProvider>

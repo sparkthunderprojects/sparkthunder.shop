@@ -34,7 +34,7 @@ export function CartView() {
   const [wrap, setWrap] = useState(false);
   const commerce = useCommerce();
   const GIFT_WRAP_PENCE = commerce.giftWrapPence;
-  const [country, setCountry] = useState(commerce.shippingCountries[0] ?? "GB");
+  const country = cur.country, setCountry = cur.setRegion;
   const physicalItems = items.filter((i) => !isGiftCardLine(i.slug));
   const [note, setNote] = useState("");
   const wrapPence = physical && gift && wrap ? GIFT_WRAP_PENCE : 0;
