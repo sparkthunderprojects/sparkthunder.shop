@@ -1,5 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
+import { CharacterCarousel } from "@/components/CharacterCarousel";
+import type { CharacterEntry } from "@/lib/character-config";
+import { homeList } from "@/lib/character-config";
 import { ProductCard } from "@/components/ProductCard";
 import { productImagePath, isPlaceholderArt } from "@/lib/card";
 import type { StoreSettings } from "@/lib/store-config";
@@ -10,7 +13,7 @@ const FLUSH = "pgrid -mx-(--gutter) grid grid-cols-2 border-l border-t border-in
 const H2 = "display text-2xl sm:text-3xl";
 
 /** The home page for any store other than the original Sparkthunder one: built entirely from the store's own settings, categories and products. */
-export function StoreHome({ store, products, categories, theme = DEFAULT_THEME }: { store: StoreSettings; products: Product[]; categories: Category[]; theme?: ThemeLayout }) {
+export function StoreHome({ store, products, categories, theme = DEFAULT_THEME, characters = [], franchiseNames = {} }: { store: StoreSettings; products: Product[]; categories: Category[]; theme?: ThemeLayout; characters?: CharacterEntry[]; franchiseNames?: Record<string, string> }) {
   const featured = products.filter((p) => p.isFeatured).concat(products.filter((p) => !p.isFeatured)).slice(0, 3);
   const fresh = products.filter((p) => p.isNew).slice(0, 5);
   const picks = products.filter((p) => p.isFeatured).slice(0, 5);
@@ -42,6 +45,10 @@ export function StoreHome({ store, products, categories, theme = DEFAULT_THEME }
         </div>
       </section>
     ),
+    characters: () => {
+      const list = homeList(characters);
+      return list.length ? <div key="characters" className="px-(--gutter)" data-home-section="characters"><CharacterCarousel id="home-characters" title="Shop by character" viewAllHref="/characters" items={list.map((c) => ({ slug: c.slug, name: c.name, image: c.image, franchise: franchiseNames[c.franchiseSlug] }))} /></div> : null;
+    },
     categories: () => wrap("categories", categories.length > 0 && (
       <section aria-labelledby="types-h" className="mt-14">
         <h2 id="types-h" className={H2}>Shop by category</h2>

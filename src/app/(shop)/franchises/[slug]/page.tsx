@@ -6,6 +6,9 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { JsonLd } from "@/components/JsonLd";
+import { CharacterCarousel } from "@/components/CharacterCarousel";
+import { forFranchise } from "@/lib/character-config";
+import { getCharacters } from "@/lib/characters";
 import { Listing } from "@/components/Listing";
 import { getCategories, getFranchise, getFranchises, getProducts } from "@/lib/catalog";
 import { breadcrumbLd, itemListLd } from "@/lib/seo";
@@ -31,7 +34,8 @@ export default async function FranchisePage(props: PageProps<"/franchises/[slug]
   const { slug } = await props.params;
   const franchise = await getFranchise(slug);
   if (!franchise) notFound();
-  const [products, categories] = await Promise.all([getProducts({ franchise: slug }), getCategories()]);
+  const [products, categories, allCharacters] = await Promise.all([getProducts({ franchise: slug }), getCategories(), getCharacters()]);
+  const characters = forFranchise(allCharacters, slug);
   const used = categories.filter((c) => products.some((p) => p.categorySlug === c.slug));
   const path = `/franchises/${slug}`;
 
@@ -56,6 +60,8 @@ export default async function FranchisePage(props: PageProps<"/franchises/[slug]
           </ul>
         )}
       </section>
+
+      <CharacterCarousel id="franchise-characters" title={`${franchise.name} characters`} viewAllHref="/characters" items={characters.map((c) => ({ slug: c.slug, name: c.name, image: c.image, accent: franchise.accent }))} />
 
       <section className="mt-16" aria-labelledby="all-h">
         <h2 id="all-h" className="display text-2xl sm:text-3xl">All {franchise.name} products</h2>

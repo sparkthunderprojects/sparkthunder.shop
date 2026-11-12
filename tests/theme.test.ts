@@ -15,7 +15,7 @@ describe("theme layout settings", () => {
   it("keeps the saved section order, drops unknown and repeated sections, and always lists every section once", () => {
     const t = normaliseTheme({ home: [{ id: "new", on: true }, { id: "nope", on: true }, { id: "hero", on: true }, { id: "new", on: false }] } as never);
     expect(t.home.map((s) => s.id).slice(0, 2)).toEqual(["new", "hero"]);
-    expect(new Set(t.home.map((s) => s.id)).size).toBe(6); expect(t.home).toHaveLength(6);
+    expect(new Set(t.home.map((s) => s.id)).size).toBe(7); expect(t.home).toHaveLength(7);
     expect(t.home.find((s) => s.id === "categories")!.on).toBe(false);
     expect(t.home.find((s) => s.id === "new")!.on).toBe(true);
   });

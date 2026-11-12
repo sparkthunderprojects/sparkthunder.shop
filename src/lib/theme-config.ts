@@ -8,7 +8,7 @@ export const HEADERS = ["classic", "compact"] as const;
 export const CARDS = ["bordered", "soft", "minimal"] as const;
 export const PRODUCT_PAGES = ["split", "stacked"] as const;
 export const FOOTERS = ["full", "compact"] as const;
-export const HOME_SECTION_IDS = ["hero", "categories", "featured", "new", "story", "gift-cards"] as const;
+export const HOME_SECTION_IDS = ["hero", "categories", "characters", "featured", "new", "story", "gift-cards"] as const;
 export type HeaderStyle = (typeof HEADERS)[number];
 export type CardStyle = (typeof CARDS)[number];
 export type ProductPageStyle = (typeof PRODUCT_PAGES)[number];
@@ -29,12 +29,12 @@ export const LABELS = {
   footer: { full: "Full: logo, description and link columns", compact: "Compact: one tidy row" },
 } as const;
 export const SECTION_LABEL: Record<HomeSectionId, string> = {
-  hero: "Hero: heading, text and featured products", categories: "Shop by category", featured: "Featured products", new: "New arrivals", story: "Brand story", "gift-cards": "Gift cards banner",
+  hero: "Hero: heading, text and featured products", categories: "Shop by category", characters: "Shop by character", featured: "Featured products", new: "New arrivals", story: "Brand story", "gift-cards": "Gift cards banner",
 };
 
 export const DEFAULT_THEME: ThemeLayout = {
   header: "classic", card: "bordered", productPage: "split", footer: "full",
-  home: [{ id: "hero", on: true }, { id: "categories", on: true }, { id: "new", on: true }, { id: "featured", on: false }, { id: "story", on: false }, { id: "gift-cards", on: false }],
+  home: [{ id: "hero", on: true }, { id: "categories", on: true }, { id: "characters", on: false }, { id: "new", on: true }, { id: "featured", on: false }, { id: "story", on: false }, { id: "gift-cards", on: false }],
   storyTitle: "Our story", storyText: "",
 };
 

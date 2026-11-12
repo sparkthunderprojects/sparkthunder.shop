@@ -18,7 +18,7 @@ export const permsForRole = (r: Role | undefined): Permission[] => (r ? ROLE_PER
 
 const PATHS: [string, Permission][] = [
   ["/admin/orders", "orders"], ["/admin/customers", "customers"], ["/admin/returns", "orders"],
-  ["/admin/products", "catalogue"], ["/admin/franchises", "catalogue"], ["/admin/categories", "catalogue"], ["/admin/collections", "catalogue"], ["/admin/media", "catalogue"],
+  ["/admin/products", "catalogue"], ["/admin/franchises", "catalogue"], ["/admin/characters", "catalogue"], ["/admin/categories", "catalogue"], ["/admin/collections", "catalogue"], ["/admin/media", "catalogue"],
   ["/admin/stock-alerts", "catalogue"], ["/admin/schedule", "catalogue"], ["/admin/redirects", "catalogue"], ["/admin/seo", "catalogue"], ["/admin/universe-sites", "catalogue"],
   ["/admin/reviews", "content"], ["/admin/questions", "content"],
   ["/admin/discounts", "marketing"], ["/admin/promotions", "marketing"], ["/admin/gift-cards", "marketing"], ["/admin/rewards", "marketing"],

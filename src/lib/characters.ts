@@ -1,22 +1,36 @@
+import { unstable_cache } from "next/cache";
 import { getAllProducts } from "@/lib/catalog";
+import { publicClient } from "@/lib/db/clients";
+import { currentStoreId } from "@/lib/db/stores";
+import { storeTag } from "@/lib/tags";
+import { mergeCharacters, normaliseCharacters, characterSlugs, type CharacterEntry, type CharacterProfile } from "@/lib/character-config";
 import type { Product } from "@/lib/types";
 
-/** A product is linked to a character by a tag: `character:<slug>`, where <slug> is the character's slug on the universe site. */
-export const CHARACTER_PREFIX = "character:";
-export const characterSlugOf = (tag: string) => (tag.toLowerCase().startsWith(CHARACTER_PREFIX) ? tag.slice(CHARACTER_PREFIX.length).trim().toLowerCase().replace(/[^a-z0-9-]/g, "") : "");
-export const characterSlugs = (p: Pick<Product, "tags">) => [...new Set((p.tags ?? []).map(characterSlugOf).filter(Boolean))];
-export const characterName = (slug: string) => slug.split("-").filter(Boolean).map((w) => w[0].toUpperCase() + w.slice(1)).join(" ");
+export { CHARACTER_PREFIX, characterSlugOf, characterSlugs, characterName, type CharacterEntry } from "@/lib/character-config";
 
-export type CharacterEntry = { slug: string; name: string; count: number; franchiseSlug: string };
+/** The characters the owner set up for this store (cached; busted by the "settings" tag on save). */
+export const getCharacterProfiles = async (): Promise<CharacterProfile[]> => {
+  const storeId = await currentStoreId();
+  return unstable_cache(
+    async () => {
+      const db = publicClient(storeId);
+      if (!db) return [];
+      const { data } = await db.from("settings").select("value").eq("key", "characters").maybeSingle();
+      return normaliseCharacters((data as { value?: unknown } | null)?.value);
+    },
+    ["store-characters-v1", storeId],
+    { tags: [storeTag("settings", storeId)], revalidate: 600 },
+  )();
+};
 
+/** Every character: the owner's curated ones plus any that only exist as a product tag. Includes ones with no products yet. */
 export async function getCharacters(): Promise<CharacterEntry[]> {
-  const all = await getAllProducts();
-  const m = new Map<string, CharacterEntry>();
-  for (const p of all) for (const s of characterSlugs(p)) {
-    const e = m.get(s) ?? { slug: s, name: characterName(s), count: 0, franchiseSlug: p.franchiseSlug };
-    e.count++; m.set(s, e);
-  }
-  return [...m.values()].sort((a, b) => a.name.localeCompare(b.name));
+  const [profiles, all] = await Promise.all([getCharacterProfiles(), getAllProducts()]);
+  return mergeCharacters(profiles, all);
+}
+
+export async function getCharacter(slug: string): Promise<CharacterEntry | undefined> {
+  return (await getCharacters()).find((c) => c.slug === slug);
 }
 
 export async function getCharacterProducts(slug: string): Promise<Product[]> {

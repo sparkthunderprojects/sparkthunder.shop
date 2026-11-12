@@ -5,6 +5,9 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { ProductCard } from "@/components/ProductCard";
 import { getAllProducts, getCategories, getFranchises } from "@/lib/catalog";
+import { CharacterCarousel } from "@/components/CharacterCarousel";
+import { homeList } from "@/lib/character-config";
+import { getCharacters } from "@/lib/characters";
 import { productImagePath, isPlaceholderArt } from "@/lib/card";
 import { buildMetadata } from "@/lib/seo-metadata";
 import { StoreHome } from "@/components/StoreHome";
@@ -31,8 +34,8 @@ const HERO_TILES = [
 ] as const;
 
 export default async function HomePage() {
-  const [franchises, categories, products, store, storeId, theme] = await Promise.all([getFranchises(), getCategories(), getAllProducts(), getStore(), currentStoreId(), getTheme()]);
-  if (storeId !== DEFAULT_STORE_ID) return <StoreHome store={store} products={products} categories={categories} theme={theme} />;
+  const [franchises, categories, products, store, storeId, theme, characters] = await Promise.all([getFranchises(), getCategories(), getAllProducts(), getStore(), currentStoreId(), getTheme(), getCharacters()]);
+  if (storeId !== DEFAULT_STORE_ID) return <StoreHome store={store} products={products} categories={categories} theme={theme} characters={characters} franchiseNames={Object.fromEntries(franchises.map((f) => [f.slug, f.name]))} />;
   const nameBySlug = Object.fromEntries(franchises.map((f) => [f.slug, f.name]));
   const fresh = products.filter((p) => p.isNew).slice(0, 5);
   const drop = products.find((p) => p.isNew && p.isFeatured && p.inStock) ?? products[0];
@@ -125,6 +128,9 @@ export default async function HomePage() {
           ))}
         </ul>
       </section>
+
+      {/* Shop by character */}
+      {homeList(characters).length > 0 && <CharacterCarousel id="home-characters" title="Shop by character" viewAllHref="/characters" items={homeList(characters).map((c) => ({ slug: c.slug, name: c.name, image: c.image, franchise: nameBySlug[c.franchiseSlug], accent: franchises.find((f) => f.slug === c.franchiseSlug)?.accent }))} />}
 
       {/* New arrivals */}
       {fresh.length > 0 && (

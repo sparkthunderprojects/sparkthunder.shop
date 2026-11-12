@@ -4,7 +4,7 @@ import type { MediaItem } from "@/lib/admin/repo";
 import { uploadImage } from "./upload";
 
 /** Modal to choose from the library or upload a new image. Calls onPick with the chosen item. */
-export function MediaPicker({ media, onPick, onClose }: { media: MediaItem[]; onPick: (m: MediaItem) => void; onClose: () => void }) {
+export function MediaPicker({ media, onPick, onClose, trim = false }: { media: MediaItem[]; onPick: (m: MediaItem) => void; onClose: () => void; /** Crop uploads to the visible figure (for cut-out portraits on transparent backgrounds). */ trim?: boolean }) {
   const [items, setItems] = useState(media);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
@@ -13,7 +13,7 @@ export function MediaPicker({ media, onPick, onClose }: { media: MediaItem[]; on
     if (!files?.length) return;
     setBusy(true); setErr("");
     for (const f of Array.from(files)) {
-      const r = await uploadImage(f, "");
+      const r = await uploadImage(f, "", { trim });
       if (r.ok) setItems((x) => [r.item, ...x]); else setErr(r.error);
     }
     setBusy(false);
