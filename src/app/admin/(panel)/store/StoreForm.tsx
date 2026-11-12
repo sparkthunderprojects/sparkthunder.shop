@@ -44,7 +44,7 @@ export function StoreForm({ initial, defaults, media }: { initial: StoreSettings
             <p style={{ maxWidth: 520, marginTop: 10, opacity: 0.75 }}>{s.description}</p>
             <div style={{ display: "flex", gap: 10, marginTop: 14 }}><button style={btn}>Shop new arrivals</button><button style={{ ...btn, background: "transparent", color: s.text, border: `1px solid ${s.text}55` }}>Browse everything</button></div>
           </div>
-          <div style={{ background: s.dark, color: "#f5f5f5", padding: "12px 20px", fontSize: 13 }}>Footer · <span style={{ color: s.accent }}>link colour</span></div>
+          <div style={{ background: s.dark, color: readableOn(s.dark) === "#ffffff" ? "#f5f5f5" : "#0b0b0c", padding: "12px 20px", fontSize: 13 }}>Footer · <span style={{ color: s.accent }}>link colour</span></div>
         </div>
       </section>
 

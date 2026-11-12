@@ -104,6 +104,9 @@ export function storeCssVars(s: StoreSettings): CSSProperties {
     ["--color-paper" as string]: s.light,
     ["--color-ink" as string]: s.text,
     ["--store-dark" as string]: s.dark,
+    // Text on the dark areas (header, footer): light on a dark colour, dark on a light one, so any header colour stays readable.
+    ["--store-dark-ink" as string]: readableOn(s.dark) === "#ffffff" ? "#f5f5f5" : "#0b0b0c",
+    ["--store-dark-muted" as string]: readableOn(s.dark) === "#ffffff" ? "#a1a1a8" : "#55555c",
     ["--store-light" as string]: s.light,
     ["--store-text" as string]: s.text,
     ["--font-display" as string]: `${f.display}, ui-sans-serif, system-ui, sans-serif`,

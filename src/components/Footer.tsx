@@ -5,14 +5,32 @@ import { RegionSwitcher } from "@/components/Currency";
 import { PaymentBadges } from "@/components/PaymentBadges";
 import { getCategories, getFranchises } from "@/lib/catalog";
 import { getStore } from "@/lib/store";
+import { getTheme } from "@/lib/theme.server";
 import { LEGAL_PAGES, outbound } from "@/lib/site";
 import { CookieSettingsLink } from "@/components/CookieSettingsLink";
 
 export async function Footer() {
-  const [franchises, categories, store, storeId] = await Promise.all([getFranchises(), getCategories(), getStore(), currentStoreId()]);
+  const [franchises, categories, store, storeId, theme] = await Promise.all([getFranchises(), getCategories(), getStore(), currentStoreId(), getTheme()]);
   const original = storeId === DEFAULT_STORE_ID;
   const col = "mt-4 space-y-2.5 text-[0.95rem] text-ink/75";
   const lnk = "hover:text-bolt hover:underline hover:underline-offset-4";
+  if (theme.footer === "compact") {
+    return (
+      <footer className="theme-dark border-t border-ink/15" data-footer="compact">
+        <div className="flex flex-col gap-5 px-(--gutter) py-8 text-sm text-ink/70 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+            <Link href="/" className="display text-lg text-ink">{store.name}</Link>
+            <span>© {new Date().getFullYear()} {store.legalName}.{original ? " Official merchandise." : ""}</span>
+          </div>
+          <nav aria-label="Legal"><ul className="flex flex-wrap gap-x-6 gap-y-2 font-semibold text-ink/80">
+            {LEGAL_PAGES.map((l) => <li key={l.href}><Link className={lnk} href={l.href}>{l.label}</Link></li>)}
+            <li><CookieSettingsLink className={lnk} /></li>
+          </ul></nav>
+        </div>
+        <div className="flex flex-wrap items-center gap-x-8 gap-y-3 px-(--gutter) pb-8"><RegionSwitcher /><PaymentBadges /></div>
+      </footer>
+    );
+  }
   return (
     <footer className="theme-dark border-t border-ink/15">
       <div className="px-(--gutter) pb-10 pt-14">

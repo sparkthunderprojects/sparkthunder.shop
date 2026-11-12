@@ -11,6 +11,7 @@ import { StoreHome } from "@/components/StoreHome";
 import { currentStoreId, DEFAULT_STORE_ID } from "@/lib/db/stores";
 import { getStore } from "@/lib/store";
 import { worldStyle } from "@/lib/theme";
+import { getTheme } from "@/lib/theme.server";
 
 export const revalidate = 300;
 
@@ -20,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /** Edge-to-edge product grid with hairline dividers. */
-const FLUSH = "-mx-(--gutter) grid grid-cols-2 border-l border-t border-ink/15 md:grid-cols-3 xl:grid-cols-5";
+const FLUSH = "pgrid -mx-(--gutter) grid grid-cols-2 border-l border-t border-ink/15 md:grid-cols-3 xl:grid-cols-5";
 const H2 = "display text-2xl sm:text-3xl";
 
 const HERO_TILES = [
@@ -30,8 +31,8 @@ const HERO_TILES = [
 ] as const;
 
 export default async function HomePage() {
-  const [franchises, categories, products, store, storeId] = await Promise.all([getFranchises(), getCategories(), getAllProducts(), getStore(), currentStoreId()]);
-  if (storeId !== DEFAULT_STORE_ID) return <StoreHome store={store} products={products} categories={categories} />;
+  const [franchises, categories, products, store, storeId, theme] = await Promise.all([getFranchises(), getCategories(), getAllProducts(), getStore(), currentStoreId(), getTheme()]);
+  if (storeId !== DEFAULT_STORE_ID) return <StoreHome store={store} products={products} categories={categories} theme={theme} />;
   const nameBySlug = Object.fromEntries(franchises.map((f) => [f.slug, f.name]));
   const fresh = products.filter((p) => p.isNew).slice(0, 5);
   const drop = products.find((p) => p.isNew && p.isFeatured && p.inStock) ?? products[0];

@@ -22,7 +22,7 @@ export function ProductCard({ product, franchiseName, priority = false, variant 
   if (variant === "flush") {
     // Edge-to-edge catalogue cell: borderless image on a soft ground, centred copy, Quick View on hover.
     return (
-      <article className="group relative flex flex-col border-b border-r border-ink/15 bg-paper">
+      <article className="pcard pcard-flush group relative flex flex-col border-b border-r border-ink/15 bg-paper">
         <Link href={`/products/${product.slug}`} className="block">
           <div className="relative bg-paper-2">
             <ProductImage product={product} priority={priority} sizes={sizes} />
@@ -41,13 +41,13 @@ export function ProductCard({ product, franchiseName, priority = false, variant 
   }
 
   return (
-    <article className="group relative">
+    <article className="pcard group relative">
       <Link href={`/products/${product.slug}`} className="block">
-        <div className="relative border border-ink/20 bg-paper-2">
+        <div className="pcard-frame relative border border-ink/20 bg-paper-2">
           <ProductImage product={product} priority={priority} sizes={sizes} />
           {badgeEl}
         </div>
-        <h3 className="mt-3 font-bold leading-snug decoration-2 underline-offset-4 group-hover:underline">{product.name}</h3>
+        <h3 className="pcard-title mt-3 font-bold leading-snug decoration-2 underline-offset-4 group-hover:underline">{product.name}</h3>
         <p className="mt-1 flex items-baseline justify-between gap-3 text-sm">
           <span className="text-muted">{franchiseName}</span>
           <span className="flex items-baseline gap-2">

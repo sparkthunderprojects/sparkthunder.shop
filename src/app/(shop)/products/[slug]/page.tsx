@@ -27,6 +27,7 @@ import { autoLink } from "@/lib/seo/autolink";
 import { buildMetadata } from "@/lib/seo-metadata";
 import { Price } from "@/components/Currency";
 import { worldStyle } from "@/lib/theme";
+import { getTheme } from "@/lib/theme.server";
 
 export const revalidate = 300;
 export const dynamicParams = true;
@@ -59,6 +60,8 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
     getReviews(slug),
     getQuestions(slug),
   ]);
+  const theme = await getTheme();
+  const stacked = theme.productPage === "stacked";
   const stats = await getSalesStats();
   const partners = (stats.together[product.slug] ?? [])
     .map((s) => allProducts.find((x) => x.slug === s))
@@ -99,10 +102,10 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
         ]} />
       </div>
 
-      <div className="mt-8 grid gap-12 lg:grid-cols-[1.1fr_1fr]">
-        <ProductGallery images={gallery} alts={product.imageAlts} name={product.name} sizes="(min-width:1024px) 55vw, 100vw" />
+      <div className={stacked ? "mx-auto mt-8 grid max-w-3xl gap-10" : "mt-8 grid gap-12 lg:grid-cols-[1.1fr_1fr]"} data-pdp={theme.productPage}>
+        <ProductGallery images={gallery} alts={product.imageAlts} name={product.name} sizes={stacked ? "(min-width:768px) 48rem, 100vw" : "(min-width:1024px) 55vw, 100vw"} />
 
-        <div className="lg:pt-2">
+        <div className={stacked ? "" : "lg:pt-2"}>
           {franchise && (
             <Link href={`/franchises/${franchise.slug}`} className="inline-flex items-center gap-2 font-bold hover:underline hover:underline-offset-4">
               <span className="inline-block h-3 w-3" style={{ background: "var(--color-world)" }} aria-hidden />

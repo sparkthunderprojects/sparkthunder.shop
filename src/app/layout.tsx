@@ -5,6 +5,7 @@ import { getSiteSettings } from "@/lib/catalog";
 import { SITE } from "@/lib/site";
 import { getSiteInfo } from "@/lib/site-info";
 import { getStore, storeCssVars } from "@/lib/store";
+import { getTheme } from "@/lib/theme.server";
 
 export async function generateViewport(): Promise<Viewport> {
   return { themeColor: (await getStore()).dark, width: "device-width", initialScale: 1 };
@@ -28,9 +29,9 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const store = await getStore();
+  const [store, theme] = await Promise.all([getStore(), getTheme()]);
   return (
-    <html lang="en-GB" className="h-full antialiased" style={storeCssVars(store)}>
+    <html lang="en-GB" className="h-full antialiased" style={storeCssVars(store)} data-card={theme.card}>
       <body className="flex min-h-full flex-col">{children}</body>
     </html>
   );

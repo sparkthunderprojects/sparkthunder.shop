@@ -196,7 +196,7 @@ export function Listing({ products, franchiseNames, categoryNames = {}, priority
       {shown.length === 0 ? (
         <p className="serif mt-8 text-xl text-muted">Nothing matches those filters. <button onClick={reset} className="font-bold text-ink underline underline-offset-4">Clear them</button> to see everything.</p>
       ) : (
-        <div className={`mt-6 grid transition-opacity duration-150 ${busy ? "opacity-40" : "opacity-100"} ${flush ? `-mx-(--gutter) border-l border-t border-ink/15 ${FLUSH_CLASS[view]}` : VIEW_CLASS[view]}`}>
+        <div className={`mt-6 grid transition-opacity duration-150 ${busy ? "opacity-40" : "opacity-100"} ${flush ? `pgrid -mx-(--gutter) border-l border-t border-ink/15 ${FLUSH_CLASS[view]}` : VIEW_CLASS[view]}`}>
           {shown.map((p, i) => <ProductCard key={p.slug} product={p} variant={flush ? "flush" : "default"} franchiseName={franchiseNames[p.franchiseSlug]} priority={i < priorityCount} />)}
         </div>
       )}

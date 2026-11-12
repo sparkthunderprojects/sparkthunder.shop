@@ -9,6 +9,7 @@ import { SearchTrigger } from "@/components/SearchTrigger";
 import { WishlistLink } from "@/components/WishlistLink";
 import { getAllProducts, getCategories, getFranchises } from "@/lib/catalog";
 import { getStore } from "@/lib/store";
+import { getTheme } from "@/lib/theme.server";
 import { Price, RegionFlag } from "@/components/Currency";
 import type { Product } from "@/lib/types";
 
@@ -29,7 +30,26 @@ function MiniProduct({ p }: { p: Product }) {
 }
 
 export async function Header() {
-  const [franchises, categories, products, store] = await Promise.all([getFranchises(), getCategories(), getAllProducts(), getStore()]);
+  const [franchises, categories, products, store, theme] = await Promise.all([getFranchises(), getCategories(), getAllProducts(), getStore(), getTheme()]);
+  if (theme.header === "compact") {
+    // One row: logo on the left, plain links in the middle, tools on the right. No mega menu.
+    const links = [...franchises.map((f) => ({ label: f.name, href: `/franchises/${f.slug}` })), ...categories.slice(0, franchises.length ? 3 : 6).map((c) => ({ label: c.name, href: `/categories/${c.slug}` })), { label: "New", href: "/new" }].slice(0, 7);
+    return (
+      <header className="theme-dark sticky top-0 z-40 border-b border-ink/15 bg-paper" data-header="compact">
+        <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:bg-bolt focus:px-3 focus:py-2">Skip to content</a>
+        <div className="flex h-16 items-center gap-6 px-(--gutter)">
+          <MobileMenu franchises={franchises.map(({ slug, name }) => ({ slug, name }))} categories={categories.map(({ slug, name }) => ({ slug, name }))} />
+          <Link href="/" className="flex shrink-0 items-center" aria-label={`${store.name} home`}>
+            {store.logoUrl ? <Image src={store.logoUrl} alt={store.legalName} width={store.logoWidth} height={store.logoHeight} priority unoptimized className="h-6 w-auto sm:h-7" /> : <span className="display text-2xl">{store.name}</span>}
+          </Link>
+          <nav aria-label="Primary" className="hidden flex-1 items-center gap-7 whitespace-nowrap font-bold lg:flex">
+            {links.map((l) => <Link key={l.href} href={l.href as never} className="border-b-2 border-transparent py-1 hover:border-bolt focus-visible:border-bolt">{l.label}</Link>)}
+          </nav>
+          <div className="ml-auto flex items-center gap-2"><div className="hidden md:block"><SearchTrigger /></div><RegionFlag /><RecentButton /><AccountLink /><WishlistLink /><CartLink /></div>
+        </div>
+      </header>
+    );
+  }
   const newest = [...products].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 3);
 
   return (

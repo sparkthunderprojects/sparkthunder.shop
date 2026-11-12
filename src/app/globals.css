@@ -52,7 +52,7 @@ body {
 }
 .on-ink { background: #0b0b0c; color: #f5f5f5; }
 /* Scoped palettes: dark surfaces (home, header, footer) and a forced-light island */
-.theme-dark { --color-paper: var(--store-dark, #000); --color-paper-2: color-mix(in oklab, var(--store-dark, #000) 90%, white); --color-ink: #f5f5f5; --color-muted: #a1a1a8; background: var(--store-dark, #000); color: #f5f5f5; }
+.theme-dark { --color-paper: var(--store-dark, #000); --color-paper-2: color-mix(in oklab, var(--store-dark, #000) 90%, var(--store-dark-ink, #f5f5f5)); --color-ink: var(--store-dark-ink, #f5f5f5); --color-muted: var(--store-dark-muted, #a1a1a8); background: var(--store-dark, #000); color: var(--store-dark-ink, #f5f5f5); }
 .theme-light { --color-paper: var(--store-light, #fff); --color-paper-2: color-mix(in oklab, var(--store-light, #fff) 92%, black); --color-ink: var(--store-text, #0b0b0c); --color-muted: #6a6a70; color: var(--store-text, #0b0b0c); }
 
 /* ---------- Buttons: flat, rectangular ---------- */
@@ -175,3 +175,17 @@ body {
 .price-range input[type="range"]:focus-visible::-moz-range-thumb { outline: 3px solid #0a0a0c; outline-offset: 2px; }
 .price-range input[type="range"]:active::-webkit-slider-thumb { cursor: grabbing; }
 .price-range input[type="range"]:focus { outline: none; }
+
+/* Product card styles, chosen per store in Admin > Theme and layout (html[data-card]). "bordered" is the default markup. */
+html[data-card="soft"] .pcard:not(.pcard-flush) { background: color-mix(in oklab, var(--color-paper) 94%, var(--color-ink)); border-radius: 1.25rem; padding: 0.5rem 0.5rem 0.9rem; }
+html[data-card="soft"] .pcard-frame { border-color: transparent; border-radius: 1rem; overflow: hidden; }
+html[data-card="soft"] .pcard-title { padding-inline: 0.5rem; }
+html[data-card="soft"] .pcard > a > p { padding-inline: 0.5rem; }
+html[data-card="minimal"] .pcard-frame { border-color: transparent; }
+html[data-card="minimal"] .pcard-title { font-weight: 500; letter-spacing: 0.01em; }
+
+/* The edge-to-edge catalogue grid follows the chosen card style too: soft and minimal drop the hairlines and space the cards out. */
+html[data-card="soft"] .pgrid, html[data-card="minimal"] .pgrid { border-color: transparent; gap: 0.75rem; padding-inline: var(--gutter); margin-inline: 0; }
+html[data-card="soft"] .pcard-flush, html[data-card="minimal"] .pcard-flush { border-color: transparent; }
+html[data-card="soft"] .pcard-flush { border-radius: 1.25rem; overflow: hidden; background: color-mix(in oklab, var(--color-paper) 94%, var(--color-ink)); }
+html[data-card="soft"] .pcard-flush > a > div { border-radius: 0; }
