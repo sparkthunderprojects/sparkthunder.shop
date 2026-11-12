@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 
 export type OrderForCustomer = {
   id: string; number: string; email: string; name: string; phone: string; shipping_address: Record<string, string> | null;
-  status: "paid" | "shipped" | "cancelled" | "attention"; total_pence: number; refunded_card_pence?: number; refunded_gift_pence?: number; created_at: string;
+  status: "paid" | "shipped" | "cancelled" | "attention"; total_pence: number; gift_card_pence?: number; refunded_card_pence?: number; refunded_gift_pence?: number; created_at: string;
 };
 export type CustomerNote = { email: string; tags: string[]; notes: string };
 
@@ -51,13 +51,13 @@ export function buildCustomers(input: {
   const ordered = [...input.orders].filter((o) => o.email).sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at));
   for (const o of ordered) {
     const c = get(o.email);
-    c.orderList.unshift({ id: o.id, number: o.number, status: o.status, totalPence: o.total_pence, at: o.created_at });
+    c.orderList.unshift({ id: o.id, number: o.number, status: o.status, totalPence: o.total_pence + (o.gift_card_pence ?? 0), at: o.created_at });
     if (o.name) c.name = o.name;           // the latest order's details win
     if (o.phone) c.phone = o.phone;
     if (o.shipping_address) c.address = o.shipping_address;
     if (o.status === "cancelled") continue;
     c.orders++;
-    c.spendPence += Math.max(0, o.total_pence - (o.refunded_card_pence ?? 0) - (o.refunded_gift_pence ?? 0));
+    c.spendPence += Math.max(0, o.total_pence + (o.gift_card_pence ?? 0) - (o.refunded_card_pence ?? 0) - (o.refunded_gift_pence ?? 0)); // card plus gift card, less refunds
     c.firstOrderAt ??= o.created_at;
     c.lastOrderAt = o.created_at;
   }

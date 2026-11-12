@@ -19,6 +19,7 @@ export function OrderDetail({ order: o }: { order: OrderRow }) {
   return (
     <>
       <div className="adm-h"><div><h1>{o.number}</h1><p><Link href="/admin/orders">All orders</Link> · {new Date(o.created_at).toLocaleString("en-GB")}</p></div>
+        <span style={{ display: "flex", gap: 8, alignItems: "center" }}><a className="adm-btn" target="_blank" rel="noreferrer" href={`/admin/print?kind=invoice&id=${o.id}`}>Print invoice</a><a className="adm-btn" target="_blank" rel="noreferrer" href={`/admin/print?kind=packing&id=${o.id}`}>Print packing slip</a></span>
         <span className={`adm-badge ${o.status === "shipped" ? "adm-ok" : o.status === "attention" ? "adm-bad" : o.status === "paid" ? "adm-warn" : ""}`}>{o.status}</span></div>
 
       {!o.fulfilled_at ? (

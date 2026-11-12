@@ -26,6 +26,7 @@ export function CommerceForm({ commerce, categories, status }: { commerce: Comme
   const [wrap, setWrap] = useState(pounds(commerce.giftWrapPence));
   const [countries, setCountries] = useState(commerce.shippingCountries.join(", "));
   const [support, setSupport] = useState(commerce.supportEmail);
+  const [bizAddr, setBizAddr] = useState(commerce.businessAddress);
   const [prefix, setPrefix] = useState(commerce.codePrefix);
   const [vatOn, setVatOn] = useState(commerce.vatEnabled), [vatRate, setVatRate] = useState(String(commerce.vatRatePercent)), [vatNo, setVatNo] = useState(commerce.vatNumber);
   type ZoneForm = { name: string; countries: string; first: string; extra: string; free: string; byWeight: boolean; bands: string; perKg: string };
@@ -58,7 +59,7 @@ export function CommerceForm({ commerce, categories, status }: { commerce: Comme
   const [pmsg, setPmsg] = useState("");
 
   const saveCommerce = async () => {
-    const r = await saveCommerceAction({ shippingZones: zones.map((z) => ({ name: z.name, countries: z.countries.split(/[\s,]+/).filter(Boolean), firstItemPence: toPence(z.first) ?? 0, extraItemPence: toPence(z.extra) ?? 0, freeOverPence: toPence(z.free), ...(z.byWeight ? { bands: textToBands(z.bands), extraPerKgPence: toPence(z.perKg) ?? 0 } : {}) })), shippingFlatPence: toPence(ship) ?? 0, freeShippingPence: toPence(free), giftWrapPence: toPence(wrap) ?? 0, shippingCountries: countries.split(/[\s,]+/).filter(Boolean), supportEmail: support, codePrefix: prefix, vatEnabled: vatOn, vatRatePercent: Number(vatRate) || 0, vatNumber: vatNo, weights: { defaultGrams: Math.round(Number(defGrams)) || 0, byCategory: Object.fromEntries(Object.entries(catGrams).filter(([, v]) => v.trim() !== "").map(([k, v]) => [k, Math.round(Number(v))])), byProduct: textToMap(prodGrams) }, currencies: currencies.map((c) => ({ code: c.code.trim().toUpperCase(), rate: Number(c.rate) })).filter((c) => c.code && Number.isFinite(c.rate)) });
+    const r = await saveCommerceAction({ shippingZones: zones.map((z) => ({ name: z.name, countries: z.countries.split(/[\s,]+/).filter(Boolean), firstItemPence: toPence(z.first) ?? 0, extraItemPence: toPence(z.extra) ?? 0, freeOverPence: toPence(z.free), ...(z.byWeight ? { bands: textToBands(z.bands), extraPerKgPence: toPence(z.perKg) ?? 0 } : {}) })), shippingFlatPence: toPence(ship) ?? 0, freeShippingPence: toPence(free), giftWrapPence: toPence(wrap) ?? 0, shippingCountries: countries.split(/[\s,]+/).filter(Boolean), supportEmail: support, codePrefix: prefix, vatEnabled: vatOn, vatRatePercent: Number(vatRate) || 0, vatNumber: vatNo, businessAddress: bizAddr, weights: { defaultGrams: Math.round(Number(defGrams)) || 0, byCategory: Object.fromEntries(Object.entries(catGrams).filter(([, v]) => v.trim() !== "").map(([k, v]) => [k, Math.round(Number(v))])), byProduct: textToMap(prodGrams) }, currencies: currencies.map((c) => ({ code: c.code.trim().toUpperCase(), rate: Number(c.rate) })).filter((c) => c.code && Number.isFinite(c.rate)) });
     setMsg(r.ok ? "Saved." : r.error); if (r.ok) router.refresh();
   };
   const saveSecrets = async (clear = false) => {
@@ -136,6 +137,7 @@ export function CommerceForm({ commerce, categories, status }: { commerce: Comme
           </div>
         </div>
         <Field label="Support email"><input className="adm-in" type="email" value={support} onChange={(e) => setSupport(e.target.value)} /></Field>
+        <Field label="Business address (printed on invoices)" hint="Your registered business address, one line or several."><textarea className="adm-in" rows={3} value={bizAddr} onChange={(e) => setBizAddr(e.target.value)} /></Field>
         <Field label="Order and gift card prefix" hint={`Letters at the start of order numbers and gift card codes, e.g. ${prefix || "SPK"}-1001. 2 to 5 letters or numbers.`}><input className="adm-in" maxLength={5} value={prefix} onChange={(e) => setPrefix(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))} /></Field>
         <div><button type="button" className="adm-btn" onClick={saveCommerce}>Save</button> <span role="status">{msg}</span></div>
       </div>

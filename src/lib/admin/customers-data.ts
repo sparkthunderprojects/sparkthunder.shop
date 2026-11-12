@@ -7,7 +7,7 @@ const LIMIT = 20_000;
 export async function loadCustomers(db: Db): Promise<Customer[]> {
   const svc = serviceClient() ?? db;
   const [o, s, p, r, v, n] = await Promise.all([
-    db.from("orders").select("id, number, email, name, phone, shipping_address, status, total_pence, refunded_card_pence, refunded_gift_pence, created_at").order("created_at", { ascending: false }).limit(LIMIT),
+    db.from("orders").select("id, number, email, name, phone, shipping_address, status, total_pence, gift_card_pence, refunded_card_pence, refunded_gift_pence, created_at").order("created_at", { ascending: false }).limit(LIMIT),
     db.from("subscribers").select("email").limit(LIMIT),
     svc.from("reward_points").select("email, points").limit(LIMIT),
     db.from("return_requests").select("email").limit(LIMIT),
