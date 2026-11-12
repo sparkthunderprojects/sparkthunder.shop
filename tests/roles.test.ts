@@ -15,7 +15,7 @@ describe("staff roles", () => {
     expect(can(permsForRole("editor"), "marketing")).toBe(false);
   });
   it("managers can do everything in their store, owners everywhere, unknown roles nothing", () => {
-    expect(ROLE_PERMS.manager).toHaveLength(7);
+    expect(ROLE_PERMS.manager).toHaveLength(8);
     expect(can("*", "settings")).toBe(true);
     expect(permsForRole(undefined)).toEqual([]);
     expect(isRole("manager")).toBe(true); expect(isRole("admin")).toBe(false);

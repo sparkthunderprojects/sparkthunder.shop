@@ -2,6 +2,7 @@ import { getAdmin, permsHere } from "@/lib/admin/auth";
 import { can } from "@/lib/admin/roles";
 import { logActivity } from "@/lib/admin/activity";
 import { toCsv } from "@/lib/csv";
+import { loadCustomers } from "@/lib/admin/customers-data";
 import { currentStoreId } from "@/lib/db/stores";
 import type { OrderRow } from "@/lib/shop/fulfil";
 
@@ -13,7 +14,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ kind: s
   const admin = await getAdmin();
   if (!admin) return new Response("Not signed in", { status: 401 });
   const { kind } = await params;
-  const need = kind === "products" ? "catalogue" : kind === "subscribers" ? "marketing" : "reports";
+  const need = kind === "products" ? "catalogue" : kind === "subscribers" ? "marketing" : kind === "customers" ? "customers" : "reports";
   if (!can(await permsHere(admin), need)) return new Response("Your role does not allow that export.", { status: 403 });
   const { db } = admin;
   let name = "", body = "";
@@ -28,6 +29,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ kind: s
   } else if (kind === "subscribers") {
     const { data } = await db.from("subscribers").select("*").order("created_at", { ascending: false });
     name = "subscribers"; body = toCsv(["Email", "Joined"], ((data ?? []) as { email: string; created_at: string }[]).map((s) => [s.email, s.created_at]));
+  } else if (kind === "customers") {
+    const list = await loadCustomers(db);
+    const rows = list.sort((a, b) => b.spendPence - a.spendPence).map((c) => [c.email, c.name, c.phone, c.orders, pounds(c.spendPence), pounds(c.aovPence), c.firstOrderAt ?? "", c.lastOrderAt ?? "", c.subscribed ? "yes" : "no", c.points, c.tags.join("; "), c.address?.country ?? ""]);
+    name = "customers"; body = toCsv(["Email", "Name", "Phone", "Orders", "Lifetime spend", "Average order", "First order", "Last order", "Newsletter", "Spark points", "Tags", "Country"], rows);
   } else return new Response("Unknown export", { status: 404 });
   await logActivity("export", `Downloaded ${name} as CSV`, { type: "export", id: name });
   return new Response(body, { headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename="${await currentStoreId()}-${name}-${new Date().toISOString().slice(0, 10)}.csv"`, "Cache-Control": "private, no-store" } });

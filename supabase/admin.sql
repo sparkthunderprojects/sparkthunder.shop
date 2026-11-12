@@ -1143,3 +1143,18 @@ create index if not exists scheduled_changes_due_idx on public.scheduled_changes
 alter table public.scheduled_changes enable row level security;
 drop policy if exists "admin all scheduled_changes" on public.scheduled_changes;
 create policy "admin all scheduled_changes" on public.scheduled_changes for all using (public.can_admin_store(store_id)) with check (public.can_admin_store(store_id));
+
+-- ============================================================================
+-- Customer notes and tags (idempotent): the owner's private notes about a customer
+-- ============================================================================
+create table if not exists public.customer_notes (
+  store_id text not null default 'sparkthunder' references public.stores(id) on update cascade,
+  email text not null check (email = lower(email)),
+  tags text[] not null default '{}',
+  notes text not null default '',
+  updated_at timestamptz not null default now(),
+  primary key (store_id, email)
+);
+alter table public.customer_notes enable row level security;
+drop policy if exists "admin all customer_notes" on public.customer_notes;
+create policy "admin all customer_notes" on public.customer_notes for all using (public.can_admin_store(store_id)) with check (public.can_admin_store(store_id));

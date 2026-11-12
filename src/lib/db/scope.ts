@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 /** Tables whose rows belong to one store. Everything else (stores, admin_users, gift_card_ledger) is platform-wide or reached through a scoped parent. */
 const SCOPED = new Set([
   "franchises", "categories", "products", "collections", "orders", "checkout_snapshots", "discount_codes", "gift_cards",
-  "reviews", "stock_alerts", "reward_points", "product_questions", "media", "redirects", "settings", "subscribers", "order_refunds", "audit_log", "system_events", "promotions", "return_requests", "basket_saves", "email_unsubscribes", "api_keys", "webhook_endpoints", "webhook_deliveries", "scheduled_changes",
+  "reviews", "stock_alerts", "reward_points", "product_questions", "media", "redirects", "settings", "subscribers", "order_refunds", "audit_log", "system_events", "promotions", "return_requests", "basket_saves", "email_unsubscribes", "api_keys", "webhook_endpoints", "webhook_deliveries", "scheduled_changes", "customer_notes",
 ]);
 const WRITES = new Set(["insert", "upsert"]);
 
