@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { deleteProductAction, saveProductAction } from "../../../actions";
+import { deleteProductAction, duplicateProductAction, saveProductAction } from "../../../actions";
 import { MediaPicker } from "../../../MediaPicker";
 import { DescCounter, ScoreList, SerpPreview, SocialPreview, TitleCounter } from "../../../SeoWidgets";
 import { Field, penceToPounds, poundsToPence, Toggle, useAction } from "../../../ui";
@@ -74,6 +74,9 @@ export function ProductEditor({ initial, isNew, franchises, categories, media, b
       if (publish !== undefined) set("published", publish);
     });
   }
+  function duplicate() {
+    run(() => duplicateProductAction(initial.slug), "Copied as a draft. Opening it now.", (r) => router.push(`/admin/products/${r.slug}`));
+  }
   function remove() {
     if (!confirm(`Delete "${p.name}"? Its URL will 301 redirect to the ${p.categorySlug} category.`)) return;
     run(() => deleteProductAction(initial.slug, null), "Deleted", () => router.push("/admin/products"));
@@ -85,7 +88,10 @@ export function ProductEditor({ initial, isNew, franchises, categories, media, b
       <div className="adm-h">
         <div><h1>{isNew ? "New product" : p.name || "Edit product"}</h1>
           <p><Link href="/admin/products">All products</Link>{!isNew && p.published !== false ? <> · <a href={`/products/${initial.slug}`} target="_blank" rel="noreferrer">View live page</a></> : null}</p></div>
-        <span className={`adm-badge ${p.published !== false ? "adm-ok" : ""}`}>{p.published !== false ? "Published" : "Draft"}</span>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          {!isNew ? <button type="button" className="adm-btn" onClick={duplicate} disabled={pending}>Duplicate</button> : null}
+          <span className={`adm-badge ${p.published !== false ? "adm-ok" : ""}`}>{p.published !== false ? "Published" : "Draft"}</span>
+        </div>
       </div>
 
       <section className="adm-card"><h2>General</h2>

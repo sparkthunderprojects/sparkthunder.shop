@@ -16,6 +16,7 @@ import { CATALOG_TAG } from "@/lib/catalog";
 import { sessionClient } from "@/lib/db/clients";
 import { pingIndexNow } from "@/lib/seo/indexnow";
 import { slugify } from "@/lib/seo/text";
+import { duplicateProduct } from "@/lib/duplicate";
 import type { Category, Franchise, Product } from "@/lib/types";
 
 export type Result<T = object> = ({ ok: true } & T) | { ok: false; error: string; fields?: Record<string, string> };
@@ -132,6 +133,23 @@ export async function saveProductAction(p: Product, originalSlug: string | null)
     const m = message(e);
     return { ok: false, error: /sku_key|duplicate key/.test(m) ? "That slug or SKU is already used by another product." : m };
   }
+}
+
+/** Makes a draft copy of a product and returns its slug so the editor can open it. */
+export async function duplicateProductAction(slug: string): Promise<Result<{ slug: string }>> {
+  try {
+    const { db } = await requireAdminAction("catalogue");
+    const original = await repo.getProductRaw(db, slug);
+    if (!original) return { ok: false, error: "That product no longer exists." };
+    const { data } = await db.from("products").select("slug, sku");
+    const rows = (data ?? []) as { slug: string; sku: string }[];
+    const copy = duplicateProduct(original, { slugs: rows.map((r) => r.slug), skus: rows.map((r) => r.sku) }, new Date().toISOString().slice(0, 10));
+    await repo.writeProduct(db, copy, null);
+    await refresh([`/products/${copy.slug}`]);
+    revalidatePath("/admin", "layout");
+    await audit("product.duplicate", `Duplicated ${slug} as ${copy.slug}`, { type: "product", id: copy.slug });
+    return { ok: true, slug: copy.slug };
+  } catch (e) { return { ok: false, error: message(e) }; }
 }
 
 export async function deleteProductAction(slug: string, redirectTo: string | null): Promise<Result> {

@@ -6,6 +6,7 @@ import { currentStoreId, DEFAULT_STORE_ID } from "@/lib/db/stores";
 import { categoryFromRow, collectionFromRow, franchiseFromRow, productFromRow, type CategoryRow, type CollectionRow, type FranchiseRow, type ProductRow } from "@/lib/db/mappers";
 import { seedCatalog } from "@/data/seed";
 import { getSalesStats, withBestSellers } from "@/lib/sales";
+import { applySmartRules, normaliseSmartMap } from "@/lib/smart-collections";
 import type { Catalog, Collection, Product } from "@/lib/types";
 
 /**
@@ -44,22 +45,25 @@ export const CATALOG_TAG = "catalog";
 async function loadFromSupabase(storeId: string): Promise<Catalog | null> {
   const supabase = publicClient(storeId);
   if (!supabase) return null;
-  const [f, c, p, col] = await Promise.all([
+  const [f, c, p, col, smart] = await Promise.all([
     supabase.from("franchises").select("*").order("sort_order"),
     supabase.from("categories").select("*").order("sort_order"),
     supabase.from("products").select("*").eq("published", true).order("created_at", { ascending: false }),
     supabase.from("collections").select("*").eq("published", true).order("sort_order"),
+    supabase.from("settings").select("value").eq("key", "smart_collections").maybeSingle(),
   ]);
   if (f.error || c.error || p.error) {
     void log.error("catalog.db_error", "Supabase error, falling back to seed data", { error: (f.error ?? c.error ?? p.error)?.message });
     return null;
   }
+  const products = (p.data as ProductRow[]).map(productFromRow);
+  // The table may not exist yet on an older database: no collections is fine.
+  const plain = col.error ? [] : (col.data as CollectionRow[]).map(collectionFromRow);
   return {
     franchises: (f.data as FranchiseRow[]).map(franchiseFromRow),
     categories: (c.data as CategoryRow[]).map(categoryFromRow),
-    products: (p.data as ProductRow[]).map(productFromRow),
-    // The table may not exist yet on an older database: no collections is fine.
-    collections: col.error ? [] : (col.data as CollectionRow[]).map(collectionFromRow),
+    products,
+    collections: applySmartRules(plain, products, normaliseSmartMap((smart.data as { value?: unknown } | null)?.value)),
   };
 }
 

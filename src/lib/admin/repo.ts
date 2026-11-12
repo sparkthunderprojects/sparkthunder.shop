@@ -37,6 +37,8 @@ export async function writeProduct(db: Db, p: Product, originalSlug: string | nu
   if (originalSlug === null) {
     const { error } = await db.from("products").insert(row);
     fail("Could not create the product", error);
+    // A product deleted earlier leaves a redirect from its address; a new product on the same address must not be hidden behind it.
+    await db.from("redirects").delete().eq("from_path", `/products/${p.slug}`);
   } else {
     const { created_at: _keep, ...patch } = row;
     void _keep;
