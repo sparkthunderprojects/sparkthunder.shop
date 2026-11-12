@@ -35,7 +35,7 @@ export function GiftCardDesigner({ store }: { store: DesignerStore }) {
     const key = Math.abs([...`${email}|${to}|${from}|${msg}|${theme.id}`].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7)).toString(36);
     add({
       slug: `gift-card-${value}-${key}`, name: `${store.name} gift card ${formatPrice(value)}`, pricePence: value, image: store.logoUrl,
-      href: "/gift-cards", gift: { recipientName: to.trim(), recipientEmail: email.trim(), senderName: from.trim(), message: msg.trim(), theme: theme.id },
+      href: "/gift-cards/send", gift: { recipientName: to.trim(), recipientEmail: email.trim(), senderName: from.trim(), message: msg.trim(), theme: theme.id },
       note: `For ${to.trim() || email}${from.trim() ? ` from ${from.trim()}` : ""} (${email})`,
     });
     setAdded(true);
