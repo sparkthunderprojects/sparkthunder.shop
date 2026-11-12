@@ -67,8 +67,7 @@ export function Sidebar({ email, demo, stores, current, owner, perms }: { email:
         {SEO.map(item)}
         {owner ? item({ href: "/admin/overview", label: "All stores" }) : null}
         {owner ? item({ href: "/admin/stores", label: "Stores" }) : null}
-        <div className="adm-sep">Coming soon</div>
-        <span>Customers <small>Soon</small></span>
+        {owner ? item({ href: "/admin/domains", label: "Domains" }) : null}
         <div className="adm-sep">Site</div>
         <a href="/" target="_blank" rel="noreferrer">View storefront</a>
       </nav>
