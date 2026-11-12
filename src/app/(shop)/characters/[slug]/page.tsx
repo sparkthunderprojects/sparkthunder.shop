@@ -17,15 +17,15 @@ export async function generateMetadata(props: PageProps<"/characters/[slug]">): 
   await connection();
   const { slug } = await props.params;
   const [c, products] = await Promise.all([getCharacter(slug), getCharacterProducts(slug)]);
-  if (!c || !products.length) return { title: "Character not found", robots: { index: false } };
-  return buildMetadata({ title: `${c.name} merchandise`, description: c.blurb || `Official ${c.name} merchandise: ${products.slice(0, 3).map((p) => p.name).join(", ")} and more.`, path: `/characters/${slug}`, image: c.image || undefined });
+  if (!c) return { title: "Character not found", robots: { index: false } };
+  return buildMetadata({ title: `${c.name} merchandise`, description: c.blurb || `Official ${c.name} merchandise: ${products.slice(0, 3).map((p) => p.name).join(", ")} and more.`, path: `/characters/${slug}`, image: c.image || undefined, noindex: !products.length });
 }
 
 export default async function CharacterPage(props: PageProps<"/characters/[slug]">) {
   await connection();
   const { slug } = await props.params;
   const [c, products] = await Promise.all([getCharacter(slug), getCharacterProducts(slug)]);
-  if (!c || !products.length) notFound();
+  if (!c) notFound();
   const [franchises, categories] = await Promise.all([getFranchises(), getCategories()]);
   const name = c.name;
   const franchise = franchises.find((f) => f.slug === c.franchiseSlug);
@@ -45,7 +45,7 @@ export default async function CharacterPage(props: PageProps<"/characters/[slug]
           {franchise ? <p className="mt-3 text-sm"><Link href={`/franchises/${franchise.slug}`} className="link-line font-semibold">More from {franchise.name}</Link></p> : null}
         </div>
       </div>
-      <div className="mt-10"><Listing products={products} franchiseNames={Object.fromEntries(franchises.map((f) => [f.slug, f.name]))} categoryNames={Object.fromEntries(categories.map((x) => [x.slug, x.name]))} flush /></div>
+      {products.length === 0 ? <p className="serif mt-10 text-xl text-muted">New {name} merchandise is on its way.</p> : <div className="mt-10"><Listing products={products} franchiseNames={Object.fromEntries(franchises.map((f) => [f.slug, f.name]))} categoryNames={Object.fromEntries(categories.map((x) => [x.slug, x.name]))} flush /></div>}
     </div>
   );
 }

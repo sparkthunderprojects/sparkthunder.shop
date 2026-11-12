@@ -35,9 +35,9 @@ describe("mergeCharacters", () => {
     expect(homeList(all).map((c) => c.slug)).toEqual(["zed"]);
     expect(homeList(all.map((c) => ({ ...c, featured: false }))).map((c) => c.slug)).toEqual(["zed", "amy", "bob"]);
   });
-  it("hides characters with no products from shoppers and filters by franchise", () => {
+  it("shows characters the owner set up even before a product is tagged, and filters by franchise", () => {
     const withEmpty = mergeCharacters(normaliseCharacters([{ name: "Ghost", franchiseSlug: "occult" }]), products);
-    expect(homeList(withEmpty).map((c) => c.slug)).not.toContain("ghost");
+    expect(homeList(withEmpty).map((c) => c.slug)).toContain("ghost");
     expect(forFranchise(all, "occult").map((c) => c.slug)).toEqual(["zed", "bob"]);
   });
 });

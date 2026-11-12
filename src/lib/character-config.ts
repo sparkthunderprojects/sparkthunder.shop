@@ -46,8 +46,8 @@ export function mergeCharacters(profiles: CharacterProfile[], products: Pick<Pro
   return [...list, ...extra];
 }
 
-/** Characters shown to shoppers: only those with products. The home page carousel prefers the featured ones when any are set. */
-export const shopperList = (all: CharacterEntry[]) => all.filter((c) => c.count > 0);
+/** Characters shown to shoppers: the ones the owner set up (even before any product is tagged), plus tag-only ones. The home page carousel prefers the featured ones when any are set. */
+export const shopperList = (all: CharacterEntry[]) => all.filter((c) => c.configured || c.count > 0);
 export function homeList(all: CharacterEntry[]): CharacterEntry[] {
   const live = shopperList(all);
   const featured = live.filter((c) => c.featured);
