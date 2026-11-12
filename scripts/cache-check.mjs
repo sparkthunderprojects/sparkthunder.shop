@@ -5,6 +5,7 @@ let failed = 0; const bad = (m) => { failed++; console.log("FAIL", m); };
 const PUBLIC = ["/", "/shop", "/new", "/products/knightverge-crest-tee", "/categories/apparel", "/franchises", "/franchises/knightverge", "/privacy", "/terms", "/delivery-returns"];
 const PRIVATE = ["/cart", "/checkout", "/search?q=tee", "/account", "/account/login", "/admin", "/admin/orders", "/checkout/success?session_id=x", "/unsubscribe"];
 for (const p of PUBLIC) {
+  await (await fetch(base + p, { redirect: "manual" })).text(); // after a settings save the first request may still get the previous copy while the page is rebuilt; what matters here is that two visitors get the same page
   const a = await fetch(base + p, { redirect: "manual" });
   const cc = a.headers.get("cache-control") ?? "";
   if (!/s-maxage=\d+/.test(cc) || /no-store|private/.test(cc)) bad(`${p} is not cacheable by a CDN (${cc})`);

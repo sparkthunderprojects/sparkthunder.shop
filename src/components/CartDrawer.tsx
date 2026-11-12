@@ -7,7 +7,8 @@ import { useCart } from "@/components/CartProvider";
 import { FreeShippingBar } from "@/components/FreeShippingBar";
 import { SlideOver } from "@/components/SlideOver";
 import type { QuickProduct } from "@/lib/card";
-import { useMoney } from "@/components/Currency";
+import { DeliveringTo, useMoney } from "@/components/Currency";
+import { PaymentBadges } from "@/components/PaymentBadges";
 
 export function CartDrawer({ suggestions = [] }: { suggestions?: QuickProduct[] }) {
   const money = useMoney();
@@ -15,7 +16,7 @@ export function CartDrawer({ suggestions = [] }: { suggestions?: QuickProduct[] 
   const addOrChoose = useAddToBasket();
   const more = suggestions.filter((s) => s.inStock && !items.some((i) => i.slug === s.slug)).slice(0, 3);
   return (
-    <SlideOver open={isOpen} onClose={closeCart} title="Your basket">
+    <SlideOver open={isOpen} onClose={closeCart} title="Your basket" width="w-[min(40rem,100vw)]">
       {items.length === 0 ? (
           <div className="flex-1 p-6">
             <p className="serif text-xl text-muted">Your basket is empty.</p>
@@ -67,10 +68,12 @@ export function CartDrawer({ suggestions = [] }: { suggestions?: QuickProduct[] 
             <div className="border-t border-white/15 p-5">
               <p className="flex justify-between text-lg"><span>Subtotal</span><span className="font-bold">{money(subtotalPence)}</span></p>
               <p className="mt-1 text-sm text-muted">Shipping and taxes are calculated at checkout.</p>
+              <p className="mt-1 text-sm text-muted">Delivering to <DeliveringTo /></p>
               <div className="mt-4 grid gap-3">
                 <Link href="/cart" onClick={closeCart} className="btn">Checkout</Link>
                 <Link href="/cart" onClick={closeCart} className="btn btn-ink">View basket</Link>
               </div>
+              <PaymentBadges className="mt-5 flex justify-center" />
             </div>
           </>
         )}

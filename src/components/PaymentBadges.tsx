@@ -22,9 +22,9 @@ const MARKS: Record<(typeof PAYMENT_METHODS)[number], React.ReactNode> = {
   ),
 };
 
-export function PaymentBadges() {
+export function PaymentBadges({ className = "mt-6" }: { className?: string }) {
   return (
-    <div className="mt-6">
+    <div className={className}>
       <p className="sr-only">Accepted payment methods: {PAYMENT_METHODS.join(", ")}</p>
       <ul className="flex flex-wrap gap-2" aria-hidden="true">
         {PAYMENT_METHODS.map((m) => <li key={m} title={m}>{MARKS[m]}</li>)}

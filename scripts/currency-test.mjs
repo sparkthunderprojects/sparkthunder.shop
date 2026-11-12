@@ -65,7 +65,18 @@ try {
   await page.waitForFunction(() => /≈€29\.99/.test(document.querySelector("main")?.innerText ?? ""));
   check(true, "choosing Ireland shows euro prices");
   await page.getByRole("button", { name: "M", exact: true }).click();
+  check((await page.locator("header").getByRole("button", { name: /Delivering to Ireland/ }).locator("img").getAttribute("src")) === "/flags/ie.svg", "the header shows Ireland's flag");
   await page.getByRole("button", { name: "Add to basket", exact: true }).first().click();
+  const drawer = page.getByRole("dialog", { name: "Your basket" });
+  await drawer.waitFor();
+  await page.waitForTimeout(600);
+  const box = await drawer.locator("aside").boundingBox();
+  check(box && box.width >= 600, "the basket slides out wide");
+  check(/Delivering to\s+Ireland/.test(await drawer.innerText()) && (await drawer.getByText(/Accepted payment methods: Visa/).count()) === 1, "the basket shows where it delivers and the payment methods");
+  await page.keyboard.press("Escape");
+  await page.locator("header").getByRole("button", { name: /Delivering to Ireland/ }).click();
+  check(await page.getByRole("dialog", { name: "Select your region" }).isVisible(), "the header flag opens the region list");
+  await page.keyboard.press("Escape");
   await page.goto(`${base}/cart`, { waitUntil: "networkidle" });
   check((await page.getByLabel("Deliver to").inputValue()) === "IE", "the basket delivers to the chosen country");
   // Put the demo store back as it was, so the test can be run again.
