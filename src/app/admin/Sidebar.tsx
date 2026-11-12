@@ -17,6 +17,7 @@ const NAV: { href: string; label: string; exact?: boolean }[] = [
   { href: "/admin/media", label: "Media library" },
   { href: "/admin/gift-cards", label: "Gift cards" },
   { href: "/admin/collections", label: "Collections" },
+  { href: "/admin/schedule", label: "Scheduled changes" },
   { href: "/admin/reviews", label: "Reviews" },
   { href: "/admin/questions", label: "Questions" },
   { href: "/admin/rewards", label: "Spark points" },

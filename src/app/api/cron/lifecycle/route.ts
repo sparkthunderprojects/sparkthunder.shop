@@ -5,6 +5,10 @@ import { currentStoreId } from "@/lib/db/stores";
 import { sendEmail } from "@/lib/email/send";
 import { runDeliveries } from "@/lib/webhooks/outbound";
 import { runLifecycle } from "@/lib/lifecycle";
+import { runScheduled } from "@/lib/schedule";
+import { revalidatePath } from "next/cache";
+import { bustTag } from "@/lib/tags";
+import { CATALOG_TAG } from "@/lib/catalog";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -26,7 +30,9 @@ async function handle(req: Request) {
     const result = await runLifecycle(db, { storeId, send: sendEmail });
     if (result.reminders || result.reviewRequests) await log.info("lifecycle.sent", `Sent ${result.reminders} basket reminders and ${result.reviewRequests} review requests`, result as never, { storeId });
     const hooks = await runDeliveries(db);
-    return Response.json({ ...result, webhooks: hooks });
+    const schedule = await runScheduled(db);
+    if (schedule.started || schedule.ended) { await bustTag(CATALOG_TAG); revalidatePath("/", "layout"); await log.info("schedule.applied", `Scheduled changes: ${schedule.started} started, ${schedule.ended} ended`, schedule as never, { storeId }); }
+    return Response.json({ ...result, webhooks: hooks, schedule });
   } catch (e) {
     await log.error("lifecycle.failed", "The scheduled emails failed", { error: e }, { storeId });
     return new Response("Failed", { status: 500 });

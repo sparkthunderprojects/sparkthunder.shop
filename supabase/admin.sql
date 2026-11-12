@@ -1120,3 +1120,26 @@ create index if not exists webhook_deliveries_due_idx on public.webhook_deliveri
 alter table public.webhook_deliveries enable row level security;
 drop policy if exists "admin read webhook_deliveries" on public.webhook_deliveries;
 create policy "admin read webhook_deliveries" on public.webhook_deliveries for select using (public.can_admin_store(store_id));
+
+-- ============================================================================
+-- Scheduled changes (idempotent): show/hide products and collections, and run sales, at a chosen time
+-- Private on purpose: unannounced drop times must not be readable by shoppers.
+-- ============================================================================
+create table if not exists public.scheduled_changes (
+  id uuid primary key default gen_random_uuid(),
+  store_id text not null default 'sparkthunder' references public.stores(id) on update cascade,
+  action text not null check (action in ('show_product','hide_product','sale','show_collection','hide_collection')),
+  target text not null,                               -- product or collection slug
+  run_at timestamptz not null,
+  ends_at timestamptz,                                -- optional: when it is undone
+  percent_off integer check (percent_off between 1 and 90),
+  status text not null default 'pending' check (status in ('pending','live','done','failed','cancelled')),
+  before jsonb,                                       -- prices remembered so a sale can be undone
+  result text not null default '',
+  applied_at timestamptz,
+  created_at timestamptz not null default now()
+);
+create index if not exists scheduled_changes_due_idx on public.scheduled_changes (store_id, status, run_at);
+alter table public.scheduled_changes enable row level security;
+drop policy if exists "admin all scheduled_changes" on public.scheduled_changes;
+create policy "admin all scheduled_changes" on public.scheduled_changes for all using (public.can_admin_store(store_id)) with check (public.can_admin_store(store_id));
