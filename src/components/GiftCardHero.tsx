@@ -1,3 +1,4 @@
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 import type { GiftTheme } from "@/lib/giftcards/themes";
 
 type Store = { name: string; logoUrl: string; logoWidth: number; logoHeight: number; dark: string; accent: string };
@@ -11,7 +12,7 @@ const Star = ({ className }: { className: string }) => (
 /** Full-width branded banner for the gift cards page: the store's own colours, logo, a floating phone showing the emailed card, sparkles and swooping lines. */
 export function GiftCardHero({ store, card }: { store: Store; card: GiftTheme }) {
   return (
-    <section className="relative -mx-(--gutter) mt-6 overflow-hidden text-white" data-giftcards="hero" style={{ background: `linear-gradient(180deg, ${store.dark} 0%, ${store.dark} 22%, color-mix(in srgb, ${store.dark} 55%, ${store.accent}) 78%, color-mix(in srgb, ${store.dark} 25%, ${store.accent}) 100%)` }}>
+    <section className="relative -mx-(--gutter) overflow-hidden text-white" data-giftcards="hero" style={{ background: `linear-gradient(180deg, ${store.dark} 0%, ${store.dark} 22%, color-mix(in srgb, ${store.dark} 55%, ${store.accent}) 78%, color-mix(in srgb, ${store.dark} 25%, ${store.accent}) 100%)` }}>
       {/* sparkles */}
       <div aria-hidden className="pointer-events-none absolute inset-0">
         {DOTS.map(([x, y, s], i) => <span key={i} className="gc-twinkle absolute rounded-full bg-white/50" style={{ animationDelay: `${(i % 6) * 0.45}s`, left: `${x}%`, top: `${y}%`, width: s, height: s, filter: s > 7 ? "blur(1px)" : undefined, opacity: 0.35 + (i % 4) * 0.15 }} />)}
@@ -23,7 +24,9 @@ export function GiftCardHero({ store, card }: { store: Store; card: GiftTheme })
         </svg>
       </div>
 
-      <div className="relative mx-auto flex min-h-[38rem] max-w-5xl flex-col items-center px-(--gutter) pt-10 text-center md:min-h-[44rem]">
+      <div className="absolute left-(--gutter) top-5 z-20"><Breadcrumbs tone="world" items={[{ name: "Home", href: "/" }, { name: "Gift cards" }]} /></div>
+
+      <div className="relative mx-auto flex min-h-[38rem] max-w-5xl flex-col items-center px-(--gutter) pt-16 text-center md:min-h-[44rem]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         {store.logoUrl ? <img src={store.logoUrl} alt={store.name} width={store.logoWidth || 240} height={store.logoHeight || 60} className="h-12 w-auto max-w-[70vw] md:h-16" /> : <span className="display text-4xl md:text-5xl">{store.name}</span>}
         <h1 className="mt-2 text-3xl font-extrabold uppercase tracking-[0.35em] md:text-5xl"><span className="sr-only">{store.name} </span>Gift card</h1>
