@@ -41,7 +41,8 @@ try {
   await page.locator("#paycalc-amount").fill("100");
   const parts = await page.locator("[data-paycalc-part]").allInnerTexts();
   check(parts.length === 4 && parts.every((p) => p.trim() === "£25.00"), `Clearpay splits £100 into four £25.00 payments (${parts.join(", ")})`);
-  await page.goto(`${base}/payment-options/klarna`, { waitUntil: "networkidle" });
+  await page.goto(`${base}/payment-options/klarna`, { waitUntil: "domcontentloaded" });
+  await page.locator("#paycalc-amount").waitFor(); await page.waitForTimeout(800);
   await page.locator("#paycalc-amount").fill("10");
   const k = (await page.locator("[data-paycalc-part]").allInnerTexts()).map((s) => s.trim());
   check(k.length === 3 && k[0] === "£3.34" && k[1] === "£3.33", `Klarna splits £10 into 3 payments (${k.join(", ")})`);
