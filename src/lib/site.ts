@@ -32,7 +32,7 @@ export const PAYMENT_METHODS = ["Visa", "Mastercard", "American Express", "Apple
 export const FRANCHISE_LOGOS: Record<string, { src: string; width: number; height: number; /** Dark artwork: gets a soft light glow so it reads on dark tiles. */ glow?: boolean }> = {
   knightverge: { src: "/franchise/knightverge.png", width: 1200, height: 268 },
   "occult-inc": { src: "/franchise/occult-inc.png", width: 1200, height: 439 },
-  "ludicrous-laughs": { src: "/franchise/ludicrous-laughs.png", width: 1200, height: 655 },
+  "ludicrous-laughs": { src: "/franchise/ludicrous-laughs.png", width: 1200, height: 777 },
   shadeveil: { src: "/franchise/shadeveil.png", width: 1200, height: 440, glow: true },
 };
 
