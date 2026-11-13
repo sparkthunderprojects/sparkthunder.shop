@@ -110,7 +110,7 @@ export function CommerceForm({ commerce, categories, status }: { commerce: Comme
         <Field label="Gift wrap price (£)"><input className="adm-in" inputMode="decimal" value={wrap} onChange={(e) => setWrap(e.target.value)} /></Field>
         {zones.length === 0 ? <Field label="Ships to (country codes)" hint="For example GB, IE, US."><input className="adm-in" value={countries} onChange={(e) => setCountries(e.target.value)} /></Field> : null}
         <fieldset style={{ border: "1px solid #d5d9de", borderRadius: 8, padding: 12, display: "grid", gap: 8 }}>
-          <legend style={{ padding: "0 6px", fontWeight: 700 }}>Ways to pay pages</legend>
+          <legend style={{ padding: "0 6px", fontWeight: 700 }}>Payment options pages</legend>
           <p className="adm-hint" style={{ marginTop: 0 }}>Show a &ldquo;how it works&rdquo; page for a payment method. Turn one on only after you have enabled that method in your Stripe dashboard (Settings, Payment methods), so the site never advertises something checkout does not offer.</p>
           {PAY_METHODS.map((m) => <Toggle key={m} label={`Show the ${PAY_INFO[m].name} page`} checked={payLater[m]} onChange={(v) => setPayLater((x) => ({ ...x, [m]: v }))} hint={`Page: /payment-options/${m}`} />)}
         </fieldset>

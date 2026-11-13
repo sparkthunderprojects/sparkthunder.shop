@@ -12,7 +12,7 @@ export function PayMethodHero({ m, products }: { m: PayMethod; products: Product
   const shown = products.slice(0, 3);
   return (
     <section className="relative -mx-(--gutter) overflow-hidden text-[#0b1b3a]" data-paymethod={m.id} style={{ background: `linear-gradient(135deg, #f7f7f5 0%, #f7f7f5 45%, ${m.tint} 130%)` }}>
-      <div className="absolute left-(--gutter) top-5 z-20 text-black"><Breadcrumbs items={[{ name: "Home", href: "/" }, { name: "Ways to pay", href: "/payment-options" }, { name: m.name }]} /></div>
+      <div className="absolute left-(--gutter) top-5 z-20 text-black"><Breadcrumbs items={[{ name: "Home", href: "/" }, { name: "Payment options", href: "/payment-options" }, { name: m.name }]} /></div>
       <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-(--gutter) pb-16 pt-20 md:grid-cols-[1.05fr_0.95fr] md:pb-20">
         <div>
           <div className="flex items-center gap-3">

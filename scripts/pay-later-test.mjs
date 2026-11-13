@@ -19,6 +19,8 @@ try {
   await setBoxes(false);
   const off = await eventually(async () => (await page.request.get(`${base}/payment-options/klarna`)).status() === 404);
   check(off, "a page is a 404 while it is switched off");
+  await page.goto(`${base}/`, { waitUntil: "domcontentloaded" });
+  check((await page.locator("footer a[href='/payment-options']", { hasText: "Payment options" }).count()) >= 1, "the footer always links to Payment options, even with every method off");
   await setBoxes(true);
   const on = await eventually(async () => (await page.request.get(`${base}/payment-options/klarna`)).status() === 200);
   check(on, "switching it on makes the page appear");
@@ -48,8 +50,8 @@ try {
   check(k.length === 3 && k[0] === "£3.34" && k[1] === "£3.33", `Klarna splits £10 into 3 payments (${k.join(", ")})`);
   // hub and footer
   await page.goto(`${base}/payment-options`, { waitUntil: "networkidle" });
-  check((await page.locator("[data-payoption]").count()) === 3, "the Ways to pay page lists the three methods");
-  check((await page.locator("footer a", { hasText: "Ways to pay" }).count()) >= 1, "the footer links to Ways to pay");
+  check((await page.locator("[data-payoption]").count()) === 3, "the Payment options page lists the three methods");
+  check((await page.locator("footer a", { hasText: "Payment options" }).count()) >= 1, "the footer links to Payment options");
   await page.goto(`${base}/payment-options/nonsense`); check((await page.locator("body").innerText()).length > 0 && (await page.request.get(`${base}/payment-options/nonsense`)).status() === 404, "an unknown method is a 404");
 } catch (e) { check(false, `unexpected error: ${e.message.split("\n").slice(0, 3).join(" | ")}`); }
 try { await setBoxes(false); } catch {}

@@ -1,4 +1,4 @@
-/** "Ways to pay" pages: PayPal, Klarna and Clearpay. A page only shows once the owner has switched it on in Admin > Shipping and payments
+/** "Payment options" pages: PayPal, Klarna and Clearpay. A page only shows once the owner has switched it on in Admin > Shipping and payments
  *  (after enabling that method in their Stripe dashboard), so the site never advertises a way to pay that checkout does not offer. */
 export const PAY_METHODS = ["paypal", "klarna", "clearpay"] as const;
 export type PayMethodId = (typeof PAY_METHODS)[number];

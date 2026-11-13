@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { connection } from "next/server";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { PaymentBadges } from "@/components/PaymentBadges";
 import { JsonLd } from "@/components/JsonLd";
 import { getCommerce } from "@/lib/commerce";
 import { enabledMethods, PAY_INFO, PAY_LATER_SMALL_PRINT } from "@/lib/pay-later";
@@ -10,7 +11,7 @@ import { breadcrumbLd } from "@/lib/seo";
 import { buildMetadata } from "@/lib/seo-metadata";
 
 export async function generateMetadata(): Promise<Metadata> {
-  return buildMetadata({ title: "Ways to pay", description: "See every way to pay for your order, including pay later options.", path: "/payment-options" });
+  return buildMetadata({ title: "Payment options", description: "See every way to pay for your order, including pay later options.", path: "/payment-options" });
 }
 
 export default async function PaymentOptionsPage() {
@@ -18,10 +19,11 @@ export default async function PaymentOptionsPage() {
   const methods = enabledMethods((await getCommerce()).payLater).map((m) => PAY_INFO[m]);
   return (
     <>
-      <JsonLd data={breadcrumbLd([{ name: "Home", path: "/" }, { name: "Ways to pay", path: "/payment-options" }])} />
-      <div className="pt-8"><Breadcrumbs items={[{ name: "Home", href: "/" }, { name: "Ways to pay" }]} /></div>
-      <h1 className="display mt-6 text-[clamp(2rem,4.2vw,3.25rem)]">Ways to pay</h1>
-      <p className="mt-4 max-w-2xl text-muted">Pay by card or Apple Pay or Google Pay at checkout{methods.length ? ", or choose one of these:" : "."}</p>
+      <JsonLd data={breadcrumbLd([{ name: "Home", path: "/" }, { name: "Payment options", path: "/payment-options" }])} />
+      <div className="pt-8"><Breadcrumbs items={[{ name: "Home", href: "/" }, { name: "Payment options" }]} /></div>
+      <h1 className="display mt-6 text-[clamp(2rem,4.2vw,3.25rem)]">Payment options</h1>
+      <p className="mt-4 max-w-2xl text-muted">Pay securely at checkout with a card, Apple Pay or Google Pay. Your card details are handled by Stripe and never touch our servers.{methods.length ? " You can also choose one of these:" : ""}</p>
+      <PaymentBadges className="mt-6" />
       {methods.length > 0 && (
         <ul className="mt-10 grid gap-4 md:grid-cols-3">
           {methods.map((m) => (

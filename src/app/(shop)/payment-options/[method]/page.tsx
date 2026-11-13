@@ -38,7 +38,7 @@ export default async function PayMethodPage(props: PageProps<"/payment-options/[
   const faqLd = { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: m.faq.map(([q, a]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } })) };
   return (
     <>
-      <JsonLd data={[breadcrumbLd([{ name: "Home", path: "/" }, { name: "Ways to pay", path: "/payment-options" }, { name: m.name, path }]), { "@context": "https://schema.org", "@type": "WebPage", "@id": `${absoluteUrl(path)}#page`, url: absoluteUrl(path), name: `Pay with ${m.name} at ${store.name}` }, faqLd]} />
+      <JsonLd data={[breadcrumbLd([{ name: "Home", path: "/" }, { name: "Payment options", path: "/payment-options" }, { name: m.name, path }]), { "@context": "https://schema.org", "@type": "WebPage", "@id": `${absoluteUrl(path)}#page`, url: absoluteUrl(path), name: `Pay with ${m.name} at ${store.name}` }, faqLd]} />
       <PayMethodHero m={m} products={pick} />
 
       <section id="how" className="scroll-mt-24 pt-16" aria-labelledby="how-h">
