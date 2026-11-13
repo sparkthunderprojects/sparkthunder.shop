@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { enabledMethods, isPayMethod, normalisePayLater, PAY_INFO, PAY_METHODS, splitInstalments } from "../src/lib/pay-later";
+import { enabledMethods, ORIGINAL_STORE_PAY_LATER, isPayMethod, normalisePayLater, PAY_INFO, PAY_METHODS, splitInstalments } from "../src/lib/pay-later";
 import { normaliseCommerce } from "../src/lib/commerce-config";
 
 describe("pay later settings", () => {
@@ -34,4 +34,14 @@ describe("splitInstalments", () => {
     expect(splitInstalments(1000, 3).reduce((a, b) => a + b, 0)).toBe(1000);
   });
   it("copes with silly input", () => { expect(splitInstalments(-5, 3)).toEqual([0, 0, 0]); expect(splitInstalments(100, 0)).toEqual([100]); });
+});
+
+describe("original store defaults", () => {
+  it("also has PayPal, Klarna and Clearpay on, and keeps Amazon Pay and Revolut Pay off", () => {
+    expect(ORIGINAL_STORE_PAY_LATER.paypal && ORIGINAL_STORE_PAY_LATER.klarna && ORIGINAL_STORE_PAY_LATER.clearpay).toBe(true);
+    expect(ORIGINAL_STORE_PAY_LATER.amazonpay || ORIGINAL_STORE_PAY_LATER.revolutpay).toBe(false);
+  });
+  it("new stores keep the safer defaults", () => {
+    expect(normalisePayLater(undefined).klarna).toBe(false);
+  });
 });

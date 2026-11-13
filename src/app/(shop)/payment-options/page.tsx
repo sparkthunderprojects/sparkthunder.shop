@@ -16,14 +16,15 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function PaymentOptionsPage() {
   await connection();
-  const methods = enabledMethods((await getCommerce()).payLater).map((m) => PAY_INFO[m]);
+  const on = enabledMethods((await getCommerce()).payLater);
+  const methods = on.map((m) => PAY_INFO[m]);
   return (
     <>
       <JsonLd data={breadcrumbLd([{ name: "Home", path: "/" }, { name: "Payment options", path: "/payment-options" }])} />
       <div className="pt-8"><Breadcrumbs items={[{ name: "Home", href: "/" }, { name: "Payment options" }]} /></div>
       <h1 className="display mt-6 text-[clamp(2rem,4.2vw,3.25rem)]">Payment options</h1>
       <p className="mt-4 max-w-2xl text-muted">Pick how you would like to pay. Every payment is handled securely by Stripe, so your card details never touch our servers.</p>
-      <PaymentBadges className="mt-6" />
+      <PaymentBadges className="mt-6" methods={on} />
       {(["wallet", "store", "later"] as PayGroup[]).map((g) => {
         const list = methods.filter((m) => m.group === g);
         return list.length === 0 ? null : (

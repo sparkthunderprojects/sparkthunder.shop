@@ -6,6 +6,9 @@ export type PayLaterSettings = Record<PayMethodId, boolean>;
 /** Cards, gift cards and the two wallets the shop already takes through Stripe start on; the rest wait until the owner enables them in Stripe and ticks them in the admin. */
 export const DEFAULT_PAY_LATER: PayLaterSettings = { applepay: true, googlepay: true, card: true, giftcard: true, amazonpay: false, revolutpay: false, paypal: false, klarna: false, clearpay: false };
 
+/** The original Sparkthunder store also takes PayPal, Klarna and Clearpay (the owner said so), so they start on there until its payment options are saved in the admin. New stores keep the safer defaults. */
+export const ORIGINAL_STORE_PAY_LATER: PayLaterSettings = { ...DEFAULT_PAY_LATER, paypal: true, klarna: true, clearpay: true };
+
 export const isPayMethod = (s: string): s is PayMethodId => (PAY_METHODS as readonly string[]).includes(s);
 export function normalisePayLater(raw: unknown): PayLaterSettings {
   const r = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;

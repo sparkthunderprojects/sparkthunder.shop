@@ -5,12 +5,15 @@ import { RegionSwitcher } from "@/components/Currency";
 import { PaymentBadges } from "@/components/PaymentBadges";
 import { getCategories, getFranchises } from "@/lib/catalog";
 import { getStore } from "@/lib/store";
+import { getCommerce } from "@/lib/commerce";
+import { enabledMethods } from "@/lib/pay-later";
 import { getTheme } from "@/lib/theme.server";
 import { LEGAL_PAGES, outbound } from "@/lib/site";
 import { CookieSettingsLink } from "@/components/CookieSettingsLink";
 
 export async function Footer() {
-  const [franchises, categories, store, storeId, theme] = await Promise.all([getFranchises(), getCategories(), getStore(), currentStoreId(), getTheme()]);
+  const [franchises, categories, store, storeId, theme, commerce] = await Promise.all([getFranchises(), getCategories(), getStore(), currentStoreId(), getTheme(), getCommerce()]);
+  const pay = enabledMethods(commerce.payLater);
   const original = storeId === DEFAULT_STORE_ID;
   const col = "mt-4 space-y-2.5 text-[0.95rem] text-ink/75";
   const lnk = "hover:text-bolt hover:underline hover:underline-offset-4";
@@ -29,7 +32,7 @@ export async function Footer() {
             <li><CookieSettingsLink className={lnk} /></li>
           </ul></nav>
         </div>
-        <div className="flex flex-wrap items-center gap-x-8 gap-y-3 px-(--gutter) pb-8"><RegionSwitcher /><PaymentBadges /></div>
+        <div className="flex flex-col items-center gap-5 px-(--gutter) pb-8"><PaymentBadges className="" methods={pay} centered /><RegionSwitcher /></div>
       </footer>
     );
   }
@@ -86,7 +89,7 @@ export async function Footer() {
             </ul>
           </nav>
         </div>
-        <div className="flex flex-wrap items-center gap-x-8 gap-y-3"><RegionSwitcher /><PaymentBadges /></div>
+        <div className="mt-8 flex flex-col items-center gap-5"><PaymentBadges className="" methods={pay} centered /><RegionSwitcher /></div>
       </div>
     </footer>
   );
