@@ -33,7 +33,7 @@ const Word = ({ label, fg, bg, size = 8.5 }: { label: string; fg: string; bg: st
 
 /** Each payment option, in the order shown. "card" stands for the three card brands. */
 const ORDER: { id: PayMethodId; names: string[] }[] = [
-  { id: "card", names: ["Visa", "Mastercard", "American Express"] },
+  { id: "card", names: ["Visa", "Mastercard", "American Express", "Discover", "Diners Club", "JCB", "UnionPay"] },
   { id: "applepay", names: ["Apple Pay"] }, { id: "googlepay", names: ["Google Pay"] },
   { id: "paypal", names: ["PayPal"] }, { id: "klarna", names: ["Klarna"] }, { id: "clearpay", names: ["Clearpay"] },
   { id: "amazonpay", names: ["Amazon Pay"] }, { id: "revolutpay", names: ["Revolut Pay"] },
@@ -44,6 +44,10 @@ function mark(name: string): React.ReactNode {
   if (name === "PayPal") return <Art src="/pay/paypal.png" alt="PayPal" w={168} h={194} bg="#fff" />;
   if (name === "Klarna") return <Art src="/pay/klarna.png" alt="Klarna" w={228} h={196} bg="#ffb3c7" />;
   if (name === "Clearpay") return <Art src="/pay/clearpay.png" alt="Clearpay" w={210} h={212} bg="#b2fce4" />;
+  if (name === "Discover") return <Word label="DISCOVER" fg="#f76f1d" bg="#fff" size={8.5} />;
+  if (name === "Diners Club") return <Word label="Diners Club" fg="#0b4e96" bg="#fff" size={8} />;
+  if (name === "JCB") return <Word label="JCB" fg="#0b6d3a" bg="#fff" size={13} />;
+  if (name === "UnionPay") return <Word label="UnionPay" fg="#fff" bg="#c8102e" size={8.5} />;
   if (name === "Amazon Pay") return <Word label="Amazon Pay" fg="#111" bg="#ff9900" size={8} />;
   if (name === "Revolut Pay") return <Word label="Revolut Pay" fg="#fff" bg="#191c1f" size={8} />;
   return null;

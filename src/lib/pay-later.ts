@@ -92,9 +92,9 @@ const EXTRA: Record<"applepay" | "googlepay" | "card" | "giftcard" | "amazonpay"
   card: {
     id: "card", name: "Card", group: "wallet", ...NONE, tint: "#e8e6f3", button: "#1a1f71", buttonText: "#ffffff",
     chips: [["lock", "Handled securely by Stripe"], ["bolt", "No account needed"], ["box", "Ships just like any order"]],
-    headline: "Pay by card, no account needed.", sub: "We take Visa, Mastercard and American Express debit and credit cards. Enter your details on Stripe's secure payment page and you are done.", cta: "How card payment works", hubLine: "Visa, Mastercard and American Express.",
+    headline: "Pay by card, no account needed.", sub: "We take Visa, Mastercard and American Express debit and credit cards, and Discover, Diners Club, JCB and UnionPay cards. Enter your details on Stripe's secure payment page and you are done.", cta: "How card payment works", hubLine: "Visa, Mastercard, American Express and more.",
     steps: [["Fill your basket", "Add your Sparkthunder merchandise as usual and go to checkout."], ["Enter your card", "On Stripe's secure payment page, enter your card details and delivery address."], ["Approve", "Your bank may ask you to confirm in its app or with a code. That is normal."], ["Done", "We get your order straight away and start packing."]],
-    facts: [["Cards we take", "Visa, Mastercard and American Express, debit or credit."], ["Your details", "Card details go straight to Stripe. They never touch our servers."], ["Currency", "Orders are charged in pounds."], ["Guest checkout", "You do not need an account to order."]],
+    facts: [["Cards we take", "Visa, Mastercard and American Express, plus Discover, Diners Club, JCB and UnionPay, debit or credit."], ["Your details", "Card details go straight to Stripe. They never touch our servers."], ["Currency", "Orders are charged in pounds."], ["Guest checkout", "You do not need an account to order."]],
     faq: [["Is it safe to pay by card here?", "Yes. The payment page is run by Stripe, a payments company, and your card number is never stored by us."], ["My card was declined", "Check the details, try another card, or contact your bank. A wallet such as Apple Pay or Google Pay may also work."], WALLET_FAQ_RETURNS],
   },
   giftcard: {
