@@ -45,11 +45,12 @@ export function HelpHero({ store, crumbs, title, q, big = false, panels = false 
       {panels && (
         <div aria-hidden className="relative grid grid-cols-2 md:grid-cols-4" data-help="panels">
           {PANELS.map((src, i) => (
-            <div key={src} className={`relative aspect-[4/3] ${i > 1 ? "hidden md:block" : ""}`}>
+            <div key={src} className={`relative aspect-square ${i > 1 ? "hidden md:block" : ""}`}>
               <Image src={src} alt="" fill sizes="(min-width: 768px) 25vw, 50vw" className="object-contain" priority={i < 2} />
             </div>
           ))}
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-16" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.6), transparent)" }} />
+          <div className="pointer-events-none absolute inset-0 hidden md:block" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.5) 100%)" }} />
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-16 md:hidden" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.6), transparent)" }} />
         </div>
       )}
       <div aria-hidden className={`pointer-events-none absolute inset-0 ${panels ? "hidden" : ""}`}>
@@ -58,9 +59,11 @@ export function HelpHero({ store, crumbs, title, q, big = false, panels = false 
         </svg>
       </div>
       <div className="absolute left-(--gutter) top-5 z-20"><Breadcrumbs tone="world" items={crumbs} /></div>
-      <div className={`relative mx-auto flex max-w-5xl flex-col items-center px-(--gutter) text-center ${panels ? "pb-28 pt-10" : big ? "pb-24 pt-20 md:pb-28" : "pb-12 pt-20"}`}>
-        <h1 className="display text-[clamp(2rem,4.6vw,3.6rem)] drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">{title}</h1>
-        <HelpSearch q={q} className="mt-8" />
+      <div className={panels ? "relative md:absolute md:inset-0 md:flex md:items-center md:justify-center" : ""}>
+        <div className={`relative mx-auto flex max-w-5xl flex-col items-center px-(--gutter) text-center ${panels ? "pb-28 pt-10 md:pb-6 md:pt-10" : big ? "pb-24 pt-20 md:pb-28" : "pb-12 pt-20"}`}>
+          <h1 className="display text-[clamp(2rem,4.6vw,3.6rem)] drop-shadow-[0_2px_12px_rgba(0,0,0,0.7)]">{title}</h1>
+          <HelpSearch q={q} className="mt-6" />
+        </div>
       </div>
     </section>
   );
