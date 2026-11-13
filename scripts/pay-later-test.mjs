@@ -11,7 +11,7 @@ const eventually = async (fn, ms = 20000) => { const t = Date.now(); for (;;) { 
 const browser = await chromium.launch(); const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 const setBoxes = async (on) => {
   await page.goto(`${base}/admin/commerce`, { waitUntil: "networkidle" });
-  for (const n of ["PayPal", "Klarna", "Clearpay"]) { const c = page.getByLabel(`Show the ${n} page`); on ? await c.check() : await c.uncheck(); }
+  for (const n of ["PayPal", "Klarna", "Clearpay", "Amazon Pay", "Revolut Pay"]) { const c = page.getByLabel(`Show the ${n} page`); on ? await c.check() : await c.uncheck(); }
   await page.getByRole("button", { name: /^Save/ }).first().click(); await page.getByText(/saved/i).first().waitFor({ timeout: 15000 });
 };
 try {
@@ -24,13 +24,14 @@ try {
   await setBoxes(true);
   const on = await eventually(async () => (await page.request.get(`${base}/payment-options/klarna`)).status() === 200);
   check(on, "switching it on makes the page appear");
-  for (const [slug, name] of [["paypal", "PayPal"], ["klarna", "Klarna"], ["clearpay", "Clearpay"]]) {
+  const all = [["applepay", "Apple Pay", false], ["googlepay", "Google Pay", false], ["card", "Card", false], ["giftcard", "Gift card", false], ["amazonpay", "Amazon Pay", false], ["revolutpay", "Revolut Pay", false], ["paypal", "PayPal", true], ["klarna", "Klarna", true], ["clearpay", "Clearpay", true]];
+  for (const [slug, name, credit] of all) {
     await page.goto(`${base}/payment-options/${slug}`, { waitUntil: "networkidle" });
     const reject = page.getByRole("button", { name: "Reject all" }); if (await reject.isVisible().catch(() => false)) await reject.click();
     const t = await page.locator("main").innerText();
-    check(new RegExp(`Pay with ${name}`).test(t), `${name}: banner says Pay with ${name}`);
-    check((await page.locator(`[data-paymethod=${slug}] img`).count()) >= 2, `${name}: logo and product pictures show`);
-    check(/Subject to status/.test(await page.locator("[data-smallprint]").innerText()), `${name}: small print is shown`);
+    check(new RegExp(`Pay with ${name}`, "i").test(t), `${name}: banner says Pay with ${name}`);
+    check((await page.locator(`[data-paymethod=${slug}] img`).count()) >= 1, `${name}: product pictures show`);
+    check((await page.locator("[data-smallprint]").count()) === (credit ? 1 : 0), `${name}: ${credit ? "has" : "has no"} credit small print`);
     check((await page.locator("main details").count()) >= 3, `${name}: has its questions`);
     check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `${name}: no sideways scrolling`);
   }
@@ -50,7 +51,7 @@ try {
   check(k.length === 3 && k[0] === "£3.34" && k[1] === "£3.33", `Klarna splits £10 into 3 payments (${k.join(", ")})`);
   // hub and footer
   await page.goto(`${base}/payment-options`, { waitUntil: "networkidle" });
-  check((await page.locator("[data-payoption]").count()) === 3, "the Payment options page lists the three methods");
+  check((await page.locator("[data-payoption]").count()) === 9, "the Payment options page lists all nine methods");
   check((await page.locator("footer a", { hasText: "Payment options" }).count()) >= 1, "the footer links to Payment options");
   await page.goto(`${base}/payment-options/nonsense`); check((await page.locator("body").innerText()).length > 0 && (await page.request.get(`${base}/payment-options/nonsense`)).status() === 404, "an unknown method is a 404");
 } catch (e) { check(false, `unexpected error: ${e.message.split("\n").slice(0, 3).join(" | ")}`); }

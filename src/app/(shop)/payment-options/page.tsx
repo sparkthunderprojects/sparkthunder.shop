@@ -6,7 +6,7 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { PaymentBadges } from "@/components/PaymentBadges";
 import { JsonLd } from "@/components/JsonLd";
 import { getCommerce } from "@/lib/commerce";
-import { enabledMethods, PAY_INFO, PAY_LATER_SMALL_PRINT } from "@/lib/pay-later";
+import { enabledMethods, GROUP_TITLE, PAY_INFO, PAY_LATER_SMALL_PRINT, type PayGroup } from "@/lib/pay-later";
 import { breadcrumbLd } from "@/lib/seo";
 import { buildMetadata } from "@/lib/seo-metadata";
 
@@ -22,23 +22,29 @@ export default async function PaymentOptionsPage() {
       <JsonLd data={breadcrumbLd([{ name: "Home", path: "/" }, { name: "Payment options", path: "/payment-options" }])} />
       <div className="pt-8"><Breadcrumbs items={[{ name: "Home", href: "/" }, { name: "Payment options" }]} /></div>
       <h1 className="display mt-6 text-[clamp(2rem,4.2vw,3.25rem)]">Payment options</h1>
-      <p className="mt-4 max-w-2xl text-muted">Pay securely at checkout with a card, Apple Pay or Google Pay. Your card details are handled by Stripe and never touch our servers.{methods.length ? " You can also choose one of these:" : ""}</p>
+      <p className="mt-4 max-w-2xl text-muted">Pick how you would like to pay. Every payment is handled securely by Stripe, so your card details never touch our servers.</p>
       <PaymentBadges className="mt-6" />
-      {methods.length > 0 && (
-        <ul className="mt-10 grid gap-4 md:grid-cols-3">
-          {methods.map((m) => (
-            <li key={m.id}>
-              <Link href={`/payment-options/${m.id}`} className="flex h-full flex-col gap-3 p-8 text-black transition-transform hover:-translate-y-1" style={{ background: m.tint }} data-payoption={m.id}>
-                <Image src={m.logo} alt="" width={m.logoW} height={m.logoH} className="h-14 w-auto self-start" />
-                <span className="display text-3xl">{m.name}</span>
-                <span>{m.hubLine}</span>
-                <span className="mt-auto pt-2 font-bold underline underline-offset-4">How {m.name} works &rarr;</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
-      {methods.length > 0 && <p className="mt-8 max-w-3xl text-xs text-muted">{PAY_LATER_SMALL_PRINT}</p>}
+      {(["wallet", "store", "later"] as PayGroup[]).map((g) => {
+        const list = methods.filter((m) => m.group === g);
+        return list.length === 0 ? null : (
+          <section key={g} className="mt-12" aria-label={GROUP_TITLE[g]}>
+            <h2 className="display text-2xl sm:text-3xl">{GROUP_TITLE[g]}</h2>
+            <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {list.map((m) => (
+                <li key={m.id}>
+                  <Link href={`/payment-options/${m.id}`} className="flex h-full flex-col gap-3 p-8 text-black transition-transform hover:-translate-y-1" style={{ background: m.tint }} data-payoption={m.id}>
+                    {m.logo ? <Image src={m.logo} alt="" width={m.logoW ?? 120} height={m.logoH ?? 120} className="h-14 w-auto self-start" /> : null}
+                    <span className="display text-3xl">{m.name}</span>
+                    <span>{m.hubLine}</span>
+                    <span className="mt-auto pt-2 font-bold underline underline-offset-4">How {m.name} works &rarr;</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        );
+      })}
+      {methods.some((m) => m.credit) && <p className="mt-8 max-w-3xl text-xs text-muted">{PAY_LATER_SMALL_PRINT}</p>}
     </>
   );
 }

@@ -25,7 +25,7 @@ export async function generateMetadata(props: PageProps<"/payment-options/[metho
   const m = await load((await props.params).method);
   const store = await getStore();
   if (!m) return { title: "Page not found", robots: { index: false } };
-  return buildMetadata({ title: `Pay with ${m.name}`, description: `How to pay for your ${store.name} order with ${m.name}: ${m.sub}`, path: `/payment-options/${m.id}` });
+  return buildMetadata({ title: m.id === "giftcard" ? "Pay with a gift card" : `Pay with ${m.name}`, description: `How to pay for your ${store.name} order with ${m.name}: ${m.sub}`, path: `/payment-options/${m.id}` });
 }
 
 export default async function PayMethodPage(props: PageProps<"/payment-options/[method]">) {
@@ -50,10 +50,12 @@ export default async function PayMethodPage(props: PageProps<"/payment-options/[
         </ol>
       </section>
 
-      <section className="mt-16" aria-labelledby="split-h">
-        <h2 id="split-h" className="display text-2xl sm:text-3xl">See how a basket could split</h2>
-        <div className="mt-6 max-w-3xl"><InstalmentCalculator name={m.name} schedule={m.schedule} note={m.scheduleNote} accent={m.tint} /></div>
-      </section>
+      {m.parts > 0 && (
+        <section className="mt-16" aria-labelledby="split-h">
+          <h2 id="split-h" className="display text-2xl sm:text-3xl">See how a basket could split</h2>
+          <div className="mt-6 max-w-3xl"><InstalmentCalculator name={m.name} schedule={m.schedule} note={m.scheduleNote} accent={m.tint} /></div>
+        </section>
+      )}
 
       <section className="mt-16" aria-labelledby="facts-h">
         <h2 id="facts-h" className="display text-2xl sm:text-3xl">The good to know</h2>
@@ -67,8 +69,8 @@ export default async function PayMethodPage(props: PageProps<"/payment-options/[
         <div className="mt-6 max-w-3xl divide-y divide-ink/15 border-y border-ink/15">
           {m.faq.map(([q, a]) => <details key={q} className="py-4"><summary className="cursor-pointer list-none font-bold marker:hidden">{q}</summary><p className="mt-2 text-muted">{a}</p></details>)}
         </div>
-        <p className="mt-8 text-muted">Ready? <Link href="/shop" className="font-bold underline underline-offset-4">Browse the shop</Link>, or read our <Link href="/delivery-returns" className="font-bold underline underline-offset-4">delivery and returns</Link>.</p>
-        <p className="mt-6 max-w-3xl text-xs text-muted" data-smallprint>{PAY_LATER_SMALL_PRINT}</p>
+        <p className="mt-8 text-muted">{m.id === "giftcard" ? <>Got a code? <Link href="/gift-cards/balance" className="font-bold underline underline-offset-4">Check your balance</Link>. Want to give one? <Link href="/gift-cards/send" className="font-bold underline underline-offset-4">Send a gift card</Link>. </> : null}Ready? <Link href="/shop" className="font-bold underline underline-offset-4">Browse the shop</Link>, or read our <Link href="/delivery-returns" className="font-bold underline underline-offset-4">delivery and returns</Link>.</p>
+        {m.credit ? <p className="mt-6 max-w-3xl text-xs text-muted" data-smallprint>{PAY_LATER_SMALL_PRINT}</p> : null}
       </section>
     </>
   );

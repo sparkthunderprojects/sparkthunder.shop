@@ -111,7 +111,7 @@ export function CommerceForm({ commerce, categories, status }: { commerce: Comme
         {zones.length === 0 ? <Field label="Ships to (country codes)" hint="For example GB, IE, US."><input className="adm-in" value={countries} onChange={(e) => setCountries(e.target.value)} /></Field> : null}
         <fieldset style={{ border: "1px solid #d5d9de", borderRadius: 8, padding: 12, display: "grid", gap: 8 }}>
           <legend style={{ padding: "0 6px", fontWeight: 700 }}>Payment options pages</legend>
-          <p className="adm-hint" style={{ marginTop: 0 }}>Show a &ldquo;how it works&rdquo; page for a payment method. Turn one on only after you have enabled that method in your Stripe dashboard (Settings, Payment methods), so the site never advertises something checkout does not offer.</p>
+          <p className="adm-hint" style={{ marginTop: 0 }}>Show a &ldquo;how it works&rdquo; page for a payment method. Turn one on only after you have enabled that method in your Stripe dashboard (Settings, Payment methods), so the site never advertises something checkout does not offer. Cards, gift cards, Apple Pay and Google Pay start on.</p>
           {PAY_METHODS.map((m) => <Toggle key={m} label={`Show the ${PAY_INFO[m].name} page`} checked={payLater[m]} onChange={(v) => setPayLater((x) => ({ ...x, [m]: v }))} hint={`Page: /payment-options/${m}`} />)}
         </fieldset>
         <Toggle label="This store is VAT registered" checked={vatOn} onChange={setVatOn} hint="Your prices already include VAT. This works out the VAT part and shows it on order emails and in the admin. Leave off until you are registered." />
