@@ -41,7 +41,7 @@ const PANELS = ["/help/panel-1.webp", "/help/panel-2.webp", "/help/panel-3.webp"
 
 export function HelpHero({ store, crumbs, title, q, big = false, panels = false }: { store: Store; crumbs: { name: string; href?: string }[]; title: string; q?: string; big?: boolean; panels?: boolean }) {
   return (
-    <section className="relative -mx-(--gutter) overflow-hidden text-white" data-help="hero" style={{ background: `linear-gradient(180deg, ${store.dark} 0%, color-mix(in srgb, ${store.dark} 60%, ${store.accent}) 100%)` }}>
+    <section className={`relative -mx-(--gutter) overflow-hidden text-white ${panels ? "md:pb-14" : ""}`} data-help="hero" style={{ background: `linear-gradient(180deg, ${store.dark} 0%, color-mix(in srgb, ${store.dark} 60%, ${store.accent}) 100%)` }}>
       {panels && (
         <div aria-hidden className="relative grid grid-cols-2 md:grid-cols-4" data-help="panels">
           {PANELS.map((src, i) => (
@@ -59,7 +59,7 @@ export function HelpHero({ store, crumbs, title, q, big = false, panels = false 
         </svg>
       </div>
       <div className="absolute left-(--gutter) top-5 z-20"><Breadcrumbs tone="world" items={crumbs} /></div>
-      <div className={panels ? "relative md:absolute md:inset-0 md:flex md:items-center md:justify-center" : ""}>
+      <div className={panels ? "relative md:absolute md:inset-x-0 md:bottom-14 md:top-0 md:flex md:items-center md:justify-center" : ""}>
         <div className={`relative mx-auto flex max-w-5xl flex-col items-center px-(--gutter) text-center ${panels ? "pb-28 pt-10 md:pb-6 md:pt-10" : big ? "pb-24 pt-20 md:pb-28" : "pb-12 pt-20"}`}>
           <h1 className="display text-[clamp(2rem,4.6vw,3.6rem)] drop-shadow-[0_2px_12px_rgba(0,0,0,0.7)]">{title}</h1>
           <HelpSearch q={q} className="mt-6" />
