@@ -17,12 +17,12 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function HelpHome() {
   await connection();
-  const [store, { ctx, articles }] = await Promise.all([getStore(), getHelp()]);
+  const [store, { ctx, articles, original }] = await Promise.all([getStore(), getHelp()]);
   const popular = popularArticles(articles);
   return (
     <>
       <JsonLd data={breadcrumbLd([{ name: "Home", path: "/" }, { name: "Help Centre", path: "/help" }])} />
-      <HelpHero store={store} crumbs={[{ name: "Home", href: "/" }, { name: "Help Centre" }]} title={`Welcome to ${store.name} Help Centre`} big />
+      <HelpHero store={store} crumbs={[{ name: "Home", href: "/" }, { name: "Help Centre" }]} title={`Welcome to ${store.name} Help Centre`} big panels={original} />
       <HelpJobs />
 
       <section className="mt-16" aria-labelledby="sections-h">

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { helpIcon, helpPieces, type HelpBlock } from "@/lib/help";
@@ -36,17 +37,29 @@ export function HelpSearch({ q = "", className = "" }: { q?: string; className?:
 }
 
 /** Branded banner: breadcrumbs, title and the search box, with the three most common jobs as big buttons underneath. */
-export function HelpHero({ store, crumbs, title, q, big = false }: { store: Store; crumbs: { name: string; href?: string }[]; title: string; q?: string; big?: boolean }) {
+const PANELS = ["/help/panel-1.webp", "/help/panel-2.webp", "/help/panel-3.webp", "/help/panel-4.webp"];
+
+export function HelpHero({ store, crumbs, title, q, big = false, panels = false }: { store: Store; crumbs: { name: string; href?: string }[]; title: string; q?: string; big?: boolean; panels?: boolean }) {
   return (
     <section className="relative -mx-(--gutter) overflow-hidden text-white" data-help="hero" style={{ background: `linear-gradient(180deg, ${store.dark} 0%, color-mix(in srgb, ${store.dark} 60%, ${store.accent}) 100%)` }}>
-      <div aria-hidden className="pointer-events-none absolute inset-0">
+      {panels && (
+        <div aria-hidden className="pointer-events-none absolute inset-0 grid grid-cols-2 md:grid-cols-4" data-help="panels">
+          {PANELS.map((src, i) => (
+            <div key={src} className={`relative ${i > 1 ? "hidden md:block" : ""}`}>
+              <Image src={src} alt="" fill sizes="(min-width: 768px) 25vw, 50vw" className="object-cover" priority={i < 2} />
+            </div>
+          ))}
+          <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.35) 55%, rgba(0,0,0,0.55) 100%)" }} />
+        </div>
+      )}
+      <div aria-hidden className={`pointer-events-none absolute inset-0 ${panels ? "hidden" : ""}`}>
         <svg className="gc-drift absolute -bottom-4 left-0 h-3/5 w-full opacity-30" viewBox="0 0 1200 300" preserveAspectRatio="none">
           {[0, 1, 2, 3, 4, 5].map((i) => <path key={i} d={`M-20 ${250 - i * 6} C 300 ${290 - i * 10}, 700 ${120 + i * 8}, 1220 ${40 + i * 14}`} fill="none" stroke="white" strokeWidth="1" strokeOpacity={0.25 + i * 0.07} />)}
         </svg>
       </div>
       <div className="absolute left-(--gutter) top-5 z-20"><Breadcrumbs tone="world" items={crumbs} /></div>
-      <div className={`relative mx-auto flex max-w-5xl flex-col items-center px-(--gutter) text-center ${big ? "pb-24 pt-20 md:pb-28" : "pb-12 pt-20"}`}>
-        <h1 className="display text-[clamp(2rem,4.6vw,3.6rem)]">{title}</h1>
+      <div className={`relative mx-auto flex max-w-5xl flex-col items-center px-(--gutter) text-center ${big ? "pb-28 pt-20 md:min-h-[26rem] md:pb-32 md:pt-28" : "pb-12 pt-20"}`}>
+        <h1 className="display text-[clamp(2rem,4.6vw,3.6rem)] drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">{title}</h1>
         <HelpSearch q={q} className="mt-8" />
       </div>
     </section>

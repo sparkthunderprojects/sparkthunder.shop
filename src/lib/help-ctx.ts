@@ -26,5 +26,6 @@ export async function getHelpCtx(): Promise<HelpCtx> {
 
 export async function getHelp() {
   const ctx = await getHelpCtx();
-  return { ctx, articles: helpArticles(ctx) };
+  const { original } = await getLegal();
+  return { ctx, articles: helpArticles(ctx), original };
 }
