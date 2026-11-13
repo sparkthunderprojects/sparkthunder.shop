@@ -33,6 +33,24 @@ export const seedCatalog: Catalog = {
       description:
         "Occult Inc is Sparkthunder's universe of the strange, the hidden and the supernatural: a world where the things people dismiss as superstition turn out to be very real, and somebody has to deal with them. Where Knightverge leans into heroes and legacy, Occult Inc leans into mystery, atmosphere and the quiet dread of a good story told after dark. The Occult Inc shop collection takes that mood and puts it on things you can use and display. Expect bold typography, ink-splatter artwork in deep violet and bone white, and designs that look just as good on a shelf as they do on a jacket. Our apparel is cut to be worn for real, our drinkware is made for long late-night sessions, and our prints and pins are made to turn a plain wall, bag or bookcase into something worth looking at twice. Every Occult Inc product is official and designed in-house by the Sparkthunder team, so the logo, the artwork and the details match the world they come from. Whether you are buying a gift for a fan, adding to your own collection, or simply want a piece of the occult in your everyday things, you will find something here. Browse the full Occult Inc range below.",
     },
+    {
+      slug: "ludicrous-laughs",
+      name: "Ludicrous Laughs",
+      tagline: "Cartoon chaos!",
+      accent: "#f97316",
+      sortOrder: 3,
+      description:
+        "Ludicrous Laughs is the loud, bright, cartoon corner of the Sparkthunder family: a world of slapstick, silly characters and pure chaos. Official merchandise for the franchise is being added here. Placeholder copy: replace this description in Admin > Franchises.",
+    },
+    {
+      slug: "shadeveil",
+      name: "Shadeveil",
+      tagline: "Official Shadeveil merchandise.",
+      accent: "#6d28d9",
+      sortOrder: 4,
+      description:
+        "Shadeveil is a dark, gothic universe in the Sparkthunder family. Official merchandise for the franchise is being added here. Placeholder copy: replace this description in Admin > Franchises.",
+    },
   ],
   categories: [
     {

@@ -29,9 +29,11 @@ export const CONTACT_EMAIL: string | null = process.env.NEXT_PUBLIC_CONTACT_EMAI
 export const PAYMENT_METHODS = ["Visa", "Mastercard", "American Express", "Apple Pay", "Google Pay"] as const;
 
 /** Franchise logo artwork (white/transparent-friendly, made for dark backgrounds), keyed by franchise slug. */
-export const FRANCHISE_LOGOS: Record<string, { src: string; width: number; height: number }> = {
+export const FRANCHISE_LOGOS: Record<string, { src: string; width: number; height: number; /** Dark artwork: gets a soft light glow so it reads on dark tiles. */ glow?: boolean }> = {
   knightverge: { src: "/franchise/knightverge.png", width: 1200, height: 268 },
   "occult-inc": { src: "/franchise/occult-inc.png", width: 1200, height: 439 },
+  "ludicrous-laughs": { src: "/franchise/ludicrous-laughs.png", width: 1200, height: 655 },
+  shadeveil: { src: "/franchise/shadeveil.png", width: 1200, height: 440, glow: true },
 };
 
 export const LEGAL_PAGES = [
