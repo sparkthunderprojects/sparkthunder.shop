@@ -1,3 +1,4 @@
+import { DEFAULT_PAY_LATER, normalisePayLater, type PayLaterSettings } from "@/lib/pay-later";
 import { normaliseCurrencies, type DisplayCurrency } from "@/lib/currency";
 import { FREE_SHIPPING_PENCE, GIFT_WRAP_PENCE, SITE } from "@/lib/site";
 
@@ -46,6 +47,8 @@ export type CommerceSettings = {
   currencies: DisplayCurrency[];
   /** Item weights, used by zones that charge by weight. */
   weights: Weights;
+  /** Which "ways to pay" pages (PayPal, Klarna, Clearpay) are shown. Turn one on only after enabling that method in Stripe. */
+  payLater: PayLaterSettings;
 };
 
 export const DEFAULT_COMMERCE: CommerceSettings = {
@@ -62,6 +65,7 @@ export const DEFAULT_COMMERCE: CommerceSettings = {
   businessAddress: "",
   currencies: [],
   weights: DEFAULT_WEIGHTS,
+  payLater: DEFAULT_PAY_LATER,
 };
 
 /** A neutral prefix for a store that has not set one: the first letters of its id (misspetty -> MIS). */
@@ -77,7 +81,7 @@ export function normaliseCommerce(raw: Partial<CommerceSettings> | null | undefi
   const countries = zones.length ? [...new Set(zones.flatMap((z) => z.countries))] : Array.isArray(r.shippingCountries) ? [...new Set(r.shippingCountries.map((c) => String(c).trim().toUpperCase()).filter((c) => /^[A-Z]{2}$/.test(c)))].slice(0, 60) : d.shippingCountries;
   const free = r.freeShippingPence === null ? null : r.freeShippingPence === undefined ? d.freeShippingPence : pence(r.freeShippingPence, 0) || null;
   const email = typeof r.supportEmail === "string" && /^\S+@\S+\.\S+$/.test(r.supportEmail.trim()) ? r.supportEmail.trim().slice(0, 120) : "";
-  return { shippingZones: zones, shippingFlatPence: pence(r.shippingFlatPence, d.shippingFlatPence, 10000), freeShippingPence: free, giftWrapPence: pence(r.giftWrapPence, d.giftWrapPence, 10000), shippingCountries: countries.length ? countries : d.shippingCountries, supportEmail: email, codePrefix: cleanPrefix(r.codePrefix, d.codePrefix), vatEnabled: r.vatEnabled === true, vatRatePercent: rate(r.vatRatePercent, d.vatRatePercent), vatNumber: String(r.vatNumber ?? "").replace(/[^A-Za-z0-9 ]/g, "").trim().slice(0, 20), businessAddress: String(r.businessAddress ?? "").replace(/[<>]/g, "").trim().slice(0, 300), currencies: normaliseCurrencies(r.currencies, SITE.currency), weights: normaliseWeights(r.weights) };
+  return { shippingZones: zones, shippingFlatPence: pence(r.shippingFlatPence, d.shippingFlatPence, 10000), freeShippingPence: free, giftWrapPence: pence(r.giftWrapPence, d.giftWrapPence, 10000), shippingCountries: countries.length ? countries : d.shippingCountries, supportEmail: email, codePrefix: cleanPrefix(r.codePrefix, d.codePrefix), vatEnabled: r.vatEnabled === true, vatRatePercent: rate(r.vatRatePercent, d.vatRatePercent), vatNumber: String(r.vatNumber ?? "").replace(/[^A-Za-z0-9 ]/g, "").trim().slice(0, 20), businessAddress: String(r.businessAddress ?? "").replace(/[<>]/g, "").trim().slice(0, 300), currencies: normaliseCurrencies(r.currencies, SITE.currency), weights: normaliseWeights(r.weights), payLater: normalisePayLater(r.payLater) };
 }
 
 /** Clean up zones from the admin form: valid country codes, a country in only one zone (the first that names it), sensible amounts. */

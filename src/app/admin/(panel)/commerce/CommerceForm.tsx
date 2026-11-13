@@ -5,6 +5,7 @@ import { currenciesForCountries } from "@/lib/regions";
 import { fetchRatesAction, saveCommerceAction, saveSecretsAction } from "../../commerce-actions";
 import type { CommerceSettings } from "@/lib/commerce-config";
 import { Toggle } from "../../ui";
+import { PAY_INFO, PAY_METHODS } from "@/lib/pay-later";
 import { SITE } from "@/lib/site";
 
 /** "500=3.50, 1000=4.50" (grams = pounds) to bands, and back. */
@@ -28,6 +29,7 @@ export function CommerceForm({ commerce, categories, status }: { commerce: Comme
   const [support, setSupport] = useState(commerce.supportEmail);
   const [bizAddr, setBizAddr] = useState(commerce.businessAddress);
   const [prefix, setPrefix] = useState(commerce.codePrefix);
+  const [payLater, setPayLater] = useState(commerce.payLater);
   const [vatOn, setVatOn] = useState(commerce.vatEnabled), [vatRate, setVatRate] = useState(String(commerce.vatRatePercent)), [vatNo, setVatNo] = useState(commerce.vatNumber);
   type ZoneForm = { name: string; countries: string; first: string; extra: string; free: string; byWeight: boolean; bands: string; perKg: string };
   const [zones, setZones] = useState<ZoneForm[]>(commerce.shippingZones.map((z) => ({ name: z.name, countries: z.countries.join(", "), first: pounds(z.firstItemPence), extra: pounds(z.extraItemPence), free: pounds(z.freeOverPence), byWeight: Boolean(z.bands?.length), bands: bandsToText(z.bands), perKg: pounds(z.extraPerKgPence ?? 0) })));
@@ -59,7 +61,7 @@ export function CommerceForm({ commerce, categories, status }: { commerce: Comme
   const [pmsg, setPmsg] = useState("");
 
   const saveCommerce = async () => {
-    const r = await saveCommerceAction({ shippingZones: zones.map((z) => ({ name: z.name, countries: z.countries.split(/[\s,]+/).filter(Boolean), firstItemPence: toPence(z.first) ?? 0, extraItemPence: toPence(z.extra) ?? 0, freeOverPence: toPence(z.free), ...(z.byWeight ? { bands: textToBands(z.bands), extraPerKgPence: toPence(z.perKg) ?? 0 } : {}) })), shippingFlatPence: toPence(ship) ?? 0, freeShippingPence: toPence(free), giftWrapPence: toPence(wrap) ?? 0, shippingCountries: countries.split(/[\s,]+/).filter(Boolean), supportEmail: support, codePrefix: prefix, vatEnabled: vatOn, vatRatePercent: Number(vatRate) || 0, vatNumber: vatNo, businessAddress: bizAddr, weights: { defaultGrams: Math.round(Number(defGrams)) || 0, byCategory: Object.fromEntries(Object.entries(catGrams).filter(([, v]) => v.trim() !== "").map(([k, v]) => [k, Math.round(Number(v))])), byProduct: textToMap(prodGrams) }, currencies: currencies.map((c) => ({ code: c.code.trim().toUpperCase(), rate: Number(c.rate) })).filter((c) => c.code && Number.isFinite(c.rate)) });
+    const r = await saveCommerceAction({ shippingZones: zones.map((z) => ({ name: z.name, countries: z.countries.split(/[\s,]+/).filter(Boolean), firstItemPence: toPence(z.first) ?? 0, extraItemPence: toPence(z.extra) ?? 0, freeOverPence: toPence(z.free), ...(z.byWeight ? { bands: textToBands(z.bands), extraPerKgPence: toPence(z.perKg) ?? 0 } : {}) })), shippingFlatPence: toPence(ship) ?? 0, freeShippingPence: toPence(free), giftWrapPence: toPence(wrap) ?? 0, shippingCountries: countries.split(/[\s,]+/).filter(Boolean), supportEmail: support, codePrefix: prefix, vatEnabled: vatOn, vatRatePercent: Number(vatRate) || 0, vatNumber: vatNo, businessAddress: bizAddr, payLater, weights: { defaultGrams: Math.round(Number(defGrams)) || 0, byCategory: Object.fromEntries(Object.entries(catGrams).filter(([, v]) => v.trim() !== "").map(([k, v]) => [k, Math.round(Number(v))])), byProduct: textToMap(prodGrams) }, currencies: currencies.map((c) => ({ code: c.code.trim().toUpperCase(), rate: Number(c.rate) })).filter((c) => c.code && Number.isFinite(c.rate)) });
     setMsg(r.ok ? "Saved." : r.error); if (r.ok) router.refresh();
   };
   const saveSecrets = async (clear = false) => {
@@ -107,6 +109,11 @@ export function CommerceForm({ commerce, categories, status }: { commerce: Comme
         </div>
         <Field label="Gift wrap price (£)"><input className="adm-in" inputMode="decimal" value={wrap} onChange={(e) => setWrap(e.target.value)} /></Field>
         {zones.length === 0 ? <Field label="Ships to (country codes)" hint="For example GB, IE, US."><input className="adm-in" value={countries} onChange={(e) => setCountries(e.target.value)} /></Field> : null}
+        <fieldset style={{ border: "1px solid #d5d9de", borderRadius: 8, padding: 12, display: "grid", gap: 8 }}>
+          <legend style={{ padding: "0 6px", fontWeight: 700 }}>Ways to pay pages</legend>
+          <p className="adm-hint" style={{ marginTop: 0 }}>Show a &ldquo;how it works&rdquo; page for a payment method. Turn one on only after you have enabled that method in your Stripe dashboard (Settings, Payment methods), so the site never advertises something checkout does not offer.</p>
+          {PAY_METHODS.map((m) => <Toggle key={m} label={`Show the ${PAY_INFO[m].name} page`} checked={payLater[m]} onChange={(v) => setPayLater((x) => ({ ...x, [m]: v }))} hint={`Page: /payment-options/${m}`} />)}
+        </fieldset>
         <Toggle label="This store is VAT registered" checked={vatOn} onChange={setVatOn} hint="Your prices already include VAT. This works out the VAT part and shows it on order emails and in the admin. Leave off until you are registered." />
         {vatOn ? <div className="adm-grid adm-g2"><Field label="VAT rate (%)" hint="20 is the UK standard rate."><input className="adm-in" inputMode="decimal" value={vatRate} onChange={(e) => setVatRate(e.target.value)} /></Field><Field label="VAT number" hint="Shown on order emails, e.g. GB123456789."><input className="adm-in" value={vatNo} onChange={(e) => setVatNo(e.target.value)} /></Field></div> : null}
         {zones.some((z) => z.byWeight) ? (

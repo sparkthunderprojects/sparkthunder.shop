@@ -5,12 +5,15 @@ import { RegionSwitcher } from "@/components/Currency";
 import { PaymentBadges } from "@/components/PaymentBadges";
 import { getCategories, getFranchises } from "@/lib/catalog";
 import { getStore } from "@/lib/store";
+import { getCommerce } from "@/lib/commerce";
+import { enabledMethods } from "@/lib/pay-later";
 import { getTheme } from "@/lib/theme.server";
 import { LEGAL_PAGES, outbound } from "@/lib/site";
 import { CookieSettingsLink } from "@/components/CookieSettingsLink";
 
 export async function Footer() {
-  const [franchises, categories, store, storeId, theme] = await Promise.all([getFranchises(), getCategories(), getStore(), currentStoreId(), getTheme()]);
+  const [franchises, categories, store, storeId, theme, commerce] = await Promise.all([getFranchises(), getCategories(), getStore(), currentStoreId(), getTheme(), getCommerce()]);
+  const waysToPay = enabledMethods(commerce.payLater).length > 0;
   const original = storeId === DEFAULT_STORE_ID;
   const col = "mt-4 space-y-2.5 text-[0.95rem] text-ink/75";
   const lnk = "hover:text-bolt hover:underline hover:underline-offset-4";
@@ -61,6 +64,7 @@ export async function Footer() {
               <li><Link className={lnk} href="/gifts">Gifts</Link></li>
               <li><Link className={lnk} href="/gift-cards">Gift cards</Link></li>
               <li><Link className={lnk} href="/gift-cards/balance">Check gift card balance</Link></li>
+              {waysToPay ? <li><Link className={lnk} href="/payment-options">Ways to pay</Link></li> : null}
               <li><Link className={lnk} href="/shop">All merchandise</Link></li>
             </ul>
           </div>
