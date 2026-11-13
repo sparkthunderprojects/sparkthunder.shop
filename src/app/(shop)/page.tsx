@@ -46,6 +46,18 @@ export default async function HomePage() {
       {/* Hero slider */}
       <HeroSlider slides={[
         {
+          id: "the-hexleys",
+          label: "The Hexleys: not your ordinary family. New drop coming soon",
+          background: "radial-gradient(70% 90% at 50% 40%, #2a1346 0%, #12081f 55%, #000 100%)",
+          children: (
+            <div className="mx-auto flex min-h-[min(80vh,44rem)] max-w-4xl flex-col items-center justify-center gap-6 pb-24 pt-12 text-center md:gap-8" data-hero="hexleys">
+              <Image src="/hero/the-hexleys.webp" alt="The Hexleys" width={1400} height={554} sizes="(min-width:768px) 56rem, 92vw" loading="eager" priority className="h-auto w-full max-w-[min(56rem,92%)] drop-shadow-[0_10px_40px_rgba(124,58,237,0.45)]" />
+              <h2 className="display text-[clamp(1.75rem,4.2vw,3.5rem)]">Not Your Ordinary Family</h2>
+              <p className="text-sm font-bold uppercase tracking-[0.35em] text-bolt sm:text-base">New Drop Coming Soon</p>
+            </div>
+          ),
+        },
+        {
           id: "universe",
           label: store.heroHeading,
           background: "#000",
