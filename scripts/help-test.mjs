@@ -9,7 +9,7 @@ const base = `http://127.0.0.1:${process.argv[2] ?? "3530"}`;
 let failed = 0; const check = (ok, what) => { console.log(`${ok ? "ok  " : "FAIL"} ${what}`); if (!ok) failed++; };
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
-const go = async (path) => { await page.goto(`${base}${path}`, { waitUntil: "domcontentloaded" }); const r = page.getByRole("button", { name: "Reject all" }); if (await r.isVisible().catch(() => false)) await r.click(); };
+const go = async (path) => { await page.goto(`${base}${path}`, { waitUntil: "domcontentloaded" }); const r = page.getByRole("button", { name: "Reject all" }); await r.waitFor({ timeout: 3000 }).catch(() => {}); if (await r.isVisible().catch(() => false)) await r.click(); };
 const noSideScroll = async () => !(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth));
 try {
   await go("/help");
