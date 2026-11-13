@@ -1,12 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import { useShopUi } from "@/components/ShopUi";
 import { useDialogBehaviour, useTransitionMount } from "@/components/SlideOver";
 import { useMoney } from "@/components/Currency";
+import { useLocale } from "@/components/LocaleProvider";
+import { localePath } from "@/lib/i18n/config";
 
 type Hit = { slug: string; name: string; pricePence: number; image: string; franchise: string; inStock: boolean };
 type LinkHit = { label: string; href: string; kind: string };
@@ -19,6 +21,7 @@ const EMPTY: Data = { products: [], links: [], suggest: [], total: 0, corrected:
 export function SearchOverlay({ popular }: { popular: { label: string; href: string }[] }) {
   const money = useMoney();
   const { panel, closePanel } = useShopUi();
+  const { locale } = useLocale();
   const open = panel === "search";
   const { mounted, shown } = useTransitionMount(open, 350);
   useDialogBehaviour(open, closePanel);
@@ -64,7 +67,7 @@ export function SearchOverlay({ popular }: { popular: { label: string; href: str
   const completion = typed ? data.suggest.find((s) => s.toLowerCase().startsWith(q.toLowerCase()) && s.length > q.length) : undefined;
   const ghost = completion ? completion.slice(q.length) : "";
 
-  function go(href: string) { closePanel(); router.push(href); }
+  function go(href: string) { closePanel(); router.push(localePath(href, locale) as never); }
 
   function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     const el = e.currentTarget;

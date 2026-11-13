@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { CardActions } from "@/components/CardActions";
 import { ProductImage } from "@/components/ProductImage";
 import { QuickAdd } from "@/components/QuickAdd";

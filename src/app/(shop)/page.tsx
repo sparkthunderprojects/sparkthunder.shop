@@ -1,7 +1,7 @@
 import { FranchiseLogo } from "@/components/FranchiseLogo";
 import Image from "next/image";
 import { HeroSlider } from "@/components/HeroSlider";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import type { Metadata } from "next";
 import { ProductCard } from "@/components/ProductCard";
 import { getAllProducts, getCategories, getFranchises } from "@/lib/catalog";

@@ -6,7 +6,7 @@ import { startCheckoutAction } from "@/app/(shop)/checkout/actions";
 import { quoteOffersAction, type OffersQuote } from "@/app/(shop)/checkout/discount";
 import { combineOffers } from "@/lib/promotions";
 import { BasketReminder } from "@/components/BasketReminder";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { useCart } from "@/components/CartProvider";
 import { FreeShippingBar } from "@/components/FreeShippingBar";
 import { DiscountApply, useDiscount } from "@/components/DiscountApply";

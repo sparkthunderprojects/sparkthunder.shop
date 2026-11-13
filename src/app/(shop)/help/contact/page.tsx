@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { connection } from "next/server";
 import { HelpContactForm } from "@/components/HelpContactForm";
 import { Breadcrumbs } from "@/components/Breadcrumbs";

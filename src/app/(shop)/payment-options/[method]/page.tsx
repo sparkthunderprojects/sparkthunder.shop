@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { InstalmentCalculator } from "@/components/InstalmentCalculator";
 import { JsonLd } from "@/components/JsonLd";
 import { PayMethodHero } from "@/components/PayMethodHero";

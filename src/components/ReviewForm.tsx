@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { reviewEligibilityAction, submitReviewAction, type Eligibility } from "@/app/(shop)/reviews/actions";
 
 async function shrink(file: File, maxEdge = 1400): Promise<File> {

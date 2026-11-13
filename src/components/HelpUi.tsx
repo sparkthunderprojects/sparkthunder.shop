@@ -1,5 +1,5 @@
 import Image from "next/image";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { helpIcon, helpPieces, type HelpBlock } from "@/lib/help";
 

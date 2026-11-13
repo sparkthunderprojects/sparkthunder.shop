@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { connection } from "next/server";
 import { CategoryTile, HelpHero, HelpJobs } from "@/components/HelpUi";
 import { JsonLd } from "@/components/JsonLd";

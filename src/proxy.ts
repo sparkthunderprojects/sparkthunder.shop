@@ -1,9 +1,21 @@
 import { hostInfo } from "@/lib/db/edge-data";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { splitLocale, DEFAULT_LOCALE } from "@/lib/i18n/config";
 
 export async function proxy(req: NextRequest) {
-  const { pathname } = req.nextUrl;
+  // /fr/..., /de/... and /es/... are the same pages in another language: strip the prefix, remember the language, and serve the normal route.
+  const split = splitLocale(req.nextUrl.pathname);
+  const locale = /^\/(admin|api|auth)(\/|$)/.test(split.path) ? DEFAULT_LOCALE : split.locale;
+  const pathname = locale === DEFAULT_LOCALE ? req.nextUrl.pathname : split.path;
+  if (locale === DEFAULT_LOCALE && split.locale !== DEFAULT_LOCALE) return new NextResponse("Not found", { status: 404, headers: { "Content-Type": "text/plain" } });
+  const pass = (headers: Headers) => {
+    headers.delete("x-locale"); // never trust this from outside
+    if (locale === DEFAULT_LOCALE) return NextResponse.next({ request: { headers } });
+    headers.set("x-locale", locale);
+    const to = req.nextUrl.clone(); to.pathname = pathname;
+    return NextResponse.rewrite(to, { request: { headers } });
+  };
 
   // Admin: keep the session fresh and send signed-out visitors to the login page.
   if (pathname.startsWith("/admin") || pathname.startsWith("/account") || pathname.startsWith("/auth")) {
@@ -11,7 +23,7 @@ export async function proxy(req: NextRequest) {
     // Tell the data layer this is the admin, where the chosen store comes from the switcher rather than the host.
     const fwd = new Headers(req.headers);
     if (isAdmin) fwd.set("x-spark-admin", "1"); else fwd.delete("x-spark-admin");
-    let res = NextResponse.next({ request: { headers: fwd } });
+    let res = pass(fwd);
     res.headers.set("X-Robots-Tag", "noindex, nofollow");
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL, key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     if (url && key) {
@@ -20,7 +32,7 @@ export async function proxy(req: NextRequest) {
           getAll: () => req.cookies.getAll(),
           setAll: (list) => {
             list.forEach(({ name, value }) => req.cookies.set(name, value));
-            res = NextResponse.next({ request: { headers: fwd } });
+            res = pass(fwd);
             res.headers.set("X-Robots-Tag", "noindex, nofollow");
             list.forEach(({ name, value, options }) => res.cookies.set(name, value, options));
           },
@@ -42,7 +54,7 @@ export async function proxy(req: NextRequest) {
   }
   const open = new Headers(req.headers);
   open.delete("x-spark-admin"); // never trust this from outside
-  return NextResponse.next({ request: { headers: open } });
+  return pass(open);
 }
 
 export const config = {

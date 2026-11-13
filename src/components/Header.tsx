@@ -1,6 +1,6 @@
 import { FranchiseLogo } from "@/components/FranchiseLogo";
 import Image from "next/image";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { AccountLink } from "@/components/AccountLink";
 import { CartLink } from "@/components/CartLink";
 import { MobileMenu } from "@/components/MobileMenu";
@@ -10,6 +10,7 @@ import { WishlistLink } from "@/components/WishlistLink";
 import { getAllProducts, getCategories, getFranchises } from "@/lib/catalog";
 import { getStore } from "@/lib/store";
 import { getTheme } from "@/lib/theme.server";
+import { getT } from "@/lib/i18n/server";
 import { Price, RegionFlag } from "@/components/Currency";
 import type { Product } from "@/lib/types";
 
@@ -30,16 +31,16 @@ function MiniProduct({ p }: { p: Product }) {
 }
 
 export async function Header() {
-  const [franchises, categories, products, store, theme] = await Promise.all([getFranchises(), getCategories(), getAllProducts(), getStore(), getTheme()]);
+  const [franchises, categories, products, store, theme, { t }] = await Promise.all([getFranchises(), getCategories(), getAllProducts(), getStore(), getTheme(), getT()]);
   if (theme.header === "compact") {
     // One row: logo on the left, plain links in the middle, tools on the right. No mega menu.
-    const links = [...franchises.map((f) => ({ label: f.name, href: `/franchises/${f.slug}` })), ...categories.slice(0, franchises.length ? 3 : 6).map((c) => ({ label: c.name, href: `/categories/${c.slug}` })), { label: "New", href: "/new" }].slice(0, 7);
+    const links = [...franchises.map((f) => ({ label: f.name, href: `/franchises/${f.slug}` })), ...categories.slice(0, franchises.length ? 3 : 6).map((c) => ({ label: c.name, href: `/categories/${c.slug}` })), { label: t("nav.new"), href: "/new" }].slice(0, 7);
     return (
       <header className="theme-dark sticky top-0 z-40 border-b border-ink/15 bg-paper" data-header="compact">
-        <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:bg-bolt focus:px-3 focus:py-2">Skip to content</a>
+        <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:bg-bolt focus:px-3 focus:py-2">{t("skip")}</a>
         <div className="flex h-16 items-center gap-6 px-(--gutter)">
           <MobileMenu franchises={franchises.map(({ slug, name }) => ({ slug, name }))} categories={categories.map(({ slug, name }) => ({ slug, name }))} />
-          <Link href="/" className="flex shrink-0 items-center" aria-label={`${store.name} home`}>
+          <Link href="/" className="flex shrink-0 items-center" aria-label={t("nav.home", { name: store.name })}>
             {store.logoUrl ? <Image src={store.logoUrl} alt={store.legalName} width={store.logoWidth} height={store.logoHeight} priority unoptimized className="h-6 w-auto sm:h-7" /> : <span className="display text-2xl">{store.name}</span>}
           </Link>
           <nav aria-label="Primary" className="hidden flex-1 items-center gap-7 whitespace-nowrap font-bold lg:flex">
@@ -54,13 +55,13 @@ export async function Header() {
 
   return (
     <header className="theme-dark sticky top-0 z-40 border-b border-ink/15 bg-paper">
-      <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:bg-bolt focus:px-3 focus:py-2">Skip to content</a>
+      <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:bg-bolt focus:px-3 focus:py-2">{t("skip")}</a>
       <div className="grid h-[5rem] grid-cols-[1fr_auto_1fr] items-center gap-2 px-(--gutter)">
         <div className="flex items-center gap-3">
           <MobileMenu franchises={franchises.map(({ slug, name }) => ({ slug, name }))} categories={categories.map(({ slug, name }) => ({ slug, name }))} />
           <div className="hidden md:block"><SearchTrigger /></div>
         </div>
-        <Link href="/" className="mx-auto flex flex-col items-center gap-1.5" aria-label={`${store.name} home`}>
+        <Link href="/" className="mx-auto flex flex-col items-center gap-1.5" aria-label={t("nav.home", { name: store.name })}>
           {store.logoUrl ? <Image src={store.logoUrl} alt={store.legalName} width={store.logoWidth} height={store.logoHeight} priority unoptimized className="h-6 w-auto sm:h-8" /> : <span className="display text-2xl sm:text-3xl">{store.name}</span>}
           {store.logoLabel ? (
             <span aria-hidden className="flex w-full items-center gap-2.5 text-bolt">
@@ -87,10 +88,10 @@ export async function Header() {
                     <div className="world -my-8 -ml-(--gutter) flex flex-col justify-end gap-3 py-8 pl-(--gutter) pr-8 whitespace-normal">
                       <FranchiseLogo slug={f.slug} name={f.name} className="h-12" textClassName="display text-3xl" />
                       <p className="serif" style={{ color: "var(--world-bright)" }}>{f.tagline}</p>
-                      <Link href={`/franchises/${f.slug}`} className="btn btn-sm mt-2 w-fit">Shop all {f.name}</Link>
+                      <Link href={`/franchises/${f.slug}`} className="btn btn-sm mt-2 w-fit">{t("nav.shopAll", { name: f.name })}</Link>
                     </div>
                     <div>
-                      <p className="font-bold">Shop by type</p>
+                      <p className="font-bold">{t("nav.shopByType")}</p>
                       <ul className="mt-2">
                         {cats.map((c) => <li key={c.slug}><Link rel="nofollow" href={`/categories/${c.slug}?franchise=${f.slug}`} className={subLink}>{c.name}</Link></li>)}
                       </ul>
@@ -103,21 +104,21 @@ export async function Header() {
           })}
 
           <div className="group static">
-            <Link href="/shop" className={topLink}>Shop</Link>
+            <Link href="/shop" className={topLink}>{t("nav.shop")}</Link>
             <div className={panel}>
               <div className="grid grid-cols-[1fr_1fr_repeat(3,minmax(0,1fr))] gap-8 px-(--gutter) py-8">
                 <div>
-                  <p className="font-bold">Shop by type</p>
+                  <p className="font-bold">{t("nav.shopByType")}</p>
                   <ul className="mt-2">
                     {categories.map((c) => <li key={c.slug}><Link href={`/categories/${c.slug}`} className={subLink}>{c.name}</Link></li>)}
-                    <li><Link href="/shop" className={`${subLink} font-bold`}>All merchandise</Link></li>
+                    <li><Link href="/shop" className={`${subLink} font-bold`}>{t("nav.allMerch")}</Link></li>
                   </ul>
                 </div>
                 <div>
-                  <p className="font-bold">Shop by franchise</p>
+                  <p className="font-bold">{t("nav.shopByFranchise")}</p>
                   <ul className="mt-2">
                     {franchises.map((f) => <li key={f.slug}><Link href={`/franchises/${f.slug}`} className={subLink}>{f.name}</Link></li>)}
-                    <li><Link href="/franchises" className={`${subLink} font-bold`}>All franchises</Link></li>
+                    <li><Link href="/franchises" className={`${subLink} font-bold`}>{t("nav.allFranchises")}</Link></li>
                   </ul>
                 </div>
                 {newest.map((p) => <MiniProduct key={p.slug} p={p} />)}
@@ -126,33 +127,33 @@ export async function Header() {
           </div>
 
           <div className="group static">
-            <Link href="/gifts" className={topLink}>Gifts</Link>
+            <Link href="/gifts" className={topLink}>{t("nav.gifts")}</Link>
             <div className={panel}>
               <div className="grid grid-cols-[1fr_1fr_2fr] gap-8 px-(--gutter) py-8">
                 <div>
-                  <p className="font-bold">Gifts by price</p>
+                  <p className="font-bold">{t("nav.giftsByPrice")}</p>
                   <ul className="mt-2">
-                    <li><Link href="/gifts#under-15" className={subLink}>Under £15</Link></li>
-                    <li><Link href="/gifts#15-to-25" className={subLink}>£15 to £25</Link></li>
-                    <li><Link href="/gifts#25-to-50" className={subLink}>£25 to £50</Link></li>
-                    <li><Link href="/gift-cards" className={subLink}>Gift cards</Link></li>
-                    <li><Link href="/gifts" className={`${subLink} font-bold`}>All gifts</Link></li>
+                    <li><Link href="/gifts#under-15" className={subLink}>{t("nav.under15")}</Link></li>
+                    <li><Link href="/gifts#15-to-25" className={subLink}>{t("nav.15to25")}</Link></li>
+                    <li><Link href="/gifts#25-to-50" className={subLink}>{t("nav.25to50")}</Link></li>
+                    <li><Link href="/gift-cards" className={subLink}>{t("nav.giftCards")}</Link></li>
+                    <li><Link href="/gifts" className={`${subLink} font-bold`}>{t("nav.allGifts")}</Link></li>
                   </ul>
                 </div>
                 <div>
-                  <p className="font-bold">Gifts by franchise</p>
+                  <p className="font-bold">{t("nav.giftsByFranchise")}</p>
                   <ul className="mt-2 whitespace-normal">
-                    {franchises.map((f) => <li key={f.slug}><Link href={`/franchises/${f.slug}`} className={subLink}>For {f.name} fans</Link></li>)}
+                    {franchises.map((f) => <li key={f.slug}><Link href={`/franchises/${f.slug}`} className={subLink}>{t("nav.forFans", { name: f.name })}</Link></li>)}
                   </ul>
                 </div>
-                <p className="serif max-w-md self-center whitespace-normal text-lg leading-relaxed text-muted">Official merchandise makes an easy gift for readers, players and collectors alike. Start with a price, or pick the universe they love.</p>
+                <p className="serif max-w-md self-center whitespace-normal text-lg leading-relaxed text-muted">{t("nav.giftBlurb")}</p>
               </div>
             </div>
           </div>
 
-          <Link href="/gift-cards" className="group flex h-full items-center border-b-4 border-transparent px-1 font-bold hover:border-bolt focus-visible:border-bolt">Gift cards</Link>
+          <Link href="/gift-cards" className="group flex h-full items-center border-b-4 border-transparent px-1 font-bold hover:border-bolt focus-visible:border-bolt">{t("nav.giftCards")}</Link>
 
-          <Link href="/new" className="flex h-full items-center border-b-4 border-bolt px-1 font-bold">New</Link>
+          <Link href="/new" className="flex h-full items-center border-b-4 border-bolt px-1 font-bold">{t("nav.new")}</Link>
         </nav>
 
       </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { useEffect, useState } from "react";
 import { PanelProductRow } from "@/components/PanelProductRow";
 import { readRecent, clearRecent } from "@/components/Recent";

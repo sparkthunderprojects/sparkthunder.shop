@@ -1,5 +1,5 @@
 import { categorySeo } from "@/lib/seo/effective";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Breadcrumbs } from "@/components/Breadcrumbs";

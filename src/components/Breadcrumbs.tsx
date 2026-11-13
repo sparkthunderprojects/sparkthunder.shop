@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 
 export function Breadcrumbs({ items, tone = "paper" }: { items: { name: string; href?: string }[]; tone?: "paper" | "world" }) {
   const muted = tone === "world" ? "text-paper/70" : "text-muted";

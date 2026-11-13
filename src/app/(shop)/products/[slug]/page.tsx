@@ -1,6 +1,6 @@
 import { productSeo } from "@/lib/seo/effective";
 import { GRID, nb } from "@/lib/ui";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { BuyBox } from "@/components/BuyBox";

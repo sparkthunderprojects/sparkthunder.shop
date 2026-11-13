@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { useAddToBasket } from "@/components/useAddToBasket";
 import { useCart } from "@/components/CartProvider";
 import { FreeShippingBar } from "@/components/FreeShippingBar";

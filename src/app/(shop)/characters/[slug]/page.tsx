@@ -5,7 +5,7 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { JsonLd } from "@/components/JsonLd";
 import { Listing } from "@/components/Listing";
 import { getCategories, getFranchises } from "@/lib/catalog";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { getCharacter, getCharacterProducts } from "@/lib/characters";
 import { breadcrumbLd, itemListLd } from "@/lib/seo";
 import { buildMetadata } from "@/lib/seo-metadata";

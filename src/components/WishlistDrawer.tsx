@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { useCart } from "@/components/CartProvider";
 import { PanelProductRow } from "@/components/PanelProductRow";
 import { useShopUi } from "@/components/ShopUi";

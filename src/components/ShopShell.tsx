@@ -24,11 +24,14 @@ import { toQuick } from "@/lib/card";
 import { organizationLd, websiteLd } from "@/lib/seo";
 import { SITE } from "@/lib/site";
 import { getStore } from "@/lib/store";
+import { LocaleProvider } from "@/components/LocaleProvider";
+import { getLanguages, getLocale } from "@/lib/i18n/server";
 import { currentStoreId, DEFAULT_STORE_ID } from "@/lib/db/stores";
 
 /** Storefront chrome: providers, header, footer and the slide-over panels. Used by the (shop) layout and the global 404. */
 export async function ShopShell({ children }: { children: React.ReactNode }) {
   const [products, franchises, categories, settings, store, commerce] = await Promise.all([getAllProducts(), getFranchises(), getCategories(), getSiteSettings(), getStore(), getCommerce()]);
+  const [locale, enabled] = await Promise.all([getLocale(), getLanguages()]);
   const original = (await currentStoreId()) === DEFAULT_STORE_ID;
   // The original shop talks about its universes; any other store speaks for itself.
   const nlBlurb = original ? "New merchandise from Knightverge, Occult Inc and the rest of the universe, straight to your inbox." : `New arrivals and offers from ${store.name}, straight to your inbox.`;
@@ -43,6 +46,7 @@ export async function ShopShell({ children }: { children: React.ReactNode }) {
   return (
     <>
       <JsonLd data={[organizationLd([...SITE.sameAs, ...settings.sameAs], { name: store.legalName, logo: store.logoUrl }), websiteLd({ name: store.name, description: store.description })]} />
+      <LocaleProvider locale={locale} enabled={enabled}>
       <CommerceProvider value={{ freeShippingPence: commerce.freeShippingPence, giftWrapPence: commerce.giftWrapPence, codePrefix: commerce.codePrefix, shippingZones: commerce.shippingZones, shippingFlatPence: commerce.shippingFlatPence, shippingCountries: commerce.shippingCountries }}>
       <CurrencyProvider base={SITE.currency} options={commerce.currencies} countries={commerce.shippingCountries}>
       <CartProvider>
@@ -69,6 +73,7 @@ export async function ShopShell({ children }: { children: React.ReactNode }) {
       </CartProvider>
       </CurrencyProvider>
       </CommerceProvider>
+      </LocaleProvider>
     </>
   );
 }

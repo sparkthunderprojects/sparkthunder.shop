@@ -1,5 +1,5 @@
 "use client";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 export type CharacterTile = { slug: string; name: string; image: string; franchise?: string; accent?: string };

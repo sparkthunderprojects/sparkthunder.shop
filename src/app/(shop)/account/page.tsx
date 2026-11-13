@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { SignOutButton } from "@/components/SignOutButton";

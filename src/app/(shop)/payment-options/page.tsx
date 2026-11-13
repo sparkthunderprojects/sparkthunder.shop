@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { connection } from "next/server";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { PaymentBadges } from "@/components/PaymentBadges";

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { connection } from "next/server";
 import { ClearBasket } from "@/components/ClearBasket";
 import { serviceClient } from "@/lib/db/clients";

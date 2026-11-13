@@ -1,7 +1,7 @@
 import { outbound } from "@/lib/site";
 import { franchiseSeo } from "@/lib/seo/effective";
 import { FranchiseLogo } from "@/components/FranchiseLogo";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Breadcrumbs } from "@/components/Breadcrumbs";

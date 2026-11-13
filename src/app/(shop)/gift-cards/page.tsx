@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { GiftCardHero } from "@/components/GiftCardHero";
 import { JsonLd } from "@/components/JsonLd";
 import { breadcrumbLd } from "@/lib/seo";

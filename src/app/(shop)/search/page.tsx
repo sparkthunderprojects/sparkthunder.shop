@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Listing } from "@/components/Listing";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { getAllProducts, getCategories, getFranchises, getProducts } from "@/lib/catalog";
 import { correctQuery } from "@/lib/search-fuzzy";
 

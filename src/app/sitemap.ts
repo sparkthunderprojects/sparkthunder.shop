@@ -9,6 +9,10 @@ import { franchiseSeo, categorySeo, productSeo } from "@/lib/seo/effective";
 import { LEGAL_PAGES, absoluteUrl } from "@/lib/site";
 import { fillForRequest } from "@/lib/site-info";
 import { currentStoreId, DEFAULT_STORE_ID } from "@/lib/db/stores";
+import { getLanguages } from "@/lib/i18n/server";
+import { LOCALE_INFO, localePath, type Locale } from "@/lib/i18n/config";
+
+const inLocale = (url: string, l: Locale) => { const u = new URL(url); u.pathname = localePath(u.pathname, l); return u.toString(); };
 
 export const revalidate = 3600;
 const LEGAL_UPDATED = "2026-11-08";
@@ -19,7 +23,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const isMain = (await currentStoreId()) === DEFAULT_STORE_ID;
   const [franchises, categories, products, collections, characters] = await Promise.all([getFranchises(), getCategories(), getAllProducts(), getCollections(), isMain ? getCharacters() : Promise.resolve([])]);
   const latest = products.reduce((m, p) => (p.createdAt > m ? p.createdAt : m), "2026-01-01");
-  return fillForRequest([
+  const languages = await getLanguages();
+  const entries: MetadataRoute.Sitemap = [
     { url: absoluteUrl("/"), lastModified: latest, changeFrequency: "daily", priority: 1 },
     { url: absoluteUrl("/franchises"), lastModified: latest, changeFrequency: "weekly", priority: 0.8 },
     { url: absoluteUrl("/new"), lastModified: latest, changeFrequency: "daily", priority: 0.8 },
@@ -46,5 +51,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
       images: p.images.length ? p.images.map((src) => (src.startsWith("http") ? src : absoluteUrl(src))) : [absoluteUrl(`/art/${p.slug}`)],
     })),
-  ]);
+  ];
+  // With more than one language on, every address is listed once per language and each names its siblings.
+  const all = languages.length < 2 ? entries : entries.flatMap((e) => {
+    const alternates = { languages: { ...Object.fromEntries(languages.map((l) => [LOCALE_INFO[l].html, inLocale(e.url, l)])), "x-default": e.url } };
+    return languages.map((l) => ({ ...e, url: inLocale(e.url, l), alternates }));
+  });
+  return fillForRequest(all);
 }

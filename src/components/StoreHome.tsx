@@ -1,5 +1,5 @@
 import Image from "next/image";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { CharacterCarousel } from "@/components/CharacterCarousel";
 import type { CharacterEntry } from "@/lib/character-config";
 import { homeList } from "@/lib/character-config";

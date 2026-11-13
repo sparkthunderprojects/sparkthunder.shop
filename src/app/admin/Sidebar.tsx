@@ -36,6 +36,7 @@ const SEO: typeof NAV = [
   { href: "/admin/theme", label: "Theme and layout" },
   { href: "/admin/store", label: "Brand and design" },
   { href: "/admin/commerce", label: "Shipping and payments" },
+  { href: "/admin/languages", label: "Languages" },
   { href: "/admin/printify", label: "Printify" },
   { href: "/admin/developers", label: "Developers" },
   { href: "/admin/settings", label: "Settings" },

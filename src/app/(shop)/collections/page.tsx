@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import type { Metadata } from "next";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { JsonLd } from "@/components/JsonLd";

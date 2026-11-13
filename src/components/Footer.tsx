@@ -1,5 +1,5 @@
 import { currentStoreId, DEFAULT_STORE_ID } from "@/lib/db/stores";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import Image from "next/image";
 import { RegionSwitcher } from "@/components/Currency";
 import { PaymentBadges } from "@/components/PaymentBadges";
@@ -8,11 +8,15 @@ import { getStore } from "@/lib/store";
 import { getCommerce } from "@/lib/commerce";
 import { enabledMethods } from "@/lib/pay-later";
 import { getTheme } from "@/lib/theme.server";
+import { getT } from "@/lib/i18n/server";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { LEGAL_PAGES, outbound } from "@/lib/site";
 import { CookieSettingsLink } from "@/components/CookieSettingsLink";
 
 export async function Footer() {
-  const [franchises, categories, store, storeId, theme, commerce] = await Promise.all([getFranchises(), getCategories(), getStore(), currentStoreId(), getTheme(), getCommerce()]);
+  const [franchises, categories, store, storeId, theme, commerce, { t }] = await Promise.all([getFranchises(), getCategories(), getStore(), currentStoreId(), getTheme(), getCommerce(), getT()]);
+  const legal: Record<string, Parameters<typeof t>[0]> = { "/terms": "legal.terms", "/delivery-returns": "legal.delivery", "/privacy": "legal.privacy", "/cookies": "legal.cookiePolicy", "/accessibility": "legal.accessibility" };
+  const legalLabel = (l: { href: string; label: string }) => (legal[l.href] ? t(legal[l.href]) : l.label);
   const pay = enabledMethods(commerce.payLater);
   const original = storeId === DEFAULT_STORE_ID;
   const col = "mt-4 space-y-2.5 text-[0.95rem] text-ink/75";
@@ -23,16 +27,16 @@ export async function Footer() {
         <div className="flex flex-col gap-5 px-(--gutter) py-8 text-sm text-ink/70 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
             <Link href="/" className="display text-lg text-ink">{store.name}</Link>
-            <span>© {new Date().getFullYear()} {store.legalName}.{original ? " Official merchandise." : ""}</span>
+            <span>© {new Date().getFullYear()} {store.legalName}.{original ? ` ${t("footer.rights")}` : ""}</span>
           </div>
           <nav aria-label="Legal"><ul className="flex flex-wrap gap-x-6 gap-y-2 font-semibold text-ink/80">
-            <li><Link className={lnk} href="/help">Help Centre</Link></li>
-            <li><Link className={lnk} href="/payment-options">Payment options</Link></li>
-            {LEGAL_PAGES.map((l) => <li key={l.href}><Link className={lnk} href={l.href}>{l.label}</Link></li>)}
-            <li><CookieSettingsLink className={lnk} /></li>
+            <li><Link className={lnk} href="/help">{t("footer.help")}</Link></li>
+            <li><Link className={lnk} href="/payment-options">{t("footer.payment")}</Link></li>
+            {LEGAL_PAGES.map((l) => <li key={l.href}><Link className={lnk} href={l.href}>{legalLabel(l)}</Link></li>)}
+            <li><CookieSettingsLink className={lnk}>{t("legal.cookies")}</CookieSettingsLink></li>
           </ul></nav>
         </div>
-        <div className="flex flex-col items-center gap-5 px-(--gutter) pb-8"><PaymentBadges className="" methods={pay} centered /><RegionSwitcher /></div>
+        <div className="flex flex-col items-center gap-5 px-(--gutter) pb-8"><PaymentBadges className="" methods={pay} centered /><RegionSwitcher /><LanguageSwitcher /></div>
       </footer>
     );
   }
@@ -52,44 +56,44 @@ export async function Footer() {
         <div className="mt-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_1fr]">
           <p className="serif max-w-sm text-lg leading-relaxed text-ink/80">{store.description}</p>
           <div>
-            <h2 className="font-bold">Franchises</h2>
+            <h2 className="font-bold">{t("nav.franchises")}</h2>
             <ul className={col}>
               {franchises.map((f) => <li key={f.slug}><Link className={lnk} href={`/franchises/${f.slug}`}>{f.name}</Link></li>)}
-              <li><Link className={lnk} href="/franchises">All franchises</Link></li>
+              <li><Link className={lnk} href="/franchises">{t("nav.allFranchises")}</Link></li>
             </ul>
           </div>
           <div>
-            <h2 className="font-bold">Shop</h2>
+            <h2 className="font-bold">{t("nav.shop")}</h2>
             <ul className={col}>
               {categories.map((c) => <li key={c.slug}><Link className={lnk} href={`/categories/${c.slug}`}>{c.name}</Link></li>)}
-              <li><Link className={lnk} href="/new">New arrivals</Link></li>
-              <li><Link className={lnk} href="/gifts">Gifts</Link></li>
-              <li><Link className={lnk} href="/gift-cards">Gift cards</Link></li>
-              <li><Link className={lnk} href="/gift-cards/balance">Check gift card balance</Link></li>
-              <li><Link className={lnk} href="/help">Help Centre</Link></li>
-              <li><Link className={lnk} href="/payment-options">Payment options</Link></li>
-              <li><Link className={lnk} href="/shop">All merchandise</Link></li>
+              <li><Link className={lnk} href="/new">{t("nav.new")}</Link></li>
+              <li><Link className={lnk} href="/gifts">{t("nav.gifts")}</Link></li>
+              <li><Link className={lnk} href="/gift-cards">{t("nav.giftCards")}</Link></li>
+              <li><Link className={lnk} href="/gift-cards/balance">{t("footer.balance")}</Link></li>
+              <li><Link className={lnk} href="/help">{t("footer.help")}</Link></li>
+              <li><Link className={lnk} href="/payment-options">{t("footer.payment")}</Link></li>
+              <li><Link className={lnk} href="/shop">{t("nav.allMerch")}</Link></li>
             </ul>
           </div>
           <div>
-            <h2 className="font-bold">The universes</h2>
+            <h2 className="font-bold">{t("nav.universes")}</h2>
             <ul className={col}>
               {franchises.filter((f) => f.siteUrl).map((f) => (
-                <li key={f.slug}><a className={lnk} href={outbound(f.siteUrl!, "footer")} rel="noopener">{f.name} website</a></li>
+                <li key={f.slug}><a className={lnk} href={outbound(f.siteUrl!, "footer")} rel="noopener">{t("footer.site", { name: f.name })}</a></li>
               ))}
             </ul>
           </div>
         </div>
         <div className="mt-14 flex flex-col gap-5 border-t border-ink/15 pt-6 text-sm text-ink/60 md:flex-row md:items-center md:justify-between">
-          <p>© {new Date().getFullYear()} {store.legalName}.{original ? " Official merchandise." : ""}</p>
+          <p>© {new Date().getFullYear()} {store.legalName}.{original ? ` ${t("footer.rights")}` : ""}</p>
           <nav aria-label="Legal">
             <ul className="flex flex-wrap gap-x-7 gap-y-2 font-semibold text-ink/75">
-              {LEGAL_PAGES.map((l) => <li key={l.href}><Link className={lnk} href={l.href}>{l.label}</Link></li>)}
-              <li><CookieSettingsLink className={lnk} /></li>
+              {LEGAL_PAGES.map((l) => <li key={l.href}><Link className={lnk} href={l.href}>{legalLabel(l)}</Link></li>)}
+              <li><CookieSettingsLink className={lnk}>{t("legal.cookies")}</CookieSettingsLink></li>
             </ul>
           </nav>
         </div>
-        <div className="mt-8 flex flex-col items-center gap-5"><PaymentBadges className="" methods={pay} centered /><RegionSwitcher /></div>
+        <div className="mt-8 flex flex-col items-center gap-5"><PaymentBadges className="" methods={pay} centered /><RegionSwitcher /><LanguageSwitcher /></div>
       </div>
     </footer>
   );

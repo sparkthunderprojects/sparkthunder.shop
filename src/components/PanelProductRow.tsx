@@ -1,5 +1,5 @@
 import Image from "next/image";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import type { ReactNode } from "react";
 import type { QuickProduct } from "@/lib/card";
 import { formatPrice } from "@/lib/site";

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { ShopShell } from "@/components/ShopShell";
 
 export default function GlobalNotFound() {
