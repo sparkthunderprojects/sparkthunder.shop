@@ -23,6 +23,7 @@ export async function Footer() {
             <span>© {new Date().getFullYear()} {store.legalName}.{original ? " Official merchandise." : ""}</span>
           </div>
           <nav aria-label="Legal"><ul className="flex flex-wrap gap-x-6 gap-y-2 font-semibold text-ink/80">
+            <li><Link className={lnk} href="/help">Help Centre</Link></li>
             <li><Link className={lnk} href="/payment-options">Payment options</Link></li>
             {LEGAL_PAGES.map((l) => <li key={l.href}><Link className={lnk} href={l.href}>{l.label}</Link></li>)}
             <li><CookieSettingsLink className={lnk} /></li>
@@ -62,6 +63,7 @@ export async function Footer() {
               <li><Link className={lnk} href="/gifts">Gifts</Link></li>
               <li><Link className={lnk} href="/gift-cards">Gift cards</Link></li>
               <li><Link className={lnk} href="/gift-cards/balance">Check gift card balance</Link></li>
+              <li><Link className={lnk} href="/help">Help Centre</Link></li>
               <li><Link className={lnk} href="/payment-options">Payment options</Link></li>
               <li><Link className={lnk} href="/shop">All merchandise</Link></li>
             </ul>

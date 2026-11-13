@@ -1,5 +1,7 @@
 import type { MetadataRoute } from "next";
 import { getCharacters } from "@/lib/characters";
+import { getHelp } from "@/lib/help-ctx";
+import { HELP_CATEGORIES, helpPath } from "@/lib/help";
 import { getCommerce } from "@/lib/commerce";
 import { enabledMethods } from "@/lib/pay-later";
 import { getAllProducts, getCategories, getCollections, getFranchises } from "@/lib/catalog";
@@ -13,6 +15,7 @@ const LEGAL_UPDATED = "2026-11-08";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const payPages = enabledMethods((await getCommerce()).payLater);
+  const help = (await getHelp()).articles;
   const isMain = (await currentStoreId()) === DEFAULT_STORE_ID;
   const [franchises, categories, products, collections, characters] = await Promise.all([getFranchises(), getCategories(), getAllProducts(), getCollections(), isMain ? getCharacters() : Promise.resolve([])]);
   const latest = products.reduce((m, p) => (p.createdAt > m ? p.createdAt : m), "2026-01-01");
@@ -25,6 +28,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...collections.map((c) => ({ url: absoluteUrl(`/collections/${c.slug}`), lastModified: latest, changeFrequency: "weekly" as const, priority: 0.7 })),
     { url: absoluteUrl("/characters"), lastModified: latest, changeFrequency: "weekly", priority: 0.6 },
     ...characters.filter((c) => c.count > 0).map((c) => ({ url: absoluteUrl(`/characters/${c.slug}`), lastModified: latest, changeFrequency: "weekly" as const, priority: 0.6 })),
+    { url: absoluteUrl("/help"), lastModified: LEGAL_UPDATED, changeFrequency: "monthly", priority: 0.6 },
+    ...HELP_CATEGORIES.map((c) => ({ url: absoluteUrl(`/help/${c.slug}`), lastModified: LEGAL_UPDATED, changeFrequency: "monthly" as const, priority: 0.5 })),
+    ...help.map((a) => ({ url: absoluteUrl(helpPath(a)), lastModified: LEGAL_UPDATED, changeFrequency: "monthly" as const, priority: 0.5 })),
+    { url: absoluteUrl("/help/contact"), lastModified: LEGAL_UPDATED, changeFrequency: "yearly", priority: 0.4 },
     { url: absoluteUrl("/gift-cards"), lastModified: latest, changeFrequency: "monthly", priority: 0.7 },
     ...(payPages.length ? [{ url: absoluteUrl("/payment-options"), lastModified: latest, changeFrequency: "monthly" as const, priority: 0.5 }, ...payPages.map((m) => ({ url: absoluteUrl(`/payment-options/${m}`), lastModified: latest, changeFrequency: "monthly" as const, priority: 0.5 }))] : []),
     { url: absoluteUrl("/gift-cards/send"), lastModified: latest, changeFrequency: "monthly", priority: 0.6 },

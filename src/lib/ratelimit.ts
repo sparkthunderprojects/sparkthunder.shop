@@ -16,6 +16,7 @@ export const LIMITS = {
   newsletter: { limit: 8, windowSec: 3600 },
   points: { limit: 10, windowSec: 3600 },
   returns: { limit: 5, windowSec: 3600 },
+  contact: { limit: 5, windowSec: 3600 },               // help centre messages per address per hour
 } as const;
 
 type Rule = { limit: number; windowSec: number };

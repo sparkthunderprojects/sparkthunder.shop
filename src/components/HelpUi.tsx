@@ -1,0 +1,83 @@
+import Link from "next/link";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { helpIcon, helpPieces, type HelpBlock } from "@/lib/help";
+
+type Store = { name: string; dark: string; accent: string };
+
+const Icon = ({ name, className = "h-8 w-8" }: { name: string; className?: string }) => (
+  <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d={helpIcon(name)} /></svg>
+);
+
+/** Text with [label](/path) links turned into real links. */
+export function HelpText({ text, linkClass = "link-line font-bold" }: { text: string; linkClass?: string }) {
+  return <>{helpPieces(text).map((x, i) => x.href ? <Link key={i} href={x.href as never} className={linkClass}>{x.text}</Link> : <span key={i}>{x.text}</span>)}</>;
+}
+
+export function HelpBlocks({ blocks }: { blocks: HelpBlock[] }) {
+  return (
+    <div className="prose-lore legal">
+      {blocks.map((b, i) =>
+        "p" in b ? <p key={i}><HelpText text={b.p} /></p>
+        : "h" in b ? <h2 key={i}>{b.h}</h2>
+        : "ul" in b ? <ul key={i}>{b.ul.map((t, j) => <li key={j}><HelpText text={t} /></li>)}</ul>
+        : <ol key={i}>{b.ol.map((t, j) => <li key={j}><HelpText text={t} /></li>)}</ol>)}
+    </div>
+  );
+}
+
+export function HelpSearch({ q = "", className = "" }: { q?: string; className?: string }) {
+  return (
+    <form action="/help/search" method="get" role="search" className={`flex w-full max-w-2xl overflow-hidden rounded-full bg-white text-black shadow-xl ${className}`}>
+      <label htmlFor="help-q" className="sr-only">Type your question</label>
+      <input id="help-q" name="q" defaultValue={q} placeholder="Type your question here" autoComplete="off" className="min-w-0 flex-1 bg-transparent px-6 py-4 text-base outline-none" />
+      <button className="m-1.5 rounded-full px-7 font-semibold text-white" style={{ background: "#0b57d0" }}>Search</button>
+    </form>
+  );
+}
+
+/** Branded banner: breadcrumbs, title and the search box, with the three most common jobs as big buttons underneath. */
+export function HelpHero({ store, crumbs, title, q, big = false }: { store: Store; crumbs: { name: string; href?: string }[]; title: string; q?: string; big?: boolean }) {
+  return (
+    <section className="relative -mx-(--gutter) overflow-hidden text-white" data-help="hero" style={{ background: `linear-gradient(180deg, ${store.dark} 0%, color-mix(in srgb, ${store.dark} 60%, ${store.accent}) 100%)` }}>
+      <div aria-hidden className="pointer-events-none absolute inset-0">
+        <svg className="gc-drift absolute -bottom-4 left-0 h-3/5 w-full opacity-30" viewBox="0 0 1200 300" preserveAspectRatio="none">
+          {[0, 1, 2, 3, 4, 5].map((i) => <path key={i} d={`M-20 ${250 - i * 6} C 300 ${290 - i * 10}, 700 ${120 + i * 8}, 1220 ${40 + i * 14}`} fill="none" stroke="white" strokeWidth="1" strokeOpacity={0.25 + i * 0.07} />)}
+        </svg>
+      </div>
+      <div className="absolute left-(--gutter) top-5 z-20"><Breadcrumbs tone="world" items={crumbs} /></div>
+      <div className={`relative mx-auto flex max-w-5xl flex-col items-center px-(--gutter) text-center ${big ? "pb-24 pt-20 md:pb-28" : "pb-12 pt-20"}`}>
+        <h1 className="display text-[clamp(2rem,4.6vw,3.6rem)]">{title}</h1>
+        <HelpSearch q={q} className="mt-8" />
+      </div>
+    </section>
+  );
+}
+
+const JOBS = [
+  { label: "Track your order", href: "/account", icon: "box" },
+  { label: "Return / exchange", href: "/help/returns/how-to-return", icon: "returns" },
+  { label: "Request replacement", href: "/help/contact?topic=replacement", icon: "help" },
+] as const;
+
+export function HelpJobs() {
+  return (
+    <ul className="relative z-10 mx-auto -mt-10 grid max-w-5xl gap-3 px-1 sm:grid-cols-3" aria-label="Quick help">
+      {JOBS.map((j) => (
+        <li key={j.label}>
+          <Link href={j.href as never} className="flex items-center justify-between gap-3 rounded-full bg-[#0b57d0] px-7 py-5 text-sm font-bold uppercase tracking-widest text-white shadow-lg transition-transform hover:-translate-y-0.5" data-helpjob={j.label}>
+            <Icon name={j.icon} className="h-9 w-9 shrink-0" /><span className="flex-1 text-center">{j.label}</span><span aria-hidden>&rarr;</span>
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+export function CategoryTile({ slug, title, blurb, icon }: { slug: string; title: string; blurb: string; icon: string }) {
+  return (
+    <Link href={`/help/${slug}` as never} className="group flex h-full items-center gap-4 border border-ink/15 bg-paper p-5 shadow-sm transition-shadow hover:shadow-lg" data-helpcat={slug}>
+      <span className="text-bolt"><Icon name={icon} /></span>
+      <span><span className="block text-lg font-bold">{title}</span><span className="block text-sm text-muted">{blurb}</span></span>
+    </Link>
+  );
+}
