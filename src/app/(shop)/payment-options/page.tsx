@@ -20,7 +20,7 @@ export default async function PaymentOptionsPage() {
   await connection();
   const { t } = await getT();
   const on = enabledMethods((await getCommerce()).payLater);
-  const methods = on.map((m) => PAY_INFO[m]);
+  const methods = on.map((m) => ({ ...PAY_INFO[m], name: t(PAY_INFO[m].name) }));
   return (
     <>
       <JsonLd data={breadcrumbLd([{ name: t("Home"), path: "/" }, { name: t("Payment options"), path: "/payment-options" }])} />

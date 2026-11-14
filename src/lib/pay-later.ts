@@ -135,3 +135,9 @@ export function splitInstalments(totalPence: number, parts: number): number[] {
 
 /** The small print shown on every pay later page. */
 export const PAY_LATER_SMALL_PRINT = "Subject to status. 18+ and UK residents only. Pay later is a form of credit: it is interest-free when paid on time, and late fees may apply. Terms apply. Borrow responsibly.";
+
+/** A copy of a payment method with every sentence run through the translator (unknown sentences stay English). */
+export function translatePay(m: PayMethod, t: (k: string) => string): PayMethod {
+  const pair = (p: [string, string]): [string, string] => [t(p[0]), t(p[1])];
+  return { ...m, name: t(m.name), headline: t(m.headline), sub: t(m.sub), cta: t(m.cta), hubLine: t(m.hubLine), chips: m.chips.map(([i, s]) => [i, t(s)] as [ChipIcon, string]), schedule: m.schedule.map(t), scheduleNote: t(m.scheduleNote), steps: m.steps.map(pair), facts: m.facts.map(pair), faq: m.faq.map(pair) };
+}
