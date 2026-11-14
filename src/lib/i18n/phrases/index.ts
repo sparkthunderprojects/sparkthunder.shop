@@ -6,9 +6,9 @@ import { listing } from "./listing";
 import { social, social2 } from "./social";
 import { home } from "./home";
 import { pdp } from "./pdp";
-import { pages, pages2, pages3 } from "./pages";
+import { pages, pages2, pages3, pages4 } from "./pages";
 export type Phrase = readonly [en: string, fr: string, de: string, es: string];
-export const PHRASES_LIST: Phrase[] = dedupe([...cart, ...region, ...search, ...consent, ...shopui, ...product, ...listing, ...social, ...social2, ...home, ...pdp, ...pages, ...pages2, ...pages3]);
+export const PHRASES_LIST: Phrase[] = dedupe([...cart, ...region, ...search, ...consent, ...shopui, ...product, ...listing, ...social, ...social2, ...home, ...pdp, ...pages, ...pages2, ...pages3, ...pages4]);
 
 /** The same English wording can appear in several files; the first translation wins. */
 function dedupe(list: Phrase[]): Phrase[] {
