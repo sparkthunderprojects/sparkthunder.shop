@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/components/LocaleProvider";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useCart } from "@/components/CartProvider";
@@ -30,6 +31,7 @@ const ShopUiCtx = createContext<Ctx | null>(null);
 
 /** Quick-view modal state and the compare list (kept in localStorage, max four products). */
 export function ShopUiProvider({ children }: { children: React.ReactNode }) {
+  const { t } = useT();
   const [quick, setQuick] = useState<QuickProduct | null>(null);
   const [compare, setCompare] = useState<CompareItem[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -65,12 +67,12 @@ export function ShopUiProvider({ children }: { children: React.ReactNode }) {
     setCompare((cur) => {
       if (cur.some((c) => c.slug === item.slug)) return cur.filter((c) => c.slug !== item.slug);
       if (cur.length >= COMPARE_MAX) {
-        flash(`You can compare up to ${COMPARE_MAX} products. Remove one first.`);
+        flash(t("You can compare up to {n} products. Remove one first.", { n: COMPARE_MAX }));
         return cur;
       }
       return [...cur, item];
     });
-  }, [flash]);
+  }, [flash, t]);
 
   const value = useMemo<Ctx>(() => ({
     quick,

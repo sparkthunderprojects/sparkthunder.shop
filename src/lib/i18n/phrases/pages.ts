@@ -241,3 +241,11 @@ export const pages5: Phrase[] = [
   ["18+, UK residents only. Terms apply.", "18 ans et plus, résidents du Royaume-Uni uniquement. Conditions applicables.", "Ab 18 Jahren, nur für Einwohner des Vereinigten Königreichs. Es gelten Bedingungen.", "Mayores de 18 años, solo residentes en el Reino Unido. Se aplican condiciones."],
   ["Availability depends on your device, browser and account.", "La disponibilité dépend de votre appareil, de votre navigateur et de votre compte.", "Die Verfügbarkeit hängt von Ihrem Gerät, Browser und Konto ab.", "La disponibilidad depende de tu dispositivo, navegador y cuenta."],
 ];
+export const pages6: Phrase[] = [
+  ["Sign out", "Se déconnecter", "Abmelden", "Cerrar sesión"],
+  ["Announcements", "Annonces", "Ankündigungen", "Anuncios"],
+  ["Close announcement", "Fermer l’annonce", "Ankündigung schließen", "Cerrar anuncio"],
+  ["Browse franchises", "Parcourir les franchises", "Franchises ansehen", "Explorar franquicias"],
+  ["That page has moved or never existed. Pick a franchise to keep browsing.", "Cette page a été déplacée ou n’a jamais existé. Choisissez une franchise pour continuer à parcourir.", "Diese Seite wurde verschoben oder hat nie existiert. Wählen Sie eine Franchise, um weiterzustöbern.", "Esa página se ha movido o nunca existió. Elige una franquicia para seguir explorando."],
+  ["You can compare up to {n} products. Remove one first.", "Vous pouvez comparer jusqu’à {n} produits. Retirez-en un d’abord.", "Sie können bis zu {n} Produkte vergleichen. Entfernen Sie zuerst eines.", "Puedes comparar hasta {n} productos. Quita uno primero."],
+];

@@ -1,8 +1,11 @@
 "use client";
-import { useRouter } from "next/navigation";
+
+import { localePath } from "@/lib/i18n/config";
+import { useT } from "@/components/LocaleProvider";import { useRouter } from "next/navigation";
 import { browserClient } from "@/lib/db/browser";
 
 export function SignOutButton() {
   const router = useRouter();
-  return <button className="btn" onClick={async () => { await browserClient()?.auth.signOut(); router.push("/"); router.refresh(); }}>Sign out</button>;
+  const { t, locale } = useT();
+  return <button className="btn" onClick={async () => { await browserClient()?.auth.signOut(); router.push(localePath("/", locale) as never); router.refresh(); }}>{t("Sign out")}</button>;
 }
