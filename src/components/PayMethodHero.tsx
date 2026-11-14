@@ -1,3 +1,4 @@
+import { getT } from "@/lib/i18n/server";
 import Image from "next/image";
 import Link from "@/components/LocaleLink";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
@@ -16,11 +17,12 @@ const PATHS: Record<ChipIcon, string> = {
 const Icon = ({ d }: { d: string }) => <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d={d} /></svg>;
 
 /** Banner for a "ways to pay" page: the provider's mark and message on the left, real Sparkthunder products on the right. */
-export function PayMethodHero({ m, products }: { m: PayMethod; products: Product[] }) {
+export async function PayMethodHero({ m, products }: { m: PayMethod; products: Product[] }) {
+  const { t } = await getT();
   const shown = products.slice(0, 3);
   return (
     <section className="relative -mx-(--gutter) overflow-hidden text-[#0b1b3a]" data-paymethod={m.id} style={{ background: `linear-gradient(135deg, #f7f7f5 0%, #f7f7f5 45%, ${m.tint} 130%)` }}>
-      <div className="absolute left-(--gutter) top-5 z-20 text-black"><Breadcrumbs items={[{ name: "Home", href: "/" }, { name: "Payment options", href: "/payment-options" }, { name: m.name }]} /></div>
+      <div className="absolute left-(--gutter) top-5 z-20 text-black"><Breadcrumbs items={[{ name: t("Home"), href: "/" }, { name: t("Payment options"), href: "/payment-options" }, { name: m.name }]} /></div>
       <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-(--gutter) pb-16 pt-20 md:grid-cols-[1.05fr_0.95fr] md:pb-20">
         <div>
           <div className="flex items-center gap-3">
@@ -31,9 +33,9 @@ export function PayMethodHero({ m, products }: { m: PayMethod; products: Product
           <p className="mt-5 max-w-xl text-lg leading-relaxed text-black/75">{m.sub}</p>
           <div className="mt-8 flex flex-wrap gap-3">
             <a href="#how" className="inline-block rounded-full px-8 py-4 text-lg font-semibold" style={{ background: m.button, color: m.buttonText }}>{m.cta}</a>
-            <Link href="/shop" className="inline-block rounded-full border-2 border-black/80 px-8 py-4 text-lg font-semibold text-black">Start shopping</Link>
+            <Link href="/shop" className="inline-block rounded-full border-2 border-black/80 px-8 py-4 text-lg font-semibold text-black">{t("Start shopping")}</Link>
           </div>
-          {m.credit ? <p className="mt-10 max-w-xl text-xs text-black/55">*{m.id === "paypal" ? "Pay later options are offered by PayPal, subject to status." : "Subject to status."} 18+, UK residents only. Terms apply.</p> : <p className="mt-10 max-w-xl text-xs text-black/55">Availability depends on your device, browser and account.</p>}
+          {m.credit ? <p className="mt-10 max-w-xl text-xs text-black/55">*{m.id === "paypal" ? t("Pay later options are offered by PayPal, subject to status.") : t("Subject to status.")} {t("18+, UK residents only. Terms apply.")}</p> : <p className="mt-10 max-w-xl text-xs text-black/55">{t("Availability depends on your device, browser and account.")}</p>}
         </div>
 
         <div className="relative mx-auto h-[24rem] w-full max-w-lg md:h-[28rem]" aria-hidden>

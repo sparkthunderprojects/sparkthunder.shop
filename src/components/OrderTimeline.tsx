@@ -1,20 +1,22 @@
+import { useT } from "@/components/LocaleProvider";
 import { trackingUrl } from "@/lib/tracking";
 import type { OrderRow } from "@/lib/shop/fulfil";
 
-const fmt = (iso?: string | null) => (iso ? new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "");
+const fmt = (iso: string | null | undefined, loc: string) => (iso ? new Date(iso).toLocaleDateString(loc === "en" ? "en-GB" : loc, { day: "numeric", month: "short" }) : "");
 
 /** Ordered → Dispatched, with a tracking link when we know the carrier. Gift-card-only orders have nothing to post. */
 export function OrderTimeline({ order }: { order: OrderRow }) {
-  if (order.status === "cancelled") return <p className="mt-3 text-sm font-bold">This order was cancelled.</p>;
+  const { t, locale } = useT();
+  if (order.status === "cancelled") return <p className="mt-3 text-sm font-bold">{t("This order was cancelled.")}</p>;
   const posted = order.items.some((l) => l.type === "product");
   const shipped = order.status === "shipped";
   const steps = posted
-    ? [{ label: "Order placed", on: true, when: fmt(order.created_at) }, { label: "Being prepared", on: true, when: "" }, { label: "Dispatched", on: shipped, when: fmt(order.shipped_at) }]
-    : [{ label: "Order placed", on: true, when: fmt(order.created_at) }, { label: "Sent by email", on: true, when: "" }];
+    ? [{ label: t("Order placed"), on: true, when: fmt(order.created_at, locale) }, { label: t("Being prepared"), on: true, when: "" }, { label: t("Dispatched"), on: shipped, when: fmt(order.shipped_at, locale) }]
+    : [{ label: t("Order placed"), on: true, when: fmt(order.created_at, locale) }, { label: t("Sent by email"), on: true, when: "" }];
   const link = trackingUrl(order.tracking_carrier, order.tracking_number);
   return (
     <div className="mt-3">
-      <ol className="flex items-start" aria-label="Order progress">
+      <ol className="flex items-start" aria-label={t("Order progress")}>
         {steps.map((s, i) => (
           <li key={s.label} className="flex-1">
             <div className="flex items-center">
@@ -26,7 +28,7 @@ export function OrderTimeline({ order }: { order: OrderRow }) {
         ))}
       </ol>
       {order.tracking_number ? (
-        <p className="mt-3 text-sm">{order.tracking_carrier || "Tracking"} <b>{order.tracking_number}</b>{link ? <> · <a href={link} target="_blank" rel="noopener" className="font-bold underline underline-offset-4">Track parcel<span className="sr-only"> (opens in a new tab)</span></a></> : null}</p>
+        <p className="mt-3 text-sm">{order.tracking_carrier || t("Tracking")} <b>{order.tracking_number}</b>{link ? <> · <a href={link} target="_blank" rel="noopener" className="font-bold underline underline-offset-4">{t("Track parcel")}<span className="sr-only">{t(" (opens in a new tab)")}</span></a></> : null}</p>
       ) : null}
     </div>
   );

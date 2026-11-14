@@ -1,3 +1,4 @@
+import { getT } from "@/lib/i18n/server";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import type { GiftTheme } from "@/lib/giftcards/themes";
 
@@ -10,7 +11,8 @@ const Star = ({ className }: { className: string }) => (
 );
 
 /** Full-width branded banner for the gift cards page: the store's own colours, logo, a floating phone showing the emailed card, sparkles and swooping lines. */
-export function GiftCardHero({ store, card }: { store: Store; card: GiftTheme }) {
+export async function GiftCardHero({ store, card }: { store: Store; card: GiftTheme }) {
+  const { t } = await getT();
   return (
     <section className="relative -mx-(--gutter) overflow-hidden text-white" data-giftcards="hero" style={{ background: `linear-gradient(180deg, ${store.dark} 0%, ${store.dark} 22%, color-mix(in srgb, ${store.dark} 55%, ${store.accent}) 78%, color-mix(in srgb, ${store.dark} 25%, ${store.accent}) 100%)` }}>
       {/* sparkles */}
@@ -24,20 +26,20 @@ export function GiftCardHero({ store, card }: { store: Store; card: GiftTheme })
         </svg>
       </div>
 
-      <div className="absolute left-(--gutter) top-5 z-20"><Breadcrumbs tone="world" items={[{ name: "Home", href: "/" }, { name: "Gift cards" }]} /></div>
+      <div className="absolute left-(--gutter) top-5 z-20"><Breadcrumbs tone="world" items={[{ name: t("Home"), href: "/" }, { name: t("Gift cards") }]} /></div>
 
       <div className="relative mx-auto flex min-h-[38rem] max-w-5xl flex-col items-center px-(--gutter) pt-16 text-center md:min-h-[44rem]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         {store.logoUrl ? <img src={store.logoUrl} alt={store.name} width={store.logoWidth || 240} height={store.logoHeight || 60} className="h-12 w-auto max-w-[70vw] md:h-16" /> : <span className="display text-4xl md:text-5xl">{store.name}</span>}
-        <h1 className="mt-2 text-3xl font-extrabold uppercase tracking-[0.35em] md:text-5xl"><span className="sr-only">{store.name} </span>Gift card</h1>
-        <p className="mt-3 text-lg text-white/85">One card. A world of possibilities!</p>
+        <h1 className="mt-2 text-3xl font-extrabold uppercase tracking-[0.35em] md:text-5xl"><span className="sr-only">{store.name} </span>{t("Gift card")}</h1>
+        <p className="mt-3 text-lg text-white/85">{t("One card. A world of possibilities!")}</p>
 
         {/* phones */}
         <div aria-hidden className="relative mt-8 h-[31rem] w-full max-w-xl md:h-[34rem]" style={{ perspective: "1400px" }}>
           {/* a notification slides in above the phones */}
           <div className="gc-toast absolute left-1/2 top-0 z-30 flex w-64 -translate-x-1/2 items-center gap-3 rounded-2xl bg-white/95 px-4 py-3 text-left text-black shadow-2xl backdrop-blur">
             <span className="grid h-9 w-9 flex-none place-items-center rounded-xl text-lg" style={{ background: store.accent }}>&#127873;</span>
-            <span className="min-w-0 text-xs leading-tight"><b className="block text-[0.8rem]">You&apos;ve got a gift card!</b><span className="text-black/60">Sam sent you £50 for {store.name}</span></span>
+            <span className="min-w-0 text-xs leading-tight"><b className="block text-[0.8rem]">{t("You've got a gift card!")}</b><span className="text-black/60">{t("Sam sent you £50 for {store}", { store: store.name })}</span></span>
           </div>
 
           {/* floor shadow */}
@@ -76,21 +78,21 @@ export function GiftCardHero({ store, card }: { store: Store; card: GiftTheme })
                   </span>
                 </div>
                 {/* mail UI */}
-                <div className="mt-3 flex items-center justify-between px-4 text-[0.65rem] font-semibold" style={{ color: "#2563eb" }}><span>&lsaquo; Inbox</span><span>&#8942;</span></div>
+                <div className="mt-3 flex items-center justify-between px-4 text-[0.65rem] font-semibold" style={{ color: "#2563eb" }}><span>&lsaquo; {t("Inbox")}</span><span>&#8942;</span></div>
                 <div className="mt-2 flex items-center gap-2 border-b border-black/10 px-4 pb-2">
                   <span className="grid h-7 w-7 flex-none place-items-center rounded-full text-[0.7rem] font-extrabold" style={{ background: store.accent, color: store.dark }}>{store.name.charAt(0)}</span>
-                  <span className="min-w-0 flex-1 text-left leading-tight"><b className="block truncate text-[0.7rem]">{store.name}</b><span className="text-[0.58rem] text-black/50">to me</span></span>
+                  <span className="min-w-0 flex-1 text-left leading-tight"><b className="block truncate text-[0.7rem]">{store.name}</b><span className="text-[0.58rem] text-black/50">{t("to me")}</span></span>
                   <span className="text-[0.55rem] text-black/45">9:41</span>
                 </div>
                 <div className="px-4 pt-2 text-left text-[0.7rem] leading-snug">
-                  <p className="text-[0.82rem] font-extrabold leading-tight">Sam sent you a gift card</p>
-                  <p className="mt-1 text-black/60">Hi Alex, here&apos;s a little something from the shop. Happy birthday!</p>
+                  <p className="text-[0.82rem] font-extrabold leading-tight">{t("Sam sent you a gift card")}</p>
+                  <p className="mt-1 text-black/60">{t("Hi Alex, here's a little something from the shop. Happy birthday!")}</p>
                   <div className="gc-card relative mt-3 aspect-[1.6/1] overflow-hidden rounded-xl p-3 shadow-lg ring-1 ring-black/10" style={{ background: card.bg }}>
-                    <span className="block text-[0.5rem] font-bold uppercase tracking-[0.2em]" style={{ color: card.accent }}>Gift card</span>
+                    <span className="block text-[0.5rem] font-bold uppercase tracking-[0.2em]" style={{ color: card.accent }}>{t("Gift card")}</span>
                     <span className="mt-1 block text-2xl font-extrabold text-white">£50</span>
                     <span className="gc-shine absolute inset-y-0 -left-1/2 w-1/3 -skew-x-12 bg-white/25" />
                   </div>
-                  <span className="mt-3 block rounded-full py-1.5 text-center text-[0.65rem] font-bold" style={{ background: store.accent, color: store.dark }}>Use my gift card</span>
+                  <span className="mt-3 block rounded-full py-1.5 text-center text-[0.65rem] font-bold" style={{ background: store.accent, color: store.dark }}>{t("Use my gift card")}</span>
                 </div>
                 <span className="absolute bottom-1.5 left-1/2 h-1 w-[5.5rem] -translate-x-1/2 rounded-full bg-black" />
                 <span className="gc-glare pointer-events-none absolute inset-0" />
