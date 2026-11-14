@@ -1,6 +1,8 @@
+import { getT } from "@/lib/i18n/server";
 import Image from "next/image";
 import Link from "@/components/LocaleLink";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { localePath } from "@/lib/i18n/config";
 import { helpIcon, helpPieces, type HelpBlock } from "@/lib/help";
 
 type Store = { name: string; dark: string; accent: string };
@@ -26,12 +28,13 @@ export function HelpBlocks({ blocks }: { blocks: HelpBlock[] }) {
   );
 }
 
-export function HelpSearch({ q = "", className = "" }: { q?: string; className?: string }) {
+export async function HelpSearch({ q = "", className = "" }: { q?: string; className?: string }) {
+  const { t, locale } = await getT();
   return (
-    <form action="/help/search" method="get" role="search" className={`flex w-full max-w-2xl overflow-hidden rounded-full bg-white text-black shadow-xl ${className}`}>
-      <label htmlFor="help-q" className="sr-only">Type your question</label>
-      <input id="help-q" name="q" defaultValue={q} placeholder="Type your question here" autoComplete="off" className="min-w-0 flex-1 bg-transparent px-6 py-4 text-base outline-none" />
-      <button className="m-1.5 rounded-full px-7 font-semibold text-white" style={{ background: "#0b57d0" }}>Search</button>
+    <form action={localePath("/help/search", locale)} method="get" role="search" className={`flex w-full max-w-2xl overflow-hidden rounded-full bg-white text-black shadow-xl ${className}`}>
+      <label htmlFor="help-q" className="sr-only">{t("Type your question")}</label>
+      <input id="help-q" name="q" defaultValue={q} placeholder={t("Type your question here")} autoComplete="off" className="min-w-0 flex-1 bg-transparent px-6 py-4 text-base outline-none" />
+      <button className="m-1.5 rounded-full px-7 font-semibold text-white" style={{ background: "#0b57d0" }}>{t("Search")}</button>
     </form>
   );
 }
@@ -75,13 +78,14 @@ const JOBS = [
   { label: "Request replacement", href: "/help/contact?topic=replacement", icon: "help" },
 ] as const;
 
-export function HelpJobs() {
+export async function HelpJobs() {
+  const { t } = await getT();
   return (
-    <ul className="relative z-10 mx-auto -mt-10 grid max-w-5xl gap-3 px-1 sm:grid-cols-3" aria-label="Quick help">
+    <ul className="relative z-10 mx-auto -mt-10 grid max-w-5xl gap-3 px-1 sm:grid-cols-3" aria-label={t("Quick help")}>
       {JOBS.map((j) => (
         <li key={j.label}>
           <Link href={j.href as never} className="flex items-center justify-between gap-3 rounded-full bg-[#0b57d0] px-7 py-5 text-sm font-bold uppercase tracking-widest text-white shadow-lg transition-transform hover:-translate-y-0.5" data-helpjob={j.label}>
-            <Icon name={j.icon} className="h-9 w-9 shrink-0" /><span className="flex-1 text-center">{j.label}</span><span aria-hidden>&rarr;</span>
+            <Icon name={j.icon} className="h-9 w-9 shrink-0" /><span className="flex-1 text-center">{t(j.label)}</span><span aria-hidden>&rarr;</span>
           </Link>
         </li>
       ))}
