@@ -1,17 +1,19 @@
 "use client";
 
+import { useT } from "@/components/LocaleProvider";
 import { useWishlist } from "@/components/WishlistProvider";
 import { ICON_BTN } from "@/lib/ui";
 
 export function HeartButton({ slug, name, className = "" }: { slug: string; name: string; className?: string }) {
   const { has, toggle } = useWishlist();
+  const { t } = useT();
   const on = has(slug);
   return (
     <button
       type="button"
       onClick={() => toggle(slug)}
       aria-pressed={on}
-      aria-label={on ? `Remove ${name} from favourites` : `Add ${name} to favourites`}
+      aria-label={on ? t("Remove {name} from favourites", { name }) : t("Add {name} to favourites", { name })}
       className={`${ICON_BTN} ${className}`}
     >
       <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">

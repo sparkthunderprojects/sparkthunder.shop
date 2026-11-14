@@ -1,7 +1,9 @@
 "use client";
 
+import { useT } from "@/components/LocaleProvider";
 import Image from "next/image";
 import Script from "next/script";
+import Link from "@/components/LocaleLink";
 import { useEffect, useRef, useState } from "react";
 import { CONSENT_EVENT, OPEN_CONSENT_EVENT, readConsent, saveConsent, type Consent } from "@/lib/consent";
 
@@ -29,6 +31,7 @@ function Toggle({ on, onChange, label, locked = false }: { on: boolean; onChange
  */
 export function ConsentManager({ logo }: { logo: { src: string; width: number; height: number; alt: string } }) {
   const [consent, setConsent] = useState<Consent | null>(null);
+  const { t } = useT();
   const [ready, setReady] = useState(false);
   const [open, setOpen] = useState(false);
   const [perf, setPerf] = useState(false);
@@ -76,17 +79,17 @@ export function ConsentManager({ logo }: { logo: { src: string; width: number; h
           <div role="dialog" aria-modal="true" aria-labelledby="consent-h" className="relative max-h-full w-full max-w-xl overflow-y-auto border border-ink/20 bg-paper text-ink shadow-2xl">
             <div className="relative flex items-center justify-center bg-black px-14 py-6">
               {logo.src ? <Image src={logo.src} alt={logo.alt} width={logo.width} height={logo.height} unoptimized className="h-7 w-auto sm:h-8" /> : <span className="display text-xl">{logo.alt}</span>}
-              <button type="button" onClick={dismiss} aria-label="Close and keep only the necessary cookies" className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center border border-white/40 text-xl leading-none text-white">×</button>
+              <button type="button" onClick={dismiss} aria-label={t("Close and keep only the necessary cookies")} className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center border border-white/40 text-xl leading-none text-white">×</button>
             </div>
             <div className="p-5 sm:p-8">
-            <h2 id="consent-h" className="display text-2xl sm:text-3xl">Your privacy choices</h2>
-            <p className="mt-3 text-sm leading-relaxed text-muted">We use your browser to remember your basket and, only if you agree, to understand how the shop is used and to measure our adverts. Turning optional cookies off will not stop you shopping. See our <a href="/cookies" className="underline underline-offset-4">cookie policy</a> and <a href="/privacy" className="underline underline-offset-4">privacy policy</a>.</p>
+            <h2 id="consent-h" className="display text-2xl sm:text-3xl">{t("Your privacy choices")}</h2>
+            <p className="mt-3 text-sm leading-relaxed text-muted">{t("We use your browser to remember your basket and, only if you agree, to understand how the shop is used and to measure our adverts. Turning optional cookies off will not stop you shopping. See our")} <Link href="/cookies" className="underline underline-offset-4">{t("cookie policy")}</Link> {t("and")} <Link href="/privacy" className="underline underline-offset-4">{t("privacy policy")}</Link>.</p>
 
             <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-              <h3 className="font-bold">Manage consent preferences</h3>
+              <h3 className="font-bold">{t("Manage consent preferences")}</h3>
               <div className="flex gap-2">
-                <button ref={first} type="button" onClick={() => choose(false, false)} className="btn btn-ink btn-sm">Reject all</button>
-                <button type="button" onClick={() => choose(true, true)} className="btn btn-ink btn-sm">Accept all</button>
+                <button ref={first} type="button" onClick={() => choose(false, false)} className="btn btn-ink btn-sm">{t("Reject all")}</button>
+                <button type="button" onClick={() => choose(true, true)} className="btn btn-ink btn-sm">{t("Accept all")}</button>
               </div>
             </div>
 
@@ -99,17 +102,17 @@ export function ConsentManager({ logo }: { logo: { src: string; width: number; h
                     <div className="flex items-center justify-between gap-4">
                       <button type="button" aria-expanded={isOpen} onClick={() => setExpanded(isOpen ? null : c.key)} className="flex flex-1 items-center gap-3 text-left font-bold">
                         <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" strokeWidth="2.5" className={isOpen ? "rotate-90 transition-transform" : "transition-transform"}><path d="m9 5 7 7-7 7" /></svg>
-                        {c.title}
+                        {t(c.title)}
                       </button>
-                      {c.key === "necessary" ? <span className="text-xs font-bold">Always active</span> : null}
-                      <Toggle on={on} locked={c.key === "necessary"} label={c.title} onChange={c.key === "performance" ? setPerf : setTarg} />
+                      {c.key === "necessary" ? <span className="text-xs font-bold">{t("Always active")}</span> : null}
+                      <Toggle on={on} locked={c.key === "necessary"} label={t(c.title)} onChange={c.key === "performance" ? setPerf : setTarg} />
                     </div>
-                    {isOpen ? <p className="mt-2 pl-7 text-sm text-muted">{c.body}</p> : null}
+                    {isOpen ? <p className="mt-2 pl-7 text-sm text-muted">{t(c.body)}</p> : null}
                   </li>
                 );
               })}
             </ul>
-            <div className="mt-5 flex justify-end"><button type="button" onClick={() => choose(perf, targ)} className="btn">Confirm my choices</button></div>
+            <div className="mt-5 flex justify-end"><button type="button" onClick={() => choose(perf, targ)} className="btn">{t("Confirm my choices")}</button></div>
             </div>
           </div>
         </div>

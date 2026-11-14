@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/components/LocaleProvider";
 import { useEffect, useState } from "react";
 import { ProductCard } from "@/components/ProductCard";
 import type { Product } from "@/lib/types";
@@ -26,6 +27,7 @@ export function RecentTracker({ slug }: { slug: string }) {
 /** Shows the products this visitor looked at most recently. Renders nothing until there are some. */
 export function RecentlyViewed({ products, franchiseNames, excludeSlug, limit = 5 }: { products: Product[]; franchiseNames: Record<string, string>; excludeSlug?: string; limit?: number }) {
   const [slugs, setSlugs] = useState<string[]>([]);
+  const { t } = useT();
   useEffect(() => setSlugs(readRecent()), []);
   const list = slugs
     .filter((s) => s !== excludeSlug)
@@ -35,7 +37,7 @@ export function RecentlyViewed({ products, franchiseNames, excludeSlug, limit = 
   if (list.length === 0) return null;
   return (
     <section className="mt-24" aria-labelledby="recent-h">
-      <h2 id="recent-h" className="display text-2xl sm:text-3xl">Recently viewed</h2>
+      <h2 id="recent-h" className="display text-2xl sm:text-3xl">{t("Recently viewed")}</h2>
       <div className="mt-8 grid grid-cols-2 gap-x-5 gap-y-10 md:grid-cols-3 xl:grid-cols-5">
         {list.map((p) => <ProductCard key={p.slug} product={p} franchiseName={franchiseNames[p.franchiseSlug]} />)}
       </div>

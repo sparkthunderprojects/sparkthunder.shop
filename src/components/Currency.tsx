@@ -1,4 +1,6 @@
 "use client";
+import { useT } from "@/components/LocaleProvider";
+
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { formatMoney, type DisplayCurrency } from "@/lib/currency";
 import { countryName, currencyFor, currencySymbol } from "@/lib/regions";
@@ -48,11 +50,12 @@ export const useCurrency = () => useContext(C);
 export function Price({ pence }: { pence: number }) { return <>{useMoney()(pence)}</>; }
 
 export function CurrencySwitcher() {
+  const { t } = useT();
   const { base, options, code, setCode } = useCurrency();
   if (!options.length) return null;
   return (
     <label className="inline-flex items-center gap-2 text-sm">
-      <span>Show prices in</span>
+      <span>{t("Show prices in")}</span>
       <select value={code} onChange={(e) => setCode(e.target.value)} className="border border-ink/30 bg-paper px-2 py-1">
         <option value={base}>{base}</option>
         {options.map((o) => <option key={o.code} value={o.code}>{o.code}</option>)}
@@ -65,6 +68,7 @@ export const flagSrc = (c: string) => `/flags/${c.toLowerCase()}.svg`;
 
 /** The full-screen region list. One copy lives in the provider; the footer button and the header flag both open it. */
 function RegionDialog() {
+  const { t, locale } = useT();
   const { base, options, countries, country, setRegion, regionOpen, closeRegion } = useCurrency();
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
@@ -74,20 +78,20 @@ function RegionDialog() {
   }, [regionOpen]);
   const shown = (c: string) => { const cur = currencyFor(c); return cur && (cur === base || options.some((o) => o.code === cur)) ? cur : base; };
   return (
-    <dialog ref={ref} aria-label="Select your region" onClose={closeRegion} onClick={(e) => { if (e.target === ref.current) closeRegion(); }} className="m-0 h-full max-h-none w-full max-w-none bg-ink/95 p-0 text-paper backdrop:bg-ink/80">
+    <dialog ref={ref} aria-label={t("Select your region")} onClose={closeRegion} onClick={(e) => { if (e.target === ref.current) closeRegion(); }} className="m-0 h-full max-h-none w-full max-w-none bg-ink/95 p-0 text-paper backdrop:bg-ink/80">
       <div className="mx-auto max-w-4xl px-6 py-10">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Select your region</h2>
-          <button type="button" onClick={closeRegion} className="border border-paper/40 px-3 py-1 text-sm">Close</button>
+          <h2 className="text-xl font-semibold">{t("Select your region")}</h2>
+          <button type="button" onClick={closeRegion} className="border border-paper/40 px-3 py-1 text-sm">{t("Close")}</button>
         </div>
-        <p className="mt-2 text-sm opacity-70">Sets where we deliver and the currency you see prices in. You are always charged in {base}.</p>
+        <p className="mt-2 text-sm opacity-70">{t("Sets where we deliver and the currency you see prices in. You are always charged in {base}.", { base })}</p>
         <ul className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {countries.map((c) => (
             <li key={c}>
               <button type="button" aria-current={c === country} onClick={() => { setRegion(c); closeRegion(); }} className={`flex w-full items-center gap-3 border px-3 py-3 text-left ${c === country ? "border-paper" : "border-paper/20"}`}>
                 {/* eslint-disable-next-line @next/next/no-img-element -- tiny local SVG */}
                 <img src={flagSrc(c)} alt="" width={32} height={21} className="h-5 w-8 shrink-0 object-cover" />
-                <span><span className="block">{countryName(c)}</span><span className="block text-xs opacity-70">{shown(c)} {currencySymbol(shown(c))}</span></span>
+                <span><span className="block">{countryName(c, locale)}</span><span className="block text-xs opacity-70">{shown(c)} {currencySymbol(shown(c))}</span></span>
               </button>
             </li>
           ))}
@@ -99,30 +103,33 @@ function RegionDialog() {
 
 /** Footer button that opens the region list. Falls back to the plain currency list when the store ships to one country. */
 export function RegionSwitcher() {
+  const { locale } = useT();
   const { countries, country, openRegion } = useCurrency();
   if (countries.length < 2) return <CurrencySwitcher />;
   return (
     <button type="button" onClick={openRegion} aria-haspopup="dialog" className="inline-flex items-center gap-2 border border-ink/30 px-3 py-2 text-sm">
       {/* eslint-disable-next-line @next/next/no-img-element -- tiny local SVG */}
       <img src={flagSrc(country)} alt="" width={24} height={16} className="h-4 w-6 object-cover" />
-      <span>{countryName(country)}</span><span aria-hidden>▾</span>
+      <span>{countryName(country, locale)}</span><span aria-hidden>▾</span>
     </button>
   );
 }
 
 /** The chosen country's flag in the header, so shoppers can see at a glance where they are shopping for. Opens the region list when there is a choice to make. */
 export function RegionFlag() {
+  const { t, locale } = useT();
   const { countries, country, openRegion } = useCurrency();
-  const name = countryName(country);
+  const name = countryName(country, locale);
   // eslint-disable-next-line @next/next/no-img-element -- tiny local SVG
   const img = <img src={flagSrc(country)} alt="" width={24} height={16} className="h-4 w-6 border border-current/20 object-cover" />;
-  if (countries.length < 2) return <span title={`Delivering to ${name}`} role="img" aria-label={`Delivering to ${name}`} className="inline-flex items-center px-1">{img}</span>;
-  return <button type="button" onClick={openRegion} aria-haspopup="dialog" aria-label={`Delivering to ${name}. Change region`} title={`Delivering to ${name}`} className="inline-flex items-center px-1 py-1">{img}</button>;
+  if (countries.length < 2) return <span title={t("Delivering to {name}", { name })} role="img" aria-label={t("Delivering to {name}", { name })} className="inline-flex items-center px-1">{img}</span>;
+  return <button type="button" onClick={openRegion} aria-haspopup="dialog" aria-label={t("Delivering to {name}. Change region", { name })} title={t("Delivering to {name}", { name })} className="inline-flex items-center px-1 py-1">{img}</button>;
 }
 
 /** "Delivering to [flag] Ireland", for the basket. */
 export function DeliveringTo() {
+  const { locale } = useT();
   const { country } = useCurrency();
   // eslint-disable-next-line @next/next/no-img-element -- tiny local SVG
-  return <span className="inline-flex items-center gap-1.5"><img src={flagSrc(country)} alt="" width={18} height={12} className="h-3 w-[18px] object-cover" />{countryName(country)}</span>;
+  return <span className="inline-flex items-center gap-1.5"><img src={flagSrc(country)} alt="" width={18} height={12} className="h-3 w-[18px] object-cover" />{countryName(country, locale)}</span>;
 }

@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
+
+import { useT } from "@/components/LocaleProvider";import { useEffect, useState } from "react";
 
 /** Current time, ticking each second while `active`. */
 export function useNow(active: boolean) {
@@ -18,15 +19,16 @@ const pad = (n: number) => String(n).padStart(2, "0");
 /** Live countdown to a launch. Renders nothing once the moment has passed. */
 export function Countdown({ to, label = "Launches in", className = "" }: { to: string; label?: string; className?: string }) {
   const target = Date.parse(to);
+  const { t } = useT();
   const now = useNow(true);
   const left = Math.max(0, target - now);
   if (!Number.isFinite(target) || left === 0) return null;
   const s = Math.floor(left / 1000);
-  const parts: [number, string][] = [[Math.floor(s / 86400), "days"], [Math.floor((s % 86400) / 3600), "hrs"], [Math.floor((s % 3600) / 60), "min"], [s % 60, "sec"]];
-  const spoken = `${parts[0][0]} days, ${parts[1][0]} hours and ${parts[2][0]} minutes`;
+  const parts: [number, string][] = [[Math.floor(s / 86400), t("days")], [Math.floor((s % 86400) / 3600), t("hrs")], [Math.floor((s % 3600) / 60), t("min")], [s % 60, t("sec")]];
+  const spoken = t("{d} days, {h} hours and {m} minutes", { d: parts[0][0], h: parts[1][0], m: parts[2][0] });
   return (
     <div className={className}>
-      <p className="text-sm font-bold uppercase tracking-wide">{label}</p>
+      <p className="text-sm font-bold uppercase tracking-wide">{t(label)}</p>
       <p className="sr-only">{spoken}</p>
       <div aria-hidden suppressHydrationWarning className="mt-2 flex gap-3">
         {parts.map(([n, u]) => (

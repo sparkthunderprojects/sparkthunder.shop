@@ -1,5 +1,7 @@
 "use client";
+import { splitLocale } from "@/lib/i18n/config";
 
+import { useT } from "@/components/LocaleProvider";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useCart } from "@/components/CartProvider";
@@ -17,6 +19,7 @@ const DELAY_MS = 30_000;
  */
 export function NewsletterPopup({ blurb }: { blurb: string }) {
   const [open, setOpen] = useState(false);
+  const { t } = useT();
   const pathname = usePathname();
   const { isOpen: cartOpen } = useCart();
   const { quick } = useShopUi();
@@ -25,7 +28,7 @@ export function NewsletterPopup({ blurb }: { blurb: string }) {
   const closeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    if (pathname === "/cart") return;
+    if (splitLocale(pathname).path === "/cart") return;
     if (!window.matchMedia("(min-width: 1024px) and (hover: hover)").matches) return;
     try {
       if (localStorage.getItem(SUBSCRIBED_KEY)) return;
@@ -59,14 +62,14 @@ export function NewsletterPopup({ blurb }: { blurb: string }) {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-[75] flex items-center justify-center p-6" role="dialog" aria-modal="true" aria-labelledby="nlp-h">
-      <button aria-label="Close" tabIndex={-1} onClick={() => setOpen(false)} className="absolute inset-0 bg-ink/70" />
+      <button aria-label={t("Close")} tabIndex={-1} onClick={() => setOpen(false)} className="absolute inset-0 bg-ink/70" />
       <div className="theme-light relative w-full max-w-xl bg-bolt p-10 text-(--color-on-accent) shadow-2xl shadow-black/40">
-        <button ref={closeRef} onClick={() => setOpen(false)} className="absolute right-4 top-4 border border-ink/20 bg-paper px-3 py-1 text-sm font-bold hover:bg-ink hover:text-paper">Close</button>
+        <button ref={closeRef} onClick={() => setOpen(false)} className="absolute right-4 top-4 border border-ink/20 bg-paper px-3 py-1 text-sm font-bold hover:bg-ink hover:text-paper">{t("Close")}</button>
         <Bolt className="h-9 w-6 text-ink" />
-        <h2 id="nlp-h" className="display mt-4 text-4xl">Don’t miss the next drop</h2>
+        <h2 id="nlp-h" className="display mt-4 text-4xl">{t("Don’t miss the next drop")}</h2>
         <p className="mt-4 text-lg">{blurb}</p>
         <div className="mt-6"><SubscribeForm idPrefix="nlp" onDone={() => setTimeout(() => setOpen(false), 2500)} /></div>
-        <p className="mt-3 text-sm">New releases only. Unsubscribe any time.</p>
+        <p className="mt-3 text-sm">{t("New releases only. Unsubscribe any time.")}</p>
       </div>
     </div>
   );

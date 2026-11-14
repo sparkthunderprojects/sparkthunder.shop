@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/components/LocaleProvider";
 import Image from "next/image";
 import Link from "@/components/LocaleLink";
 import { useAddToBasket } from "@/components/useAddToBasket";
@@ -12,15 +13,16 @@ import { PaymentBadges } from "@/components/PaymentBadges";
 
 export function CartDrawer({ suggestions = [] }: { suggestions?: QuickProduct[] }) {
   const money = useMoney();
+  const { t } = useT();
   const { isOpen, closeCart, items, subtotalPence, setQty, remove } = useCart();
   const addOrChoose = useAddToBasket();
   const more = suggestions.filter((s) => s.inStock && !items.some((i) => i.slug === s.slug)).slice(0, 3);
   return (
-    <SlideOver open={isOpen} onClose={closeCart} title="Your basket" width="w-[min(40rem,100vw)]">
+    <SlideOver open={isOpen} onClose={closeCart} title={t("Your basket")} width="w-[min(40rem,100vw)]">
       {items.length === 0 ? (
           <div className="flex-1 p-6">
-            <p className="serif text-xl text-muted">Your basket is empty.</p>
-            <Link href="/new" onClick={closeCart} className="btn mt-6">Shop new arrivals</Link>
+            <p className="serif text-xl text-muted">{t("Your basket is empty.")}</p>
+            <Link href="/new" onClick={closeCart} className="btn mt-6">{t("Shop new arrivals")}</Link>
           </div>
         ) : (
           <>
@@ -36,11 +38,11 @@ export function CartDrawer({ suggestions = [] }: { suggestions?: QuickProduct[] 
                     <p className="text-sm text-muted">{money(i.pricePence)}</p>
                     <div className="mt-2 flex items-center gap-3">
                       <div className="flex items-center border border-white/20">
-                        <button aria-label={`Decrease quantity of ${i.name}`} onClick={() => setQty(i.slug, i.qty - 1)} className="px-2.5 py-0.5 font-bold">−</button>
+                        <button aria-label={t("Decrease quantity of {name}", { name: i.name })} onClick={() => setQty(i.slug, i.qty - 1)} className="px-2.5 py-0.5 font-bold">−</button>
                         <span className="min-w-6 text-center text-sm font-bold" aria-live="polite">{i.qty}</span>
-                        <button aria-label={`Increase quantity of ${i.name}`} onClick={() => setQty(i.slug, i.qty + 1)} className="px-2.5 py-0.5 font-bold">+</button>
+                        <button aria-label={t("Increase quantity of {name}", { name: i.name })} onClick={() => setQty(i.slug, i.qty + 1)} className="px-2.5 py-0.5 font-bold">+</button>
                       </div>
-                      <button onClick={() => remove(i.slug)} className="text-sm underline underline-offset-4 hover:text-muted">Remove</button>
+                      <button onClick={() => remove(i.slug)} className="text-sm underline underline-offset-4 hover:text-muted">{t("Remove")}</button>
                     </div>
                   </div>
                   <p className="font-bold">{money(i.pricePence * i.qty)}</p>
@@ -49,7 +51,7 @@ export function CartDrawer({ suggestions = [] }: { suggestions?: QuickProduct[] 
             </ul>
             {more.length > 0 && (
               <section className="border-t border-white/15 px-5 py-5" aria-labelledby="more-h">
-                <h3 id="more-h" className="display text-2xl">You may also like</h3>
+                <h3 id="more-h" className="display text-2xl">{t("You may also like")}</h3>
                 <ul className="mt-3 space-y-3">
                   {more.map((s) => (
                     <li key={s.slug} className="flex items-center gap-3">
@@ -58,7 +60,7 @@ export function CartDrawer({ suggestions = [] }: { suggestions?: QuickProduct[] 
                         <Link href={`/products/${s.slug}`} onClick={closeCart} className="block truncate font-bold hover:underline hover:underline-offset-4">{s.name}</Link>
                         <p className="text-sm text-muted">{money(s.pricePence)}</p>
                       </div>
-                      <button onClick={() => { if (s.variants.length) closeCart(); addOrChoose(s); }} className="btn btn-sm">{s.variants.length ? "Options" : "Add"}</button>
+                      <button onClick={() => { if (s.variants.length) closeCart(); addOrChoose(s); }} className="btn btn-sm">{s.variants.length ? t("Options") : t("Add")}</button>
                     </li>
                   ))}
                 </ul>
@@ -66,12 +68,12 @@ export function CartDrawer({ suggestions = [] }: { suggestions?: QuickProduct[] 
             )}
             </div>
             <div className="border-t border-white/15 p-5">
-              <p className="flex justify-between text-lg"><span>Subtotal</span><span className="font-bold">{money(subtotalPence)}</span></p>
-              <p className="mt-1 text-sm text-muted">Shipping and taxes are calculated at checkout.</p>
-              <p className="mt-1 text-sm text-muted">Delivering to <DeliveringTo /></p>
+              <p className="flex justify-between text-lg"><span>{t("Subtotal")}</span><span className="font-bold">{money(subtotalPence)}</span></p>
+              <p className="mt-1 text-sm text-muted">{t("Shipping and taxes are calculated at checkout.")}</p>
+              <p className="mt-1 text-sm text-muted">{t("Delivering to")} <DeliveringTo /></p>
               <div className="mt-4 grid gap-3">
-                <Link href="/cart" onClick={closeCart} className="btn">Checkout</Link>
-                <Link href="/cart" onClick={closeCart} className="btn btn-ink">View basket</Link>
+                <Link href="/cart" onClick={closeCart} className="btn">{t("Checkout")}</Link>
+                <Link href="/cart" onClick={closeCart} className="btn btn-ink">{t("View basket")}</Link>
               </div>
               <PaymentBadges className="mt-5 flex justify-center" />
             </div>

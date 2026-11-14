@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/components/LocaleProvider";
 import Link from "@/components/LocaleLink";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
@@ -11,6 +12,7 @@ import type { Product } from "@/lib/types";
 const MAX_SHARED = 60;
 
 export function WishlistView({ products, franchiseNames }: { products: Product[]; franchiseNames: Record<string, string> }) {
+  const { t } = useT();
   const { slugs, has, toggle } = useWishlist();
   const params = useSearchParams();
   const [copied, setCopied] = useState(false);
@@ -24,7 +26,7 @@ export function WishlistView({ products, franchiseNames }: { products: Product[]
   async function share() {
     const url = `${location.origin}/wishlist?items=${slugs.join(",")}`;
     try {
-      if (navigator.share) { await navigator.share({ title: "My Sparkthunder favourites", url }); return; }
+      if (navigator.share) { await navigator.share({ title: t("My Sparkthunder favourites"), url }); return; }
       await navigator.clipboard.writeText(url);
       setCopied(true);
       setTimeout(() => setCopied(false), 2200);
@@ -35,16 +37,16 @@ export function WishlistView({ products, franchiseNames }: { products: Product[]
     const toAdd = sharedProducts.filter((p) => !has(p.slug));
     return (
       <div className="mt-8">
-        <p className="serif text-xl text-muted">Someone shared their favourites with you.</p>
+        <p className="serif text-xl text-muted">{t("Someone shared their favourites with you.")}</p>
         {sharedProducts.length === 0 ? (
-          <p className="mt-6">None of those products are available any more. <Link href="/new" className="font-bold underline underline-offset-4">See new arrivals</Link></p>
+          <p className="mt-6">{t("None of those products are available any more.")} <Link href="/new" className="font-bold underline underline-offset-4">{t("See new arrivals")}</Link></p>
         ) : (
           <>
             <div className="mt-4 flex flex-wrap items-center gap-4">
               <button type="button" disabled={toAdd.length === 0 || added} onClick={() => { toAdd.forEach((p) => toggle(p.slug)); setAdded(true); }} className="btn btn-sm" aria-live="polite">
-                {added ? "Added to your favourites" : toAdd.length === 0 ? "Already in your favourites" : `Add all ${toAdd.length} to my favourites`}
+                {added ? t("Added to your favourites") : toAdd.length === 0 ? t("Already in your favourites") : t("Add all {n} to my favourites", { n: toAdd.length })}
               </button>
-              <Link href="/wishlist" className="font-bold underline underline-offset-4">View my own favourites</Link>
+              <Link href="/wishlist" className="font-bold underline underline-offset-4">{t("View my own favourites")}</Link>
             </div>
             <div className={`mt-10 ${GRID}`}>
               {sharedProducts.map((p) => <ProductCard key={p.slug} product={p} franchiseName={franchiseNames[p.franchiseSlug]} />)}
@@ -59,16 +61,16 @@ export function WishlistView({ products, franchiseNames }: { products: Product[]
   if (saved.length === 0) {
     return (
       <div className="mt-8">
-        <p className="serif text-xl text-muted">Nothing saved yet. Tap the heart on any product to keep it here.</p>
-        <Link href="/new" className="btn mt-6">Shop new arrivals</Link>
+        <p className="serif text-xl text-muted">{t("Nothing saved yet. Tap the heart on any product to keep it here.")}</p>
+        <Link href="/new" className="btn mt-6">{t("Shop new arrivals")}</Link>
       </div>
     );
   }
   return (
     <div>
       <p className="mt-4 flex flex-wrap items-center gap-4">
-        <button type="button" onClick={share} className="btn btn-sm" aria-live="polite">{copied ? "Link copied" : "Share my favourites"}</button>
-        <span className="text-sm text-muted">Send the link to a friend (or hint at your birthday).</span>
+        <button type="button" onClick={share} className="btn btn-sm" aria-live="polite">{copied ? t("Link copied") : t("Share my favourites")}</button>
+        <span className="text-sm text-muted">{t("Send the link to a friend (or hint at your birthday).")}</span>
       </p>
       <div className={`mt-8 ${GRID}`}>
         {saved.map((p) => <ProductCard key={p.slug} product={p} franchiseName={franchiseNames[p.franchiseSlug]} />)}

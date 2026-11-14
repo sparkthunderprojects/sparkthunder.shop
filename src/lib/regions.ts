@@ -6,8 +6,8 @@ export const COUNTRY_CURRENCY: Record<string, string> = Object.fromEntries(TABLE
 export const currencyFor = (country: string): string | null => COUNTRY_CURRENCY[country.toUpperCase()] ?? null;
 
 /** Plain-English country name ("United Kingdom"). */
-export function countryName(code: string): string {
-  try { return new Intl.DisplayNames(["en"], { type: "region" }).of(code) ?? code; } catch { return code; }
+export function countryName(code: string, locale = "en"): string {
+  try { return new Intl.DisplayNames([locale], { type: "region" }).of(code) ?? code; } catch { return code; }
 }
 /** The currency's symbol on its own ("€", "$", "£"). */
 export function currencySymbol(code: string): string {

@@ -1,4 +1,5 @@
 import type { Locale } from "./config";
+import { PHRASES_LIST as PHRASES } from "./phrases";
 
 /**
  * Words the shop's own furniture uses (menus, footer, basket, search). English is the source: any key missing from another
@@ -81,11 +82,19 @@ const TABLES: Record<Locale, Partial<Dict>> = { en, fr, de, es };
 
 /** A language's full table, English filling any gap. Small enough to hand to the browser. */
 export function dictionary(locale: Locale): Dict {
-  return { ...en, ...TABLES[locale] };
+  if (locale === "en") return { ...en };
+  const i = locale === "fr" ? 1 : locale === "de" ? 2 : 3;
+  const phrases: Record<string, string> = {};
+  for (const p of PHRASES) if (p[i]) phrases[p[0]] = p[i];
+  return { ...en, ...phrases, ...TABLES[locale] } as Dict;
 }
 
-export function translate(dict: Dict, key: DictKey, vars?: Record<string, string | number>): string {
-  const text = dict[key] ?? en[key] ?? key;
+/**
+ * Keys are either a short dotted name from the table above, or the English sentence itself (the phrase book in phrases/).
+ * Anything not found, in any language, shows as written: English is always the fallback.
+ */
+export function translate(dict: Dict, key: string, vars?: Record<string, string | number>): string {
+  const text = (dict as Record<string, string>)[key] ?? key;
   return vars ? text.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? String(vars[k]) : m)) : text;
 }
 export { en as ENGLISH };

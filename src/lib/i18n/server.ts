@@ -5,7 +5,7 @@ import { publicClient } from "@/lib/db/clients";
 import { currentStoreId } from "@/lib/db/stores";
 import { storeTag } from "@/lib/tags";
 import { DEFAULT_LANGUAGES, DEFAULT_LOCALE, isLocale, normaliseLanguages, type Locale } from "./config";
-import { dictionary, translate, type DictKey } from "./dictionaries";
+import { dictionary, translate } from "./dictionaries";
 
 /** The language of this request: the proxy sets it from the /fr, /de or /es part of the address. */
 export async function getLocale(): Promise<Locale> {
@@ -39,5 +39,5 @@ export async function requireLocale(): Promise<Locale> {
 export async function getT() {
   const locale = await getLocale();
   const dict = dictionary(locale);
-  return { locale, t: (key: DictKey, vars?: Record<string, string | number>) => translate(dict, key, vars) };
+  return { locale, t: (key: string, vars?: Record<string, string | number>) => translate(dict, key, vars) };
 }
