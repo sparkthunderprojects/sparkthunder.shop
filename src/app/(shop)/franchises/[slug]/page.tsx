@@ -1,3 +1,4 @@
+import { getT } from "@/lib/i18n/server";
 import { outbound } from "@/lib/site";
 import { franchiseSeo } from "@/lib/seo/effective";
 import { FranchiseLogo } from "@/components/FranchiseLogo";
@@ -25,13 +26,15 @@ export async function generateStaticParams() {
 export async function generateMetadata(props: PageProps<"/franchises/[slug]">): Promise<Metadata> {
   const { slug } = await props.params;
   const f = await getFranchise(slug);
-  if (!f) return { title: "Franchise not found", robots: { index: false } };
+  const { t } = await getT();
+  if (!f) return { title: t("Franchise not found"), robots: { index: false } };
   const seo = franchiseSeo(f);
   return buildMetadata({ title: seo.title, description: seo.description, path: seo.path, image: seo.image, noindex: seo.noindex });
 }
 
 export default async function FranchisePage(props: PageProps<"/franchises/[slug]">) {
   const { slug } = await props.params;
+  const { t } = await getT();
   const franchise = await getFranchise(slug);
   if (!franchise) notFound();
   const [products, categories, allCharacters] = await Promise.all([getProducts({ franchise: slug }), getCategories(), getCharacters()]);
@@ -43,17 +46,17 @@ export default async function FranchisePage(props: PageProps<"/franchises/[slug]
     <div style={worldStyle(franchise.accent)}>
       <JsonLd data={[
         breadcrumbLd([{ name: "Home", path: "/" }, { name: "Franchises", path: "/franchises" }, { name: franchise.name, path }]),
-        itemListLd(`${franchise.name} merchandise`, path, products),
+        itemListLd(t("{name} merchandise", { name: franchise.name }), path, products),
       ]} />
 
       <section className="world bleed pb-16 pt-8">
         <Breadcrumbs tone="world" items={[{ name: "Home", href: "/" }, { name: "Franchises", href: "/franchises" }, { name: franchise.name }]} />
-        <h1 className="mt-10"><FranchiseLogo slug={franchise.slug} name={franchise.name} priority className="h-20 sm:h-28 md:h-36" textClassName="display text-[clamp(2.75rem,7vw,5.5rem)]" /><span className="sr-only"> merchandise</span></h1>
+        <h1 className="mt-10"><FranchiseLogo slug={franchise.slug} name={franchise.name} priority className="h-20 sm:h-28 md:h-36" textClassName="display text-[clamp(2.75rem,7vw,5.5rem)]" /><span className="sr-only"> {t("merchandise")}</span></h1>
         <p className="serif mt-4 text-2xl" style={{ color: "var(--world-bright)" }}>{franchise.tagline}</p>
         <p className="prose-lore mt-8 text-paper/85">{franchise.description}</p>
-        {franchise.siteUrl ? <p className="mt-6"><a href={outbound(franchise.siteUrl, "franchise-page")} target="_blank" rel="noopener" className="link-line font-bold">Explore the {franchise.name} universe at {franchise.siteUrl.replace(/^https?:\/\//, "")} <span aria-hidden>↗</span><span className="sr-only"> (opens in a new tab)</span></a></p> : null}
+        {franchise.siteUrl ? <p className="mt-6"><a href={outbound(franchise.siteUrl, "franchise-page")} target="_blank" rel="noopener" className="link-line font-bold">{t("Explore the {name} universe at {site}", { name: franchise.name, site: franchise.siteUrl.replace(/^https?:\/\//, "") })} <span aria-hidden>↗</span><span className="sr-only">{t(" (opens in a new tab)")}</span></a></p> : null}
         {used.length > 0 && (
-          <ul className="mt-10 flex flex-wrap gap-x-8 gap-y-3" aria-label={`${franchise.name} categories`}>
+          <ul className="mt-10 flex flex-wrap gap-x-8 gap-y-3" aria-label={t("{name} categories", { name: franchise.name })}>
             {used.map((c) => (
               <li key={c.slug}><Link href={`/categories/${c.slug}?franchise=${franchise.slug}`} className="link-line font-bold">{c.name}</Link></li>
             ))}
@@ -61,12 +64,12 @@ export default async function FranchisePage(props: PageProps<"/franchises/[slug]
         )}
       </section>
 
-      <CharacterCarousel id="franchise-characters" title={`${franchise.name} characters`} viewAllHref="/characters" items={characters.map((c) => ({ slug: c.slug, name: c.name, image: c.image, accent: franchise.accent }))} />
+      <CharacterCarousel id="franchise-characters" title={t("{name} characters", { name: franchise.name })} viewAllHref="/characters" items={characters.map((c) => ({ slug: c.slug, name: c.name, image: c.image, accent: franchise.accent }))} />
 
       <section className="mt-16" aria-labelledby="all-h">
-        <h2 id="all-h" className="display text-2xl sm:text-3xl">All {franchise.name} products</h2>
+        <h2 id="all-h" className="display text-2xl sm:text-3xl">{t("All {name} products", { name: franchise.name })}</h2>
         {products.length === 0 ? (
-          <p className="serif mt-6 text-xl text-muted">New {franchise.name} merchandise is on its way.</p>
+          <p className="serif mt-6 text-xl text-muted">{t("New {name} merchandise is on its way.", { name: franchise.name })}</p>
         ) : (
           <div className="mt-8"><Listing products={products} franchiseNames={{ [franchise.slug]: franchise.name }} categoryNames={Object.fromEntries(categories.map((c) => [c.slug, c.name]))} flush /></div>
         )}

@@ -1,9 +1,11 @@
 "use client";
 
+import { useT } from "@/components/LocaleProvider";
 import { useState } from "react";
 
 export function ShareButton({ title, path }: { title: string; path: string }) {
   const [copied, setCopied] = useState(false);
+  const { t } = useT();
   async function share() {
     const url = `${location.origin}${path}`;
     try {
@@ -15,7 +17,7 @@ export function ShareButton({ title, path }: { title: string; path: string }) {
   }
   return (
     <button type="button" onClick={share} className="link-line font-bold" aria-live="polite">
-      {copied ? "Link copied" : "Share this product"}
+      {copied ? t("Link copied") : t("Share this product")}
     </button>
   );
 }

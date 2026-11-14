@@ -1,3 +1,4 @@
+import { getT } from "@/lib/i18n/server";
 import { productSeo } from "@/lib/seo/effective";
 import { GRID, nb } from "@/lib/ui";
 import Link from "@/components/LocaleLink";
@@ -47,6 +48,7 @@ export async function generateMetadata(props: PageProps<"/products/[slug]">): Pr
 
 export default async function ProductPage(props: PageProps<"/products/[slug]">) {
   const { slug } = await props.params;
+  const { t } = await getT();
   const product = await getProduct(slug);
   if (!product) notFound();
 
@@ -118,10 +120,10 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
             {product.comparePricePence && <s className="text-lg text-muted"><Price pence={product.comparePricePence} /></s>}
           </p>
           <p className="mt-1 text-sm text-muted">
-            {product.bestSeller ? <b className="mr-2 bg-bolt px-2 py-0.5 text-(--color-on-accent)">Best seller</b> : null}{!product.inStock ? "Currently sold out" : lowCount !== null ? <b className="text-amber-600">Only {lowCount} left</b> : "In stock"} · SKU {product.sku}
+            {product.bestSeller ? <b className="mr-2 bg-bolt px-2 py-0.5 text-(--color-on-accent)">{t("Best seller")}</b> : null}{!product.inStock ? t("Currently sold out") : lowCount !== null ? <b className="text-amber-600">{t("Only {n} left", { n: lowCount })}</b> : t("In stock")} · {t("SKU {sku}", { sku: product.sku })}
           </p>
           {characterSlugs(product).length > 0 && (
-            <p className="mt-2 text-sm">Featuring {characterSlugs(product).map((c, i) => <span key={c}>{i > 0 ? ", " : ""}<Link href={`/characters/${c}`} className="font-bold underline underline-offset-4">{characterName(c)}</Link></span>)}</p>
+            <p className="mt-2 text-sm">{t("Featuring")} {characterSlugs(product).map((c, i) => <span key={c}>{i > 0 ? ", " : ""}<Link href={`/characters/${c}`} className="font-bold underline underline-offset-4">{characterName(c)}</Link></span>)}</p>
           )}
 
           <div id="buy-box" className="mt-8"><BuyBox product={toQuick(product, franchise?.name)} /></div>
@@ -129,8 +131,8 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
 
           {bundleParts.length > 0 && (
             <section className="mt-10 border border-ink/20 bg-paper-2 p-5" aria-labelledby="bundle-h">
-              <h2 id="bundle-h" className="display text-3xl">What&apos;s in the bundle</h2>
-              {bundleSaving > 0 && <p className="mt-1 font-bold">Buying these separately costs <Price pence={separatePence} />. Save <Price pence={bundleSaving} />.</p>}
+              <h2 id="bundle-h" className="display text-3xl">{t("What’s in the bundle")}</h2>
+              {bundleSaving > 0 && <p className="mt-1 font-bold">{t("Buying these separately costs {price}. Save {save}.", { price: "{p}", save: "{s}" }).split(/(\{p\}|\{s\})/).map((x, i) => x === "{p}" ? <Price key={i} pence={separatePence} /> : x === "{s}" ? <Price key={i} pence={bundleSaving} /> : x)}</p>}
               <ul className="mt-4 divide-y divide-ink/15">
                 {bundleParts.map(({ part, qty }) => (
                   <li key={part.slug}>
@@ -150,7 +152,7 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
 
           {product.details.length > 0 && (
             <section className="mt-10" aria-labelledby="details-h">
-              <h2 id="details-h" className="display text-3xl">Product details</h2>
+              <h2 id="details-h" className="display text-3xl">{t("Product details")}</h2>
               <ul className="mt-4 border-b border-ink/25">
                 {product.details.map((d) => <li key={d} className="border-t border-ink/25 py-2.5">{d}</li>)}
               </ul>
@@ -170,8 +172,8 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
 
       {completeSet.length > 0 && (
         <section className="mt-24" aria-labelledby="set-h">
-          <h2 id="set-h" className="display text-2xl sm:text-3xl">Complete the set</h2>
-          <p className="mt-2 text-muted">More official {franchise?.name ?? ""} merch to go with it.</p>
+          <h2 id="set-h" className="display text-2xl sm:text-3xl">{t("Complete the set")}</h2>
+          <p className="mt-2 text-muted">{t("More official {name} merch to go with it.", { name: franchise?.name ?? "" })}</p>
           <div className={`mt-8 ${GRID}`}>
             {completeSet.map((p) => <ProductCard key={p.slug} product={p} franchiseName={nameBySlug[p.franchiseSlug]} />)}
           </div>
@@ -180,7 +182,7 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
 
       {related.length > 0 && (
         <section className="mt-24" aria-labelledby="related-h">
-          <h2 id="related-h" className="display text-2xl sm:text-3xl">More from the universe</h2>
+          <h2 id="related-h" className="display text-2xl sm:text-3xl">{t("More from the universe")}</h2>
           <div className={`mt-8 ${GRID}`}>
             {related.map((p) => <ProductCard key={p.slug} product={p} franchiseName={nameBySlug[p.franchiseSlug]} />)}
           </div>

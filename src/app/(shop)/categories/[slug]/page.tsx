@@ -1,3 +1,4 @@
+import { getT } from "@/lib/i18n/server";
 import { categorySeo } from "@/lib/seo/effective";
 import Link from "@/components/LocaleLink";
 import { notFound } from "next/navigation";
@@ -13,7 +14,8 @@ export async function generateMetadata(props: PageProps<"/categories/[slug]">): 
   const { slug } = await props.params;
   const { franchise } = await props.searchParams;
   const c = await getCategory(slug);
-  if (!c) return { title: "Category not found", robots: { index: false } };
+  const { t } = await getT();
+  if (!c) return { title: t("Category not found"), robots: { index: false } };
   // Filtered views are a faceted-navigation duplicate: canonical to the base page, keep out of the index.
   const seo = categorySeo(c);
   return buildMetadata({ title: seo.title, description: seo.description, path: seo.path, image: seo.image, noindex: seo.noindex || Boolean(franchise) });
@@ -24,6 +26,7 @@ export default async function CategoryPage(props: PageProps<"/categories/[slug]"
   const sp = await props.searchParams;
   const franchiseFilter = typeof sp.franchise === "string" ? sp.franchise : undefined;
 
+  const { t } = await getT();
   const category = await getCategory(slug);
   if (!category) notFound();
   const [franchises, products] = await Promise.all([getFranchises(), getProducts({ category: slug, franchise: franchiseFilter })]);
@@ -40,8 +43,8 @@ export default async function CategoryPage(props: PageProps<"/categories/[slug]"
       <h1 className="display mt-6 text-[clamp(2rem,4.2vw,3.25rem)]">{category.name}</h1>
       <p className="prose-lore mt-6 text-muted">{category.description}</p>
 
-      <ul className="mt-10 flex flex-wrap gap-x-7 gap-y-2 border-y border-ink/15 py-4" aria-label="Filter by franchise">
-        <li><Link href={path} aria-current={!franchiseFilter ? "page" : undefined} className={`font-bold ${!franchiseFilter ? "link-line" : "text-muted hover:text-ink"}`}>All franchises</Link></li>
+      <ul className="mt-10 flex flex-wrap gap-x-7 gap-y-2 border-y border-ink/15 py-4" aria-label={t("Filter by franchise")}>
+        <li><Link href={path} aria-current={!franchiseFilter ? "page" : undefined} className={`font-bold ${!franchiseFilter ? "link-line" : "text-muted hover:text-ink"}`}>{t("All franchises")}</Link></li>
         {franchises.map((f) => (
           <li key={f.slug}>
             <Link href={`${path}?franchise=${f.slug}`} rel="nofollow" aria-current={franchiseFilter === f.slug ? "page" : undefined} className={`font-bold ${franchiseFilter === f.slug ? "link-line" : "text-muted hover:text-ink"}`}>{f.name}</Link>
@@ -50,7 +53,7 @@ export default async function CategoryPage(props: PageProps<"/categories/[slug]"
       </ul>
 
       {products.length === 0 ? (
-        <p className="serif mt-10 text-xl text-muted">Nothing here yet. New merchandise is added regularly.</p>
+        <p className="serif mt-10 text-xl text-muted">{t("Nothing here yet. New merchandise is added regularly.")}</p>
       ) : (
         <div className="mt-10"><Listing products={products} franchiseNames={nameBySlug} flush /></div>
       )}
