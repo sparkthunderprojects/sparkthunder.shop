@@ -1,3 +1,4 @@
+import { getT } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import { LegalPage } from "@/components/LegalPage";
 import { CookieSettingsLink } from "@/components/CookieSettingsLink";
@@ -7,9 +8,10 @@ import { getStore } from "@/lib/store";
 
 export async function generateMetadata(): Promise<Metadata> {
   const store = await getStore();
+  const { t } = await getT();
   return buildMetadata({
-    title: "Cookie Policy",
-    description: `What ${store.name} stores in your browser: only what powers your basket, sign-in and preferences, plus optional analytics and advertising cookies if you allow them.`,
+    title: t("Cookie Policy"),
+    description: t("What {store} stores in your browser: only what powers your basket, sign-in and preferences, plus optional analytics and advertising cookies if you allow them.", { store: store.name }),
     path: "/cookies",
   });
 }
@@ -28,30 +30,31 @@ const items: [string, string, string][] = [
 
 export default async function CookiesPage() {
   const { name, domain } = await getLegal();
+  const { t } = await getT();
   return (
-    <LegalPage title="Cookie policy" path="/cookies" intro={`${name} uses your browser to remember things you have chosen. Analytics and advertising cookies are optional and stay off unless you say yes.`}>
-      <h2>What is stored</h2>
-      <p>These items are essential to features you use, so they do not need a consent banner. They stay on your device.</p>
+    <LegalPage title={t("Cookie policy")} path="/cookies" intro={t("{name} uses your browser to remember things you have chosen. Analytics and advertising cookies are optional and stay off unless you say yes.", { name })}>
+      <h2>{t("What is stored")}</h2>
+      <p>{t("These items are essential to features you use, so they do not need a consent banner. They stay on your device.")}</p>
       <div className="mt-4 overflow-x-auto">
         <table className="w-full border-collapse text-left font-sans text-base">
-          <thead><tr className="border-b border-ink/15"><th className="py-2 pr-4">Name</th><th className="py-2 pr-4">Purpose</th><th className="py-2">Kept</th></tr></thead>
+          <thead><tr className="border-b border-ink/15"><th className="py-2 pr-4">{t("Name")}</th><th className="py-2 pr-4">{t("Purpose")}</th><th className="py-2">{t("Kept")}</th></tr></thead>
           <tbody>
-            {items.map(([n, p, k]) => (
-              <tr key={n} className="border-b border-ink/20 align-top"><td className="py-2.5 pr-4 font-bold">{n}</td><td className="py-2.5 pr-4">{p}</td><td className="py-2.5">{k}</td></tr>
+            {items.map(([n, pu, k]) => (
+              <tr key={n} className="border-b border-ink/20 align-top"><td className="py-2.5 pr-4 font-bold">{n}</td><td className="py-2.5 pr-4">{t(pu)}</td><td className="py-2.5">{t(k)}</td></tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      <h2>Optional cookies</h2>
-      <p><b>Performance cookies</b> (analytics) show us which pages and products are popular so we can improve the shop. <b>Targeting cookies</b> let us measure our adverts and show relevant {name} products elsewhere. Both are off until you turn them on, and nothing optional loads before then.</p>
-      <p><CookieSettingsLink className="btn btn-ink btn-sm">Change my cookie choices</CookieSettingsLink></p>
+      <h2>{t("Optional cookies")}</h2>
+      <p><b>{t("Performance cookies")}</b>{t(" (analytics) show us which pages and products are popular so we can improve the shop. ")}<b>{t("Targeting cookies")}</b>{t(" let us measure our adverts and show relevant {name} products elsewhere. Both are off until you turn them on, and nothing optional loads before then.", { name })}</p>
+      <p><CookieSettingsLink className="btn btn-ink btn-sm">{t("Change my cookie choices")}</CookieSettingsLink></p>
 
-      <h2>Managing it</h2>
-      <p>You can remove all of this at any time by clearing site data for {domain} in your browser settings. Your basket and favourites will then be emptied, and you will be signed out. When you pay, Stripe may also set its own cookies on its payment page; see Stripe&rsquo;s cookie policy for details.</p>
+      <h2>{t("Managing it")}</h2>
+      <p>{t("You can remove all of this at any time by clearing site data for {domain} in your browser settings. Your basket and favourites will then be emptied, and you will be signed out. When you pay, Stripe may also set its own cookies on its payment page; see Stripe’s cookie policy for details.", { domain })}</p>
 
-      <h2>If this changes</h2>
-      <p>If we add new kinds of non-essential cookies, we will ask for your consent first and update this page.</p>
+      <h2>{t("If this changes")}</h2>
+      <p>{t("If we add new kinds of non-essential cookies, we will ask for your consent first and update this page.")}</p>
     </LegalPage>
   );
 }
