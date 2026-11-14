@@ -61,6 +61,21 @@ try {
   const xml = await sm.text();
   check(xml.includes("/fr/shop") && xml.includes("hreflang=\"de\""), "sitemap lists each language with hreflang");
 
+  // Pages that are fixed text should be in the chosen language. A few English words remain on pages that show store content (taglines, product and franchise descriptions) until that is translated by the AI step.
+  const pagesToScan = ["/", "/shop", "/franchises", "/gifts", "/search?q=dice", "/cart", "/gift-cards", "/gift-cards/send", "/gift-cards/balance", "/payment-options", "/payment-options/klarna", "/help", "/help/returns", "/help/returns/returns-policy", "/help/contact", "/privacy", "/terms", "/delivery-returns", "/cookies", "/accessibility", "/account/login", "/unsubscribe", "/nonexistent-page-xyz"];
+  const english = /\b(the|and|your|you|with|for|our|will|from|are|this|that|have)\b/gi;
+  for (const lang of ["fr", "de", "es"]) {
+    const noisy = [];
+    for (const path of pagesToScan) {
+      const resp = await go(`/${lang}${path === "/" ? "" : path}`);
+      if (!resp || resp.status() >= 500) { noisy.push(`${path} (status ${resp?.status()})`); continue; }
+      const text = await page.locator("body").innerText();
+      const hits = (text.match(english) ?? []).length;
+      if (hits > 20) noisy.push(`${path} (${hits})`);
+    }
+    check(noisy.length === 0, `/${lang}: pages are translated (${noisy.join(", ") || "all clean"})`);
+  }
+
   // mobile menu translated
   await page.setViewportSize({ width: 390, height: 800 });
   await go("/de");
