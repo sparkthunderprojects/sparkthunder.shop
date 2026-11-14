@@ -1,5 +1,6 @@
 "use client";
-import Link from "@/components/LocaleLink";
+
+import { useT } from "@/components/LocaleProvider";import Link from "@/components/LocaleLink";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 export type CharacterTile = { slug: string; name: string; image: string; franchise?: string; accent?: string };
@@ -9,6 +10,7 @@ const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2)
 /** "Shop by character": dark tiles with the cut-out figure and the name along the bottom. Arrows on wide screens, swipe on phones. */
 export function CharacterCarousel({ title, items, viewAllHref, id }: { title: string; items: CharacterTile[]; viewAllHref?: string; id: string }) {
   const track = useRef<HTMLUListElement>(null);
+  const { t } = useT();
   const [edge, setEdge] = useState({ start: true, end: true });
   const measure = useCallback(() => {
     const el = track.current; if (!el) return;
@@ -28,11 +30,11 @@ export function CharacterCarousel({ title, items, viewAllHref, id }: { title: st
       <div className="flex items-end justify-between gap-4">
         <h2 id={`${id}-h`} className="display text-2xl sm:text-3xl">{title}</h2>
         <div className="flex items-center gap-4">
-          {viewAllHref ? <Link href={viewAllHref} className="link-line text-sm font-semibold">View all</Link> : null}
+          {viewAllHref ? <Link href={viewAllHref} className="link-line text-sm font-semibold">{t("View all")}</Link> : null}
           {canScroll ? (
             <span className="hidden gap-2 md:flex">
-              <button type="button" className="char-arrow" aria-label="Previous characters" disabled={edge.start} onClick={() => go(-1)}>&larr;</button>
-              <button type="button" className="char-arrow" aria-label="Next characters" disabled={edge.end} onClick={() => go(1)}>&rarr;</button>
+              <button type="button" className="char-arrow" aria-label={t("Previous characters")} disabled={edge.start} onClick={() => go(-1)}>&larr;</button>
+              <button type="button" className="char-arrow" aria-label={t("Next characters")} disabled={edge.end} onClick={() => go(1)}>&rarr;</button>
             </span>
           ) : null}
         </div>

@@ -1,3 +1,4 @@
+import { getT } from "@/lib/i18n/server";
 import Image from "next/image";
 import Link from "@/components/LocaleLink";
 import { CharacterCarousel } from "@/components/CharacterCarousel";
@@ -13,7 +14,8 @@ const FLUSH = "pgrid -mx-(--gutter) grid grid-cols-2 border-l border-t border-in
 const H2 = "display text-2xl sm:text-3xl";
 
 /** The home page for any store other than the original Sparkthunder one: built entirely from the store's own settings, categories and products. */
-export function StoreHome({ store, products, categories, theme = DEFAULT_THEME, characters = [], franchiseNames = {} }: { store: StoreSettings; products: Product[]; categories: Category[]; theme?: ThemeLayout; characters?: CharacterEntry[]; franchiseNames?: Record<string, string> }) {
+export async function StoreHome({ store, products, categories, theme = DEFAULT_THEME, characters = [], franchiseNames = {} }: { store: StoreSettings; products: Product[]; categories: Category[]; theme?: ThemeLayout; characters?: CharacterEntry[]; franchiseNames?: Record<string, string> }) {
+  const { t } = await getT();
   const featured = products.filter((p) => p.isFeatured).concat(products.filter((p) => !p.isFeatured)).slice(0, 3);
   const fresh = products.filter((p) => p.isNew).slice(0, 5);
   const picks = products.filter((p) => p.isFeatured).slice(0, 5);
@@ -27,12 +29,12 @@ export function StoreHome({ store, products, categories, theme = DEFAULT_THEME, 
             <h1 className="display text-[clamp(2.5rem,5.2vw,4.5rem)]">{store.heroHeading}</h1>
             <p className="mt-6 max-w-lg text-lg leading-relaxed text-ink/75">{store.description}</p>
             <div className="mt-9 flex flex-wrap gap-3">
-              <Link href="/new" className="btn">Shop new arrivals</Link>
-              <Link href="/shop" className="btn btn-ink">Browse everything</Link>
+              <Link href="/new" className="btn">{t("Shop new arrivals")}</Link>
+              <Link href="/shop" className="btn btn-ink">{t("Browse everything")}</Link>
             </div>
           </div>
           {featured.length > 0 && (
-            <ul className="hidden grid-cols-3 gap-3 md:grid" aria-label="Featured products">
+            <ul className="hidden grid-cols-3 gap-3 md:grid" aria-label={t("Featured products")}>
               {featured.map((p, i) => (
                 <li key={p.slug} className={i === 1 ? "mt-14" : i === 2 ? "mt-6" : ""}>
                   <Link href={`/products/${p.slug}`} className="block overflow-hidden bg-paper-2">
@@ -47,11 +49,11 @@ export function StoreHome({ store, products, categories, theme = DEFAULT_THEME, 
     ),
     characters: () => {
       const list = homeList(characters);
-      return list.length ? <div key="characters" className="px-(--gutter)" data-home-section="characters"><CharacterCarousel id="home-characters" title="Shop by character" viewAllHref="/characters" items={list.map((c) => ({ slug: c.slug, name: c.name, image: c.image, franchise: franchiseNames[c.franchiseSlug] }))} /></div> : null;
+      return list.length ? <div key="characters" className="px-(--gutter)" data-home-section="characters"><CharacterCarousel id="home-characters" title={t("Shop by character")} viewAllHref="/characters" items={list.map((c) => ({ slug: c.slug, name: c.name, image: c.image, franchise: franchiseNames[c.franchiseSlug] }))} /></div> : null;
     },
     categories: () => wrap("categories", categories.length > 0 && (
       <section aria-labelledby="types-h" className="mt-14">
-        <h2 id="types-h" className={H2}>Shop by category</h2>
+        <h2 id="types-h" className={H2}>{t("Shop by category")}</h2>
         <ul className="mt-5 grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-5">
           {categories.map((c) => {
             const first = products.find((p) => p.categorySlug === c.slug);
@@ -70,8 +72,8 @@ export function StoreHome({ store, products, categories, theme = DEFAULT_THEME, 
     featured: () => wrap("featured", picks.length > 0 && (
       <section aria-labelledby="feat-h" className="mt-16">
         <div className="flex items-baseline justify-between gap-4">
-          <h2 id="feat-h" className={H2}>Featured</h2>
-          <Link href="/shop" className="link-line text-sm font-semibold">Shop all</Link>
+          <h2 id="feat-h" className={H2}>{t("Featured")}</h2>
+          <Link href="/shop" className="link-line text-sm font-semibold">{t("Shop all")}</Link>
         </div>
         <div className={`mt-5 ${FLUSH}`}>{picks.map((p) => <ProductCard key={p.slug} variant="flush" product={p} franchiseName="" />)}</div>
       </section>
@@ -79,23 +81,23 @@ export function StoreHome({ store, products, categories, theme = DEFAULT_THEME, 
     new: () => wrap("new", fresh.length > 0 && (
       <section aria-labelledby="new-h" className="mt-16">
         <div className="flex items-baseline justify-between gap-4">
-          <h2 id="new-h" className={H2}>New arrivals</h2>
-          <Link href="/new" className="link-line text-sm font-semibold">View all</Link>
+          <h2 id="new-h" className={H2}>{t("New arrivals")}</h2>
+          <Link href="/new" className="link-line text-sm font-semibold">{t("View all")}</Link>
         </div>
         <div className={`mt-5 ${FLUSH}`}>{fresh.map((p) => <ProductCard key={p.slug} variant="flush" product={p} franchiseName="" />)}</div>
       </section>
     )),
     story: () => wrap("story", theme.storyText && (
       <section aria-labelledby="story-h" className="mx-auto mt-16 max-w-3xl text-center">
-        <h2 id="story-h" className={H2}>{theme.storyTitle || "Our story"}</h2>
+        <h2 id="story-h" className={H2}>{theme.storyTitle || t("Our story")}</h2>
         <p className="serif mt-5 whitespace-pre-line text-lg leading-relaxed text-ink/80">{theme.storyText}</p>
       </section>
     )),
     "gift-cards": () => wrap("gift-cards", (
       <section aria-labelledby="gc-h" className="mt-16">
         <Link href="/gift-cards" className="flex flex-col gap-3 bg-paper-2 p-8 transition-colors hover:bg-ink/15 sm:flex-row sm:items-center sm:justify-between sm:p-10">
-          <span><span id="gc-h" className="display block text-3xl">Give them the choice</span><span className="mt-1 block text-muted">Gift cards delivered by email in minutes.</span></span>
-          <span className="btn self-start sm:self-center">Send a gift card</span>
+          <span><span id="gc-h" className="display block text-3xl">{t("Give them the choice")}</span><span className="mt-1 block text-muted">{t("Gift cards delivered by email in minutes.")}</span></span>
+          <span className="btn self-start sm:self-center">{t("Send a gift card")}</span>
         </Link>
       </section>
     )),
@@ -104,7 +106,7 @@ export function StoreHome({ store, products, categories, theme = DEFAULT_THEME, 
   return (
     <div className="-mx-(--gutter) -mb-24 pb-24">
       {theme.home.filter((x) => x.on).map((x) => sections[x.id]())}
-      {products.length === 0 && <p className="mt-16 px-(--gutter) text-muted">This store has no products yet. Add some in the admin and they will appear here.</p>}
+      {products.length === 0 && <p className="mt-16 px-(--gutter) text-muted">{t("This store has no products yet. Add some in the admin and they will appear here.")}</p>}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/components/LocaleProvider";
 import { useEffect, useId, useState, useTransition } from "react";
 import { lookupGiftCardAction } from "@/app/(shop)/gift-cards/actions";
 import { formatCode } from "@/lib/giftcards/format";
@@ -35,23 +36,24 @@ export function GiftCardApply({ card, setCard }: { card: AppliedCard | null; set
   const [pending, start] = useTransition();
   const id = useId();
   const { codePrefix } = useCommerce();
+  const { t } = useT();
 
   if (card) {
     return (
       <p className="mt-4 flex items-center justify-between gap-3 border border-ink/20 bg-paper px-3 py-2 text-sm">
-        <span><b>Gift card</b> <span className="font-mono">{formatCode(card.code, codePrefix)}</span><br />{formatPrice(card.balancePence)} available</span>
-        <button onClick={() => setCard(null)} className="underline underline-offset-4">Remove</button>
+        <span><b>{t("Gift card")}</b> <span className="font-mono">{formatCode(card.code, codePrefix)}</span><br />{t("{amount} available", { amount: formatPrice(card.balancePence) })}</span>
+        <button onClick={() => setCard(null)} className="underline underline-offset-4">{t("Remove")}</button>
       </p>
     );
   }
   return (
     <div className="mt-4">
-      {!open ? <button onClick={() => setOpen(true)} className="text-sm font-bold underline underline-offset-4">Have a gift card?</button> : (
-        <form onSubmit={(e) => { e.preventDefault(); setErr(""); start(async () => { const r = await lookupGiftCardAction(code); if (!r.ok) return setErr(r.error); if (r.status !== "active") return setErr(r.status === "used" ? "That card has no balance left." : r.status === "expired" ? "That card has expired." : "That card cannot be used."); setCard({ code: r.code, balancePence: r.balancePence }); setCode(""); setOpen(false); }); }}>
-          <label htmlFor={id} className="text-sm font-bold">Gift card code</label>
+      {!open ? <button onClick={() => setOpen(true)} className="text-sm font-bold underline underline-offset-4">{t("Have a gift card?")}</button> : (
+        <form onSubmit={(e) => { e.preventDefault(); setErr(""); start(async () => { const r = await lookupGiftCardAction(code); if (!r.ok) return setErr(t(r.error)); if (r.status !== "active") return setErr(r.status === "used" ? t("That card has no balance left.") : r.status === "expired" ? t("That card has expired.") : t("That card cannot be used.")); setCard({ code: r.code, balancePence: r.balancePence }); setCode(""); setOpen(false); }); }}>
+          <label htmlFor={id} className="text-sm font-bold">{t("Gift card code")}</label>
           <div className="mt-1 flex gap-2">
             <input id={id} value={code} onChange={(e) => setCode(e.target.value)} autoComplete="off" spellCheck={false} placeholder={`${codePrefix}-XXXX-XXXX-XXXX`} className="min-w-0 flex-1 border border-ink/20 bg-paper px-3 py-2 font-mono text-sm" />
-            <button className="btn btn-sm btn-ink" disabled={pending || !code.trim()}>{pending ? "..." : "Apply"}</button>
+            <button className="btn btn-sm btn-ink" disabled={pending || !code.trim()}>{pending ? "..." : t("Apply")}</button>
           </div>
           {err ? <p role="alert" className="mt-1 text-sm font-bold text-red-700">{err}</p> : null}
         </form>

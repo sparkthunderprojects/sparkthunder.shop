@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/components/LocaleProvider";
 import { useEffect, useId, useRef, useState, useTransition } from "react";
 import { quoteDiscountAction, type QuoteResult } from "@/app/(shop)/checkout/discount";
 import type { CartInput } from "@/lib/shop/types";
@@ -35,6 +36,7 @@ export function useDiscount(cart: CartInput) {
 }
 
 export function DiscountApply({ code, setCode, quote }: { code: string | null; setCode: (c: string | null) => void; quote: QuoteResult | null }) {
+  const { t } = useT();
   const money = useMoney();
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
@@ -46,23 +48,23 @@ export function DiscountApply({ code, setCode, quote }: { code: string | null; s
     return (
       <div className="mt-4 border border-ink/20 bg-paper px-3 py-2 text-sm">
         <p className="flex items-center justify-between gap-3">
-          <span><b>Discount code</b> <span className="font-mono">{quote?.ok ? quote.code : code}</span>{quote?.ok ? <><br />{quote.label}: you save {money(quote.amountPence)}</> : null}</span>
-          <button onClick={() => setCode(null)} className="underline underline-offset-4">Remove</button>
+          <span><b>{t("Discount code")}</b> <span className="font-mono">{quote?.ok ? quote.code : code}</span>{quote?.ok ? <><br />{t("{label}: you save {amount}", { label: quote.label, amount: money(quote.amountPence) })}</> : null}</span>
+          <button onClick={() => setCode(null)} className="underline underline-offset-4">{t("Remove")}</button>
         </p>
-        {quote && !quote.ok ? <p role="alert" className="mt-1 font-bold text-red-700">{quote.error}</p> : null}
+        {quote && !quote.ok ? <p role="alert" className="mt-1 font-bold text-red-700">{t(quote.error)}</p> : null}
       </div>
     );
   }
   return (
     <div className="mt-4">
-      {!open ? <button onClick={() => setOpen(true)} className="text-sm font-bold underline underline-offset-4">Have a discount code?</button> : (
+      {!open ? <button onClick={() => setOpen(true)} className="text-sm font-bold underline underline-offset-4">{t("Have a discount code?")}</button> : (
         <form onSubmit={(e) => { e.preventDefault(); setErr(""); const c = text.trim(); if (!c) return; start(async () => { setCode(c.toUpperCase()); setText(""); setOpen(false); }); }}>
-          <label htmlFor={id} className="text-sm font-bold">Discount code</label>
+          <label htmlFor={id} className="text-sm font-bold">{t("Discount code")}</label>
           <div className="mt-1 flex gap-2">
-            <input id={id} value={text} onChange={(e) => setText(e.target.value)} autoComplete="off" spellCheck={false} placeholder="Enter code" className="min-w-0 flex-1 border border-ink/20 bg-paper px-3 py-2 font-mono text-sm uppercase" />
-            <button className="btn btn-sm btn-ink" disabled={pending || !text.trim()}>Apply</button>
+            <input id={id} value={text} onChange={(e) => setText(e.target.value)} autoComplete="off" spellCheck={false} placeholder={t("Enter code")} className="min-w-0 flex-1 border border-ink/20 bg-paper px-3 py-2 font-mono text-sm uppercase" />
+            <button className="btn btn-sm btn-ink" disabled={pending || !text.trim()}>{t("Apply")}</button>
           </div>
-          {err ? <p role="alert" className="mt-1 text-sm font-bold text-red-700">{err}</p> : null}
+          {err ? <p role="alert" className="mt-1 text-sm font-bold text-red-700">{t(err)}</p> : null}
         </form>
       )}
     </div>

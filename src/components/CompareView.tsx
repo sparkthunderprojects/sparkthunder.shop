@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/components/LocaleProvider";
 import Image from "next/image";
 import Link from "@/components/LocaleLink";
 import { useShopUi } from "@/components/ShopUi";
@@ -9,6 +10,7 @@ import { useMoney } from "@/components/Currency";
 import type { Product } from "@/lib/types";
 
 export function CompareView({ products, franchiseNames, categoryNames }: { products: Product[]; franchiseNames: Record<string, string>; categoryNames: Record<string, string> }) {
+  const { t } = useT();
   const money = useMoney();
   const { compare, removeCompare, clearCompare } = useShopUi();
   const addOrChoose = useAddToBasket();
@@ -17,8 +19,8 @@ export function CompareView({ products, franchiseNames, categoryNames }: { produ
   if (picked.length === 0) {
     return (
       <div className="mt-8">
-        <p className="serif text-xl text-muted">Nothing to compare yet. Use the compare icon on any product card to add up to four.</p>
-        <Link href="/shop" className="btn mt-6">Browse all merchandise</Link>
+        <p className="serif text-xl text-muted">{t("Nothing to compare yet. Use the compare icon on any product card to add up to four.")}</p>
+        <Link href="/shop" className="btn mt-6">{t("Browse all merchandise")}</Link>
       </div>
     );
   }
@@ -26,22 +28,22 @@ export function CompareView({ products, franchiseNames, categoryNames }: { produ
   const th = "w-32 shrink-0 border-t border-ink/25 py-4 pr-4 text-left align-top text-sm font-bold text-muted sm:w-40";
   const td = "min-w-44 border-t border-ink/25 px-3 py-4 align-top";
   const rows: { label: string; cell: (p: Product) => React.ReactNode }[] = [
-    { label: "Franchise", cell: (p) => franchiseNames[p.franchiseSlug] ?? "-" },
-    { label: "Type", cell: (p) => categoryNames[p.categorySlug] ?? "-" },
-    { label: "Price", cell: (p) => (
+    { label: t("Franchise"), cell: (p) => franchiseNames[p.franchiseSlug] ?? "-" },
+    { label: t("Type"), cell: (p) => categoryNames[p.categorySlug] ?? "-" },
+    { label: t("Price"), cell: (p) => (
       <span className="flex items-baseline gap-2"><span className="text-lg font-bold">{money(p.pricePence)}</span>{p.comparePricePence && <s className="text-muted">{money(p.comparePricePence)}</s>}</span>
     ) },
-    { label: "Availability", cell: (p) => (p.inStock ? "In stock" : "Sold out") },
-    { label: "SKU", cell: (p) => p.sku },
-    { label: "Summary", cell: (p) => p.shortDescription },
-    { label: "Details", cell: (p) => (p.details.length ? <ul className="list-disc space-y-1 pl-4">{p.details.map((d) => <li key={d}>{d}</li>)}</ul> : "-") },
+    { label: t("Availability"), cell: (p) => (p.inStock ? t("In stock") : t("Sold out")) },
+    { label: t("SKU"), cell: (p) => p.sku },
+    { label: t("Summary"), cell: (p) => p.shortDescription },
+    { label: t("Details"), cell: (p) => (p.details.length ? <ul className="list-disc space-y-1 pl-4">{p.details.map((d) => <li key={d}>{d}</li>)}</ul> : "-") },
   ];
 
   return (
     <div className="mt-8">
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-left">
-          <caption className="sr-only">Product comparison</caption>
+          <caption className="sr-only">{t("Product comparison")}</caption>
           <thead>
             <tr>
               <td className="w-32 sm:w-40" />
@@ -63,14 +65,14 @@ export function CompareView({ products, franchiseNames, categoryNames }: { produ
               </tr>
             ))}
             <tr>
-              <th scope="row" className={th}><span className="sr-only">Actions</span></th>
+              <th scope="row" className={th}><span className="sr-only">{t("Actions")}</span></th>
               {picked.map((p) => (
                 <td key={p.slug} className={td}>
                   <div className="flex flex-col items-start gap-3">
                     {p.inStock
-                      ? <button className="btn btn-sm" onClick={() => addOrChoose(toQuick(p, franchiseNames[p.franchiseSlug]))}>{(p.variants ?? []).length ? "Choose options" : "Add to basket"}</button>
-                      : <button className="btn btn-sm" disabled>Sold out</button>}
-                    <button onClick={() => removeCompare(p.slug)} className="text-sm underline underline-offset-4 hover:text-muted">Remove</button>
+                      ? <button className="btn btn-sm" onClick={() => addOrChoose(toQuick(p, franchiseNames[p.franchiseSlug]))}>{(p.variants ?? []).length ? t("Choose options") : t("Add to basket")}</button>
+                      : <button className="btn btn-sm" disabled>{t("Sold out")}</button>}
+                    <button onClick={() => removeCompare(p.slug)} className="text-sm underline underline-offset-4 hover:text-muted">{t("Remove")}</button>
                   </div>
                 </td>
               ))}
@@ -78,7 +80,7 @@ export function CompareView({ products, franchiseNames, categoryNames }: { produ
           </tbody>
         </table>
       </div>
-      <button onClick={clearCompare} className="mt-8 text-sm font-bold underline underline-offset-4">Clear comparison</button>
+      <button onClick={clearCompare} className="mt-8 text-sm font-bold underline underline-offset-4">{t("Clear comparison")}</button>
     </div>
   );
 }
