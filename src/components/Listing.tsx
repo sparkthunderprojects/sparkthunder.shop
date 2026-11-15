@@ -30,9 +30,10 @@ const FLUSH_CLASS: Record<View, string> = {
   dense: "grid-cols-2 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8",
 };
 const CAT_CLASS: Record<View, string> = {
-  large: "grid-cols-1 md:grid-cols-2",
-  default: "grid-cols-2 xl:grid-cols-4",
-  dense: "grid-cols-3 xl:grid-cols-6",
+  // Same breakpoint as the reference: four across from 1024px, 1px between columns (3px on smaller screens).
+  large: "gap-x-[3px] grid-cols-1 lg:gap-x-px lg:grid-cols-2",
+  default: "gap-x-[3px] grid-cols-2 lg:gap-x-px lg:grid-cols-4",
+  dense: "gap-x-[3px] grid-cols-3 lg:gap-x-px lg:grid-cols-6",
 };
 const VIEW_KEY = "sparkthunder-grid-v1";
 
@@ -218,7 +219,7 @@ export function Listing({ products, franchiseNames, categoryNames = {}, priority
       {shown.length === 0 ? (
         <p className="serif mt-8 text-xl text-muted">{t("Nothing matches those filters.")} <button onClick={reset} className="font-bold text-ink underline underline-offset-4">{t("Clear them")}</button> {t("to see everything.")}</p>
       ) : (
-        <div className={`${cat ? "mt-0 -mx-(--gutter) grid gap-x-px gap-y-[35px] " + CAT_CLASS[view] : "mt-6 grid"} transition-opacity duration-150 ${busy ? "opacity-40" : "opacity-100"} ${cat ? "" : flush ? `pgrid -mx-(--gutter) border-l border-t border-ink/15 ${FLUSH_CLASS[view]}` : VIEW_CLASS[view]}`}>
+        <div className={`${cat ? "mt-0 -mx-(--gutter) grid gap-y-[35px] " + CAT_CLASS[view] : "mt-6 grid"} transition-opacity duration-150 ${busy ? "opacity-40" : "opacity-100"} ${cat ? "" : flush ? `pgrid -mx-(--gutter) border-l border-t border-ink/15 ${FLUSH_CLASS[view]}` : VIEW_CLASS[view]}`}>
           {shown.map((p, i) => <ProductCard key={p.slug} product={p} variant={cat ? "catalogue" : flush ? "flush" : "default"} franchiseName={franchiseNames[p.franchiseSlug]} priority={i < priorityCount} />)}
         </div>
       )}
