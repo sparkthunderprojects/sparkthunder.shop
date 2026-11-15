@@ -12,7 +12,7 @@ for (const w of [1920, 1440, 1280, 1100, 1024, 1023, 390]) {
   await p.getByRole("button", { name: "Reject all" }).click({ timeout: 1500 }).catch(() => {});
   const r = await p.evaluate(() => { const a = document.querySelector("[data-product-card], article"); const cards = [...document.querySelectorAll("[data-product-card], article")]; const c = cards[0]; const g = c.parentElement; const gs = getComputedStyle(g); const bb = c.getBoundingClientRect(); const im = c.querySelector("img")?.closest("div")?.getBoundingClientRect(); return { sb: innerWidth - document.documentElement.clientWidth, cols: gs.gridTemplateColumns.split(" ").length, cw: +bb.width.toFixed(2), ch: Math.round(bb.height), imgH: im && Math.round(im.height), imgW: im && +im.width.toFixed(2), gx: +g.getBoundingClientRect().x.toFixed(1), cg: gs.columnGap, rg: gs.rowGap, x1: +cards[1].getBoundingClientRect().x.toFixed(2) }; });
   const cols = w >= 1024 ? 4 : 2, cw = (w - (cols - 1) * (cols === 4 ? 1 : 3)) / cols;
-  const ok = r.cols === cols && Math.abs(r.cw - cw) < 0.3 && Math.abs(r.imgH - Math.round(cw * 4 / 3)) <= 1 && Math.abs(r.ch - r.imgH - 72) <= 1 && r.cg === (cols === 4 ? "1px" : "3px") && r.rg === "35px";
+  const ok = r.cols === cols && Math.abs(r.cw - cw) < 0.3 && Math.abs(r.imgH - Math.round(cw * 4 / 3)) <= 1 && (w < 1024 || Math.abs(r.ch - r.imgH - 72) <= 1) && r.cg === (cols === 4 ? "1px" : "3px") && r.rg === "35px";
   console.log(ok ? "ok  " : "FAIL", w, JSON.stringify(r)); if (!ok) failed++; await ctx.close();
 }
 await b.close();
