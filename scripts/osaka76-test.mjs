@@ -42,6 +42,24 @@ try {
     await wide.evaluate(() => scrollTo(0, 300)); await wide.waitForTimeout(400);
     check(await wide.evaluate(() => document.querySelector("[data-header='slim']").hasAttribute("data-solid")), "header turns solid after scrolling");
   }
+  // Footer: the reference's grid at 1920 wide (sign-up at x32, link columns at 661, 976, 1291, 1606; 25px link rows; 387px tall).
+  {
+    const wide = await (await browser.newContext({ viewport: { width: 1920, height: 1080 } })).newPage();
+    await wide.goto(`${base}/`, { waitUntil: "load" });
+    await wide.getByRole("button", { name: "Reject all" }).click({ timeout: 2500 }).catch(() => {});
+    const m = await wide.evaluate(() => {
+      const f = document.querySelector("[data-footer='catalogue']"); const fb = f.getBoundingClientRect();
+      const hs = [...f.querySelectorAll("h2")].map((e) => Math.round(e.getBoundingClientRect().x));
+      const col = f.querySelectorAll("ul")[0]; const links = [...col.querySelectorAll("a")].map((e) => Math.round(e.getBoundingClientRect().y - fb.y));
+      const legal = f.querySelector("nav a"); const ls = getComputedStyle(legal);
+      return { h: Math.round(fb.height), hs, links: links.slice(0, 3), legalY: Math.round(legal.getBoundingClientRect().y - fb.y), fs: ls.fontSize, bg: getComputedStyle(f).backgroundColor, news: document.querySelectorAll("#newsletter").length };
+    });
+    check(m.h === 387, `footer is 387px tall (${m.h})`);
+    check(m.hs.join() === "32,661,976,1291,1606" || m.hs.join() === "32,661,976,1291,1605", `footer columns start at 32, 661, 976, 1291, 1606 (${m.hs.join()})`);
+    check(m.links.join() === "104,129,154", `link rows start at 104 with a 25px pitch (${m.links.join()})`);
+    check(m.legalY === 355 && m.fs === "12px", `legal row at 355, 12px (${m.legalY}, ${m.fs})`);
+    check(m.bg === "rgb(255, 255, 255)" && m.news === 1, "white footer with exactly one sign-up (#newsletter)");
+  }
   // Catalogue collection page: measured against the reference at 1920 wide.
   {
     const wide = await (await browser.newContext({ viewport: { width: 1920, height: 1080 } })).newPage();

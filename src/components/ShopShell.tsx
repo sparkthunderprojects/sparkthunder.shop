@@ -61,8 +61,8 @@ export async function ShopShell({ children }: { children: React.ReactNode }) {
             <AnnouncementBar items={store.announcements} />
             <Header />
             <main id="main" className="w-full flex-1 px-(--gutter) pb-24">{children}</main>
-            <Newsletter blurb={nlBlurb} />
-            <Footer />
+            {theme.card === "catalogue" && theme.footer === "full" ? null : <Newsletter blurb={nlBlurb} />}
+            <Footer blurb={nlBlurb} />
             <div className="h-14 md:hidden" aria-hidden />
             <CartDrawer suggestions={suggestions} />
             <WishlistDrawer />

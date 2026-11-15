@@ -12,8 +12,9 @@ import { getT } from "@/lib/i18n/server";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { LEGAL_PAGES, outbound } from "@/lib/site";
 import { CookieSettingsLink } from "@/components/CookieSettingsLink";
+import { SubscribeForm } from "@/components/SubscribeForm";
 
-export async function Footer() {
+export async function Footer({ blurb = "" }: { blurb?: string }) {
   const [franchises, categories, store, storeId, theme, commerce, { t }] = await Promise.all([getFranchises(), getCategories(), getStore(), currentStoreId(), getTheme(), getCommerce(), getT()]);
   const legal: Record<string, Parameters<typeof t>[0]> = { "/terms": "legal.terms", "/delivery-returns": "legal.delivery", "/privacy": "legal.privacy", "/cookies": "legal.cookiePolicy", "/accessibility": "legal.accessibility" };
   const legalLabel = (l: { href: string; label: string }) => (legal[l.href] ? t(legal[l.href]) : l.label);
@@ -21,6 +22,58 @@ export async function Footer() {
   const original = storeId === DEFAULT_STORE_ID;
   const col = "mt-4 space-y-2.5 text-[0.95rem] text-ink/75";
   const lnk = "hover:text-bolt hover:underline hover:underline-offset-4";
+  if (theme.card === "catalogue" && theme.footer === "full") {
+    // Catalogue stores: a white footer in the reference's grid (sign-up left, four link columns, legal row at the foot). Same links and features as the full footer.
+    const h = "h-8 text-xs font-medium capitalize leading-8";
+    const ul = "mt-5";
+    const a = "block h-[25px] text-xs capitalize leading-[25px] tracking-[0.36px] hover:underline hover:underline-offset-4";
+    return (
+      <footer className="flex min-h-[387px] flex-col bg-paper px-8 pb-4 pt-[52px] text-ink" data-footer="catalogue">
+        <div className="grid gap-x-20 gap-y-10 md:grid-cols-2 xl:grid-cols-[minmax(0,549px)_repeat(4,minmax(0,235px))]">
+          <div id="newsletter" className="max-w-[549px]">
+            <h2 className={h}>{t("First access to every drop")}</h2>
+            <p className="mb-6 mt-5 max-w-[394px] text-xs leading-4">{blurb}</p>
+            <SubscribeForm idPrefix="nl" inline />
+          </div>
+          <div>
+            <h2 className={h}>{t("footer.help")}</h2>
+            <ul className={ul}>
+              <li><Link className={a} href="/help">{t("footer.help")}</Link></li>
+              <li><Link className={a} href="/payment-options">{t("footer.payment")}</Link></li>
+              <li><Link className={a} href="/gift-cards">{t("nav.giftCards")}</Link></li>
+              <li><Link className={a} href="/gift-cards/balance">{t("footer.balance")}</Link></li>
+            </ul>
+          </div>
+          <div>
+            <h2 className={h}>{t("nav.shop")}</h2>
+            <ul className={ul}>
+              {categories.map((c) => <li key={c.slug}><Link className={a} href={`/categories/${c.slug}`}>{c.name}</Link></li>)}
+              <li><Link className={a} href="/new">{t("nav.new")}</Link></li>
+              <li><Link className={a} href="/shop">{t("nav.allMerch")}</Link></li>
+            </ul>
+          </div>
+          <div>
+            <h2 className={h}>{t("nav.franchises")}</h2>
+            <ul className={ul}>
+              {franchises.map((f) => <li key={f.slug}><Link className={a} href={`/franchises/${f.slug}`}>{f.name}</Link></li>)}
+              {franchises.filter((f) => f.siteUrl).map((f) => <li key={`site-${f.slug}`}><a className={a} href={outbound(f.siteUrl!, "footer")} rel="noopener">{t("footer.site", { name: f.name })}</a></li>)}
+            </ul>
+          </div>
+          <div>
+            <h2 className={h}>{t("Select your region")}</h2>
+            <div className="mt-5 flex flex-col items-start gap-4 text-xs"><RegionSwitcher /><LanguageSwitcher /><PaymentBadges className="" methods={pay} /></div>
+          </div>
+        </div>
+        <nav aria-label="Legal" className="mt-auto pt-10">
+          <ul className="flex flex-wrap gap-x-6 gap-y-1 text-xs leading-4 tracking-[0.36px] text-[rgba(87,87,87,0.8)]">
+            {LEGAL_PAGES.map((l) => <li key={l.href}><Link className="hover:underline" href={l.href}>{legalLabel(l)}</Link></li>)}
+            <li><CookieSettingsLink className="hover:underline">{t("legal.cookies")}</CookieSettingsLink></li>
+            <li>© {new Date().getFullYear()} {store.legalName}</li>
+          </ul>
+        </nav>
+      </footer>
+    );
+  }
   if (theme.footer === "compact") {
     return (
       <footer className="theme-dark border-t border-ink/15" data-footer="compact">
