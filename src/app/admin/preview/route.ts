@@ -14,13 +14,15 @@ export async function GET(req: Request) {
   if (!admin) return new Response("Not signed in", { status: 401 });
   const url = new URL(req.url);
   const back = (clear: boolean, set?: string) => {
-    const res = new Response(null, { status: 303, headers: { Location: new URL("/", req.url).toString() } });
+    const res = new Response(null, { status: 303, headers: { Location: new URL(`/?preview=${Date.now()}`, req.url).toString(), "Cache-Control": "private, no-store" } });
     const secure = url.protocol === "https:" ? "; Secure" : "";
     res.headers.append("Set-Cookie", clear ? `${PREVIEW_COOKIE}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax${secure}` : `${PREVIEW_COOKIE}=${set}; Path=/; HttpOnly; SameSite=Lax${secure}`);
     return res;
   };
   if (url.searchParams.get("off")) return back(true);
-  const id = await currentStoreId();
+  // The sidebar names the store it is showing, so a stale admin cookie can never send you to the wrong one.
+  const asked = url.searchParams.get("store");
+  const id = asked && (await listStores()).some((s) => s.id === asked) ? asked : await currentStoreId();
   if (admin.access !== "*" && !admin.access.includes(id)) return new Response("No access to that store", { status: 403 });
   const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host");
   const owner = storeForHost(await listStores(), host).id;

@@ -73,7 +73,7 @@ export function Sidebar({ email, demo, stores, current, owner, perms }: { email:
         {owner ? item({ href: "/admin/domains", label: "Domains" }) : null}
         <div className="adm-sep">Site</div>
         {/* Opens the store being edited, on its own domain if it has one, otherwise as a private preview. */}
-        <a href="/admin/preview" target="_blank" rel="noreferrer">View storefront{stores.find((x) => x.id === current) ? ` (${stores.find((x) => x.id === current)?.name})` : ""}</a>
+        <a href={`/admin/preview?store=${encodeURIComponent(current)}`} target="_blank" rel="noreferrer">View storefront{stores.find((x) => x.id === current) ? ` (${stores.find((x) => x.id === current)?.name})` : ""}</a>
       </nav>
       <div className="adm-side-foot">
         {demo ? <div style={{ color: "#ffd400", fontWeight: 700, marginBottom: 6 }}>Demo mode: changes are not saved to a database</div> : null}
