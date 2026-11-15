@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ROLES, ROLE_LABEL, type Role } from "@/lib/admin/roles";
 import { STARTERS } from "@/lib/starters";
-import { cloneStoreAction, createStarterStoreAction, saveStoreRecordAction, setStaffAction, switchStoreAction } from "../../stores-actions";
+import { cloneStoreAction, createStarterStoreAction, reapplyStarterLookAction, saveStoreRecordAction, setStaffAction, switchStoreAction } from "../../stores-actions";
 import type { StoreRow } from "@/lib/db/stores";
 
 function Row({ s, current, create }: { s?: StoreRow; current?: boolean; create?: boolean }) {
@@ -80,7 +80,7 @@ function Clone({ stores }: { stores: StoreRow[] }) {
   );
 }
 
-function Starters() {
+function Starters({ current }: { current: string }) {
   const router = useRouter();
   const [pick, setPick] = useState(STARTERS[0]?.id ?? "");
   const st = STARTERS.find((x) => x.id === pick) ?? STARTERS[0];
@@ -105,6 +105,10 @@ function Starters() {
       </div>
       <label>Domains (optional now, add later; each domain belongs to one store)<input value={domains} onChange={(e) => setDomains(e.target.value)} placeholder="osaka76.com, www.osaka76.com" /></label>
       <div><button type="button" className="adm-btn adm-pri" disabled={busy} onClick={go}>Create store from template</button> <span role="status">{msg}</span></div>
+      <div style={{ borderTop: "1px solid #d5d9de", paddingTop: 8 }}>
+        <small>Already made this store? Update the store you are editing ({current || "none chosen"}) to the latest {st.name} look and home page. Keeps its name, domains, products, orders and customers; replaces its colours, logo, layout and banners.</small><br />
+        <button type="button" className="adm-btn" disabled={busy || !current} data-starter-reapply onClick={async () => { if (!confirm(`Replace the look and home page of "${current}" with the latest ${st.name} template?`)) return; setBusy(true); setMsg(""); const r = await reapplyStarterLookAction(st.id); setBusy(false); setMsg(r.ok ? "Updated. Open View storefront to see it." : r.error); router.refresh(); }}>Update the store I am editing to this template</button>
+      </div>
     </div>
   );
 }
@@ -117,7 +121,7 @@ export function StoresManager({ stores, current }: { stores: StoreRow[]; current
       <h2>Add a store</h2>
       <Row create />
       <h2>Start from a ready-made template</h2>
-      <Starters />
+      <Starters current={current} />
       <h2>Or start from a copy of an existing store</h2>
       <Clone stores={stores} />
     </>

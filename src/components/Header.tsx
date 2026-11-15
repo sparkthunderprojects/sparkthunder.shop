@@ -1,6 +1,7 @@
 import { FranchiseLogo } from "@/components/FranchiseLogo";
 import Image from "next/image";
 import Link from "@/components/LocaleLink";
+import { HeaderTone } from "@/components/HeaderTone";
 import { AccountLink } from "@/components/AccountLink";
 import { CartLink } from "@/components/CartLink";
 import { MobileMenu } from "@/components/MobileMenu";
@@ -39,6 +40,7 @@ export async function Header() {
     const lnk = "flex h-[46px] items-center px-3 text-xs hover:underline hover:underline-offset-4";
     return (
       <header className="sticky top-0 z-40 bg-paper text-ink" data-header="slim">
+        <HeaderTone />
         <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:bg-bolt focus:px-3 focus:py-2">{t("skip")}</a>
         <div className="relative flex h-[46px] items-center justify-between">
           <div className="flex items-center pl-1">

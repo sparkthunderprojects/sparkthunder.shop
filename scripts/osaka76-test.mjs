@@ -20,10 +20,27 @@ try {
     check((await page.title()).startsWith("Osaka76"), `${name}: title is Osaka76`);
     check((await page.locator("h1").count()) === 1, `${name}: exactly one h1`);
     const sections = await page.evaluate(() => [...document.querySelectorAll("[data-home-section]")].map((e) => e.getAttribute("data-home-section")));
-    check(sections.join() === "slides,new,categories,loyalty,featured,story", `${name}: banner slides, new, categories, members club, featured, story (got ${sections.join()})`);
+    check(sections.join() === "split,new,categories,loyalty,featured,story", `${name}: split banner, new, categories, members club, featured, story (got ${sections.join()})`);
     check(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${name}: no sideways scrolling`);
     check((await page.getByText("Members Club").count()) > 0, `${name}: members club banner shown`);
     check(errs.length === 0, `${name}: no page errors ${errs[0] ?? ""}`);
+  }
+  // Home page: the split banner fills the first screen (two panels side by side) with the header floating over it, as on the reference.
+  {
+    const wide = await (await browser.newContext({ viewport: { width: 1920, height: 945 } })).newPage();
+    await wide.goto(`${base}/`, { waitUntil: "load" });
+    await wide.getByRole("button", { name: "Reject all" }).click({ timeout: 2500 }).catch(() => {});
+    await wide.waitForTimeout(400);
+    const m = await wide.evaluate(() => {
+      const r = (e) => { const b = e.getBoundingClientRect(); return [Math.round(b.x), Math.round(b.y + scrollY), Math.round(b.width), Math.round(b.height)]; };
+      const panels = [...document.querySelectorAll("[data-home-split] section")].map(r);
+      const h = document.querySelector("[data-header='slim']");
+      return { panels, header: r(h), bg: getComputedStyle(h).backgroundColor, solid: h.hasAttribute("data-solid") };
+    });
+    check(m.panels.length === 2 && m.panels[0].join() === "0,0,960,945" && m.panels[1].join() === "960,0,960,945", `split banner: two panels of 960 x 945 filling the first screen (${m.panels.map((p) => p.join(",")).join(" | ")})`);
+    check(m.header.join() === "0,0,1920,46" && m.bg === "rgba(0, 0, 0, 0)" && !m.solid, `header floats transparent over the banner (${m.header.join(",")} ${m.bg})`);
+    await wide.evaluate(() => scrollTo(0, 300)); await wide.waitForTimeout(400);
+    check(await wide.evaluate(() => document.querySelector("[data-header='slim']").hasAttribute("data-solid")), "header turns solid after scrolling");
   }
   // Catalogue collection page: measured against the reference at 1920 wide.
   {

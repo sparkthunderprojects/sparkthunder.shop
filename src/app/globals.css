@@ -232,3 +232,9 @@ html[data-card="soft"] .pcard-flush > a > div { border-radius: 0; }
 html[data-card="catalogue"] { --gutter: 24px; }
 html[data-card="catalogue"] body { letter-spacing: 0.133333px; font-size: 12px; line-height: 17px; }
 @media (max-width: 767px) { html[data-card="catalogue"] { --gutter: 12px; } }
+
+/* A page that opens with the split banner: the slim header floats transparent and white over it, then turns solid after a little scrolling. */
+html:has([data-home-split]) [data-home-split] { margin-top: -46px; }
+html:has([data-home-split]) [data-header="slim"]:not([data-solid]) { background: transparent; color: #fff; }
+html:has([data-home-split]) [data-header="slim"]:not([data-solid]) img { filter: brightness(0) invert(1); }
+html:has([data-home-split]) [data-header="slim"] { transition: background-color .2s, color .2s; }

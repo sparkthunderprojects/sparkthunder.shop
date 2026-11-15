@@ -6,7 +6,8 @@ import { logActivity as audit } from "@/lib/admin/activity";
 import { cookies } from "next/headers";
 import { revalidatePath, updateTag } from "next/cache";
 import { requireAdminAction, requireOwnerAction } from "@/lib/admin/auth";
-import { ADMIN_STORE_COOKIE, listStores } from "@/lib/db/stores";
+import { ADMIN_STORE_COOKIE, currentStoreId, listStores } from "@/lib/db/stores";
+import { bustTag } from "@/lib/tags";
 import { serviceClient } from "@/lib/db/clients";
 import { isRole } from "@/lib/admin/roles";
 import { starterById, starterSettings } from "@/lib/starters";
@@ -120,6 +121,33 @@ export async function createStarterStoreAction(input: { starter: string; id: str
     updateTag("stores");
     revalidatePath("/admin", "layout");
     await audit("store.starter", `Created store ${id} from the ${st.name} template`, { type: "store", id });
+    return { ok: true };
+  } catch (e) { return { ok: false, error: e instanceof Error ? e.message : "Something went wrong." }; }
+}
+
+/**
+ * Re-applies a template's look and home page to the store being edited (for a store made from an older version of the template).
+ * Replaces its colours, logo, fonts, layout, banners and home page; keeps its name, domains, products, orders and customers.
+ */
+export async function reapplyStarterLookAction(starterId: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    await requireOwnerAction();
+    const st = starterById(starterId);
+    if (!st) return { ok: false, error: "Unknown template." };
+    const id = await currentStoreId();
+    const store0 = (await listStores()).find((x) => x.id === id);
+    if (!store0) return { ok: false, error: "Pick the store to update first." };
+    const dest = serviceClient(id);
+    if (!dest) return { ok: false, error: dbSetupProblem() };
+    const { store, theme } = starterSettings(st, store0.name);
+    for (const [key, value] of [["store", store], ["theme", theme]] as const) {
+      const { error } = await dest.from("settings").upsert({ key, value }, { onConflict: "key" });
+      if (error) return { ok: false, error: `The ${key} settings did not save: ${error.message}` };
+    }
+    await bustTag("settings");
+    revalidatePath("/", "layout");
+    revalidatePath("/admin", "layout");
+    await audit("store.starter", `Re-applied the ${st.name} template look to ${id}`, { type: "store", id });
     return { ok: true };
   } catch (e) { return { ok: false, error: e instanceof Error ? e.message : "Something went wrong." }; }
 }

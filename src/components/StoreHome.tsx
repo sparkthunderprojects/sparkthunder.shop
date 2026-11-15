@@ -48,6 +48,25 @@ export async function StoreHome({ store, products, categories, theme = DEFAULT_T
         </div>
       </section>
     ),
+    // Two full-screen photos side by side, the first thing on the page. The header sits transparent on top of it (see globals.css).
+    split: () => theme.split.length === 0 ? null : (
+      <div key="split" data-home-section="split" data-home-split className="grid md:grid-cols-2">
+        {theme.split.map((b, i) => (
+          <section key={i} aria-label={b.title || b.label} className="theme-dark relative h-[80svh] overflow-hidden bg-(--store-dark) md:h-[100svh]">
+            <Image src={b.image} alt="" fill priority sizes="(min-width: 768px) 50vw, 100vw" unoptimized={b.image.startsWith("https://") || b.image.endsWith(".svg")} className="object-cover object-top" />
+            <div aria-hidden className="absolute inset-0 bg-black/25" />
+            <div className="absolute inset-x-0 top-[40%] px-[4.5vw] text-white">
+              {b.label && <p className="text-xs font-light uppercase">{b.label}</p>}
+              {i === 0 ? <h1 className="mt-1 text-2xl font-medium">{b.title}</h1> : <h2 className="mt-1 text-2xl font-medium">{b.title}</h2>}
+              <div className="mt-5 flex flex-wrap gap-2">
+                {b.label1 && b.href1 && <Link href={b.href1 as never} className="inline-flex h-[30px] items-center border border-white/60 bg-black/40 px-6 text-[10px] font-bold uppercase text-white backdrop-blur-sm hover:bg-white hover:text-black">{b.label1}</Link>}
+                {b.label2 && b.href2 && <Link href={b.href2 as never} className="inline-flex h-[30px] items-center border border-white/60 bg-black/40 px-6 text-[10px] font-bold uppercase text-white backdrop-blur-sm hover:bg-white hover:text-black">{b.label2}</Link>}
+              </div>
+            </div>
+          </section>
+        ))}
+      </div>
+    ),
     slides: () => theme.slides.length === 0 ? null : (
       <div key="slides" data-home-section="slides" className="theme-dark [&>section]:mx-0">
         <HeroSlider slides={theme.slides.map((b, i) => ({

@@ -24,9 +24,13 @@ export const OSAKA76: Starter = {
   },
   theme: {
     header: "slim", card: "catalogue", productPage: "split", footer: "full",
-    home: [{ id: "slides", on: true }, { id: "new", on: true }, { id: "categories", on: true }, { id: "loyalty", on: true }, { id: "featured", on: true }, { id: "story", on: true }, { id: "hero", on: false }, { id: "characters", on: false }, { id: "gift-cards", on: false }],
+    home: [{ id: "split", on: true }, { id: "slides", on: false }, { id: "new", on: true }, { id: "categories", on: true }, { id: "loyalty", on: true }, { id: "featured", on: true }, { id: "story", on: true }, { id: "hero", on: false }, { id: "characters", on: false }, { id: "gift-cards", on: false }],
     storyTitle: "Born in Osaka",
     storyText: "Osaka76 started with one heavyweight hoodie and a simple rule: if it is not worth wearing for ten years, we do not make it. Every piece is cut boxy, washed by hand and numbered by drop.",
+    split: [
+      { image: "/osaka76/osaka-street-tee.jpg", label: "Winter 76", title: "Osaka Street", label1: "Shop now", href1: "/new", label2: "Shop tees", href2: "/categories/tees" },
+      { image: "/osaka76/drunken-octopus-tee.jpg", label: "Dotonbori", title: "Drunken Octopus", label1: "Shop now", href1: "/categories/tees", label2: "Shop collection", href2: "/collections/streetwear-hats" },
+    ],
     slides: [
       { image: "/osaka76/banner-1.svg", headline: "Winter 76 is here", text: "Heavyweight hoodies, boxy tees and the new Kansai puffer.", label1: "Shop new arrivals", href1: "/new", label2: "Shop outerwear", href2: "/categories/outerwear" },
       { image: "/osaka76/banner-2.svg", headline: "The Members Club", text: "Early access to every drop, points on every order.", label1: "Join the club", href1: "/account", label2: "", href2: "" },

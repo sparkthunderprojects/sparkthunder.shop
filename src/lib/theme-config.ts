@@ -8,7 +8,7 @@ export const HEADERS = ["classic", "compact", "slim"] as const;
 export const CARDS = ["bordered", "soft", "minimal", "catalogue"] as const;
 export const PRODUCT_PAGES = ["split", "stacked"] as const;
 export const FOOTERS = ["full", "compact"] as const;
-export const HOME_SECTION_IDS = ["hero", "slides", "categories", "characters", "featured", "new", "story", "loyalty", "gift-cards"] as const;
+export const HOME_SECTION_IDS = ["split", "hero", "slides", "categories", "characters", "featured", "new", "story", "loyalty", "gift-cards"] as const;
 export type HeaderStyle = (typeof HEADERS)[number];
 export type CardStyle = (typeof CARDS)[number];
 export type ProductPageStyle = (typeof PRODUCT_PAGES)[number];
@@ -20,6 +20,8 @@ export type ThemeLayout = {
   /** Home page sections, in order. Used by every store except the original Sparkthunder shop, whose home page is hand-designed. */
   home: { id: HomeSectionId; on: boolean }[];
   storyTitle: string; storyText: string;
+  /** Two full-screen image panels side by side for the "Split banner" home section. */
+  split: SplitPanel[];
   /** Full-width image banners for the "Banner slides" home section. */
   slides: HeroBanner[];
   /** Image tiles shown above the product grid on collection pages (catalogue style). */
@@ -27,6 +29,7 @@ export type ThemeLayout = {
   /** The "Members club" banner: heading, up to three benefit lines and where Join goes. */
   loyalty: { title: string; text: string; bullets: string[]; joinLabel: string; joinHref: string; image: string };
 };
+export type SplitPanel = { image: string; label: string; title: string; label1: string; href1: string; label2: string; href2: string };
 export type LookbookTile = { image: string; title: string; caption: string; href: string };
 export type HeroBanner = { image: string; headline: string; text: string; label1: string; href1: string; label2: string; href2: string };
 
@@ -37,14 +40,14 @@ export const LABELS = {
   footer: { full: "Full: logo, description and link columns", compact: "Compact: one tidy row" },
 } as const;
 export const SECTION_LABEL: Record<HomeSectionId, string> = {
-  hero: "Hero: heading, text and featured products", slides: "Banner slides: full-width image banners", loyalty: "Members club banner", categories: "Shop by category", characters: "Shop by character", featured: "Featured products", new: "New arrivals", story: "Brand story", "gift-cards": "Gift cards banner",
+  split: "Split banner: two full-screen photos side by side", hero: "Hero: heading, text and featured products", slides: "Banner slides: full-width image banners", loyalty: "Members club banner", categories: "Shop by category", characters: "Shop by character", featured: "Featured products", new: "New arrivals", story: "Brand story", "gift-cards": "Gift cards banner",
 };
 
 export const DEFAULT_THEME: ThemeLayout = {
   header: "classic", card: "bordered", productPage: "split", footer: "full",
-  home: [{ id: "hero", on: true }, { id: "slides", on: false }, { id: "categories", on: true }, { id: "characters", on: false }, { id: "new", on: true }, { id: "featured", on: false }, { id: "story", on: false }, { id: "loyalty", on: false }, { id: "gift-cards", on: false }],
+  home: [{ id: "hero", on: true }, { id: "slides", on: false }, { id: "categories", on: true }, { id: "characters", on: false }, { id: "new", on: true }, { id: "featured", on: false }, { id: "story", on: false }, { id: "loyalty", on: false }, { id: "gift-cards", on: false }, { id: "split", on: false }],
   storyTitle: "Our story", storyText: "",
-  slides: [], lookbook: [], loyalty: { title: "", text: "", bullets: [], joinLabel: "Join", joinHref: "/account", image: "" },
+  split: [], slides: [], lookbook: [], loyalty: { title: "", text: "", bullets: [], joinLabel: "Join", joinHref: "/account", image: "" },
 };
 
 const txt = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "");
@@ -65,6 +68,7 @@ export function normaliseTheme(raw: Partial<ThemeLayout> | null | undefined): Th
   for (const s of d.home) if (!seen.has(s.id)) home.push({ ...s, on: Array.isArray(r.home) ? false : s.on });
   return {
     header: pick(HEADERS, r.header, d.header), card: pick(CARDS, r.card, d.card), productPage: pick(PRODUCT_PAGES, r.productPage, d.productPage), footer: pick(FOOTERS, r.footer, d.footer),
+    split: (Array.isArray(r.split) ? r.split : []).map((b) => ({ image: img(b?.image), label: txt(b?.label, 40), title: txt(b?.title, 60), label1: txt(b?.label1, 30), href1: link(b?.href1), label2: txt(b?.label2, 30), href2: link(b?.href2) })).filter((b) => b.image).slice(0, 2),
     slides: (Array.isArray(r.slides) ? r.slides : []).map((b) => ({ image: img(b?.image), headline: txt(b?.headline, 90), text: txt(b?.text, 200), label1: txt(b?.label1, 30), href1: link(b?.href1), label2: txt(b?.label2, 30), href2: link(b?.href2) })).filter((b) => b.headline || b.image).slice(0, 5),
     lookbook: (Array.isArray(r.lookbook) ? r.lookbook : []).map((b) => ({ image: img(b?.image), title: txt(b?.title, 40), caption: txt(b?.caption, 60), href: link(b?.href) })).filter((b) => b.image && b.href).slice(0, 6),
     loyalty: { title: txt(r.loyalty?.title, 80), text: txt(r.loyalty?.text, 200), bullets: (Array.isArray(r.loyalty?.bullets) ? r.loyalty.bullets : []).map((x) => txt(x, 90)).filter(Boolean).slice(0, 3), joinLabel: txt(r.loyalty?.joinLabel, 30) || d.loyalty.joinLabel, joinHref: link(r.loyalty?.joinHref) || d.loyalty.joinHref, image: img(r.loyalty?.image) },
