@@ -38,7 +38,8 @@ export async function currentStoreId(): Promise<string> {
       const chosen = (await cookies()).get(ADMIN_STORE_COOKIE)?.value;
       if (chosen && stores.some((s) => s.id === chosen)) return chosen;
     }
-    const preview = (await cookies()).get(PREVIEW_COOKIE)?.value;
+    // Inside the admin the chosen store always rules: a preview cookie must never leak into admin pages.
+    const preview = h.get("x-spark-admin") === "1" ? undefined : (await cookies()).get(PREVIEW_COOKIE)?.value;
     if (preview && stores.some((s) => s.id === preview)) return preview;
     return storeForHost(stores, h.get("x-forwarded-host") ?? h.get("host")).id;
   } catch {

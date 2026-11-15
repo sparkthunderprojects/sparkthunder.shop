@@ -31,6 +31,19 @@ try {
   check(hoodies.status() === 200, "its categories exist");
   const col = await p2.goto(`http://osaka77.localhost:${port}/collections/streetwear-hats`, { waitUntil: "load" });
   check(col.status() === 404, "its collections start unpublished");
+  // Sample caps: Admin > Products > "Add 12 sample caps" fills the new store and publishes its caps collection.
+  await page.goto(`http://127.0.0.1:${port}/admin/products`, { waitUntil: "networkidle" });
+  const caps = page.locator("[data-add-caps]");
+  check(await caps.count() === 1, "Products page has the sample caps button");
+  await caps.click();
+  await page.getByText("Added 12 caps.").waitFor({ timeout: 15000 });
+  check(true, "twelve caps are added");
+  await caps.click();
+  await page.getByText("The caps are already there.").waitFor({ timeout: 15000 });
+  check(true, "pressing it again adds nothing");
+  const col2 = await p2.goto(`http://osaka77.localhost:${port}/collections/streetwear-hats`, { waitUntil: "load" });
+  check(col2.status() === 200, "the caps collection is now published");
+  check((await p2.locator("[data-product-card], article").count()) >= 12, `the collection shows the caps (${await p2.locator("[data-product-card], article").count()} cards)`);
   const orig = await page.goto(`http://127.0.0.1:${port}/`, { waitUntil: "load" });
   check(!(await page.content()).includes("Osaka77"), "the original store shows nothing of it");
 } finally { await browser.close(); }

@@ -1,5 +1,6 @@
 // A tiny in-memory stand-in for the parts of the Supabase client the app uses (demo mode only).
 import { OSAKA76, starterSettings } from "@/lib/starters";
+import { CAPS, CAP_COLOURS } from "@/lib/starters-caps";
 import { seedCatalog } from "@/data/seed";
 import { categoryToRow, franchiseToRow, productToRow } from "@/lib/db/mappers";
 import { mkdir, writeFile } from "node:fs/promises";
@@ -62,13 +63,7 @@ function store(): Store {
         ["midosuji-coach-jacket", "Midosuji Coach Jacket", "outerwear", 14000, false, true], ["kansai-puffer", "Kansai Puffer", "outerwear", 19500, true, true],
       ];
       const acc: [string, string, number][] = [["everyday-tote", "Everyday Tote", 3000]];
-      const COL: Record<string, string> = { Black: "#111111", Ecru: "#e8e0d0", Red: "#b01e28", Navy: "#1f2a44", Brown: "#6b4a3a", Slate: "#4f5b6b" };
-      const hats: [string, string, number, string[], boolean][] = [
-        ["osaka76-castle-cap", "Osaka76 Castle Cap", 4500, ["Black", "Brown", "Red", "Slate"], true], ["dotonbori-trucker", "Dotonbori Trucker Cap", 4200, ["Black", "Navy", "Red", "Ecru"], false], ["kita-bucket-hat", "Kita Washed Bucket Hat", 4800, ["Ecru", "Black", "Slate"], true],
-        ["shibuya-five-panel", "Shibuya 5-Panel Cap", 4500, ["Navy", "Black", "Brown", "Red"], false], ["namba-beanie", "Namba Ribbed Beanie", 3200, ["Black", "Ecru", "Red"], true], ["sakai-dad-cap", "Sakai Distressed Dad Cap", 4600, ["Brown", "Black", "Slate", "Navy"], false],
-        ["midosuji-snapback", "Midosuji Snapback", 4400, ["Black", "Red"], false], ["umeda-ball-cap", "Umeda Ball Cap", 4000, ["Black", "Ecru", "Navy", "Red"], false], ["tsuruhashi-visor", "Tsuruhashi Visor", 3800, ["Black", "Ecru"], false],
-        ["kansai-beanie", "Kansai Cuffed Beanie", 3400, ["Slate", "Black", "Brown", "Red"], true], ["script-76-cap", "76 Script Cap", 4700, ["Black", "Brown", "Navy", "Ecru"], true], ["night-market-cap", "Night Market Cap", 4900, ["Black", "Slate", "Red"], false],
-      ];
+      const COL = CAP_COLOURS; const hats = CAPS;
       const base = { store_id: O, compare_price_pence: null, details: [], images: [], in_stock: true, published: true, created_at: now, updated_at: now, track_stock: true, low_stock_threshold: 5, bundle_items: [], tags: [], image_alts: [] };
       for (const [slug, name, cat, price, isNew, feat] of clothes) {
         g.__sparkFake.products.push({ ...base, slug, sku: `O76-${slug.replace(/-/g, "").slice(0, 10)}`.toUpperCase(), name, franchise_slug: slug.includes("puffer") || slug.includes("coach") ? "archive" : "core", category_slug: cat, price_pence: price, short_description: `${name}. Boxy fit, heavyweight cotton.`, description: `${name} from Osaka76: heavyweight, boxy and garment-washed for a lived-in feel. Sizes XS to XL.`, is_new: isNew, is_featured: feat, stock_qty: 40,
