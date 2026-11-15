@@ -79,6 +79,39 @@ try {
     check(m.add[0] === 1204 && m.add[2] === 472 && m.add[3] === 52 && m.addBg === "rgb(10, 10, 10)" && m.addFs === "12px" && m.addFw === "500" && m.tt === "uppercase", `add button 472 x 52, black, 12px/500 uppercase (${m.add.join(",")} ${m.addBg})`);
     check(m.crumbs === 0, "no breadcrumb bar above the gallery");
   }
+  // Basket drawer (empty): the reference's 440px white panel, full height, with the popular items under the button.
+  {
+    const wide = await (await browser.newContext({ viewport: { width: 1920, height: 945 } })).newPage();
+    await wide.goto(`${base}/`, { waitUntil: "load" });
+    await wide.getByRole("button", { name: "Reject all" }).click({ timeout: 2500 }).catch(() => {});
+    await wide.getByRole("button", { name: /basket|cart/i }).first().click(); await wide.waitForTimeout(700);
+    const m = await wide.evaluate(() => {
+      const r = (e) => { const b = e.getBoundingClientRect(); return [Math.round(b.x), Math.round(b.y), Math.round(b.width), Math.round(b.height)]; };
+      const d = document.querySelector("[data-slideover='catalogue']"); if (!d) return null;
+      const tile = d.querySelector("[data-cart-empty] li a");
+      return { d: r(d), bg: getComputedStyle(d).backgroundColor, tile: tile && r(tile), title: d.querySelector("h2")?.textContent, fs: getComputedStyle(d.querySelector("h2")).fontSize };
+    });
+    check(m && m.d.join() === "1480,0,440,945" && m.bg === "rgb(255, 255, 255)", `basket drawer is 440 x 945 at the right edge, white (${m?.d.join(",")})`);
+    check(m && m.tile && m.tile[2] === 190 && m.tile[3] === 253 || (m && m.tile && Math.abs(m.tile[3] - 254) <= 1 && m.tile[2] === 190), `popular items are 190 x 254 tiles (${m?.tile?.join(",")})`);
+    check(m && m.fs === "14px", `drawer title is 14px (${m?.title})`);
+  }
+  // Main menu: the reference's 320px white panel under the 46px bar (big links 30px rows, grey section labels, 32px rows).
+  {
+    const wide = await (await browser.newContext({ viewport: { width: 1920, height: 945 } })).newPage();
+    await wide.goto(`${base}/`, { waitUntil: "load" });
+    await wide.getByRole("button", { name: "Reject all" }).click({ timeout: 2500 }).catch(() => {});
+    await wide.locator("[data-cat-menu-button]").click(); await wide.waitForTimeout(300);
+    const m = await wide.evaluate(() => {
+      const r = (e) => { const b = e.getBoundingClientRect(); return [Math.round(b.x), Math.round(b.y), Math.round(b.width), Math.round(b.height)]; };
+      const nav = document.querySelector("[data-cat-menu] nav"); if (!nav) return null;
+      const feat = nav.querySelector("li a"), item = nav.querySelector("section li a"), label = nav.querySelector("section h2");
+      return { nav: r(nav), feat: r(feat), ffs: getComputedStyle(feat).fontSize, item: r(item), ifs: getComputedStyle(item).fontSize, label: r(label), lfs: getComputedStyle(label).fontSize, lcol: getComputedStyle(label).color };
+    });
+    check(m && m.nav[0] === 0 && m.nav[1] === 46 && m.nav[2] === 320, `menu panel is 320 wide under the bar (${m?.nav.join(",")})`);
+    check(m && m.feat[3] === 30 && m.ffs === "16px" && m.item[3] === 32 && m.ifs === "12px" && m.lfs === "10px" && m.lcol === "rgb(117, 117, 117)", `rows: big links 30px/16px, items 32px/12px, grey 10px labels (${m?.feat[3]}, ${m?.item[3]}, ${m?.lfs})`);
+    await wide.keyboard.press("Escape");
+    check((await wide.locator("[data-cat-menu]").count()) === 0, "Escape closes the menu");
+  }
   // Catalogue collection page: measured against the reference at 1920 wide.
   {
     const wide = await (await browser.newContext({ viewport: { width: 1920, height: 1080 } })).newPage();

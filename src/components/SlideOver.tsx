@@ -2,6 +2,7 @@
 
 import { useT } from "@/components/LocaleProvider";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useCatalogue } from "@/components/CardStyle";
 
 /** Keeps a panel mounted through its exit so it can animate out as smoothly as it animates in. */
 export function useTransitionMount(open: boolean, ms = 380) {
@@ -35,6 +36,7 @@ export function useDialogBehaviour(active: boolean, onClose: () => void) {
 /** A frosted, see-through panel that slides in from the right over a dimmed, blurred page. */
 export function SlideOver({ open, onClose, title, children, wide = false, width }: { open: boolean; onClose: () => void; title: string; children: ReactNode; wide?: boolean; width?: string }) {
   const { t } = useT();
+  const cat = useCatalogue();
   const { mounted, shown } = useTransitionMount(open);
   const closeRef = useRef<HTMLButtonElement>(null);
   useDialogBehaviour(open, onClose);
@@ -45,11 +47,20 @@ export function SlideOver({ open, onClose, title, children, wide = false, width 
     <div className="fixed inset-0 z-[60]" role="dialog" aria-modal="true" aria-label={title}>
       <button aria-label={`Close ${title.toLowerCase()}`} tabIndex={-1} onClick={onClose}
         className={`absolute inset-0 bg-black/35 backdrop-blur-[3px] transition-opacity duration-300 ease-out ${shown ? "opacity-100" : "opacity-0"}`} />
-      <aside className={`glass-dark absolute right-0 top-0 flex h-full ${width ?? (wide ? "w-[min(68rem,100vw)]" : "w-[min(28rem,100vw)]")} flex-col border-l border-white/15 shadow-2xl shadow-black/50 transition-transform duration-[380ms] ease-[cubic-bezier(0.32,0.72,0,1)] will-change-transform motion-reduce:transition-none ${shown ? "translate-x-0" : "translate-x-full"}`}>
+      <aside data-slideover={cat ? "catalogue" : undefined} className={`${cat ? "bg-paper text-ink" : "glass-dark border-l border-white/15 shadow-2xl shadow-black/50"} absolute right-0 top-0 flex h-full ${cat && !wide ? "w-[min(440px,100vw)]" : width ?? (wide ? "w-[min(68rem,100vw)]" : "w-[min(28rem,100vw)]")} flex-col transition-transform duration-[380ms] ease-[cubic-bezier(0.32,0.72,0,1)] will-change-transform motion-reduce:transition-none ${shown ? "translate-x-0" : "translate-x-full"}`}>
+        {cat ? (
+          <div className="flex h-[46px] shrink-0 items-center justify-between pl-[10px]">
+            <h2 className="text-sm uppercase">{title}</h2>
+            <button ref={closeRef} onClick={onClose} aria-label={t("Close")} className="flex h-[46px] w-[38px] items-center justify-center">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.2" aria-hidden><path d="M1 1l10 10M11 1L1 11" /></svg>
+            </button>
+          </div>
+        ) : (
         <div className="flex items-center justify-between border-b border-white/15 px-5 py-4">
           <h2 className="display text-3xl">{title}</h2>
           <button ref={closeRef} onClick={onClose} className="px-2 py-1 font-bold underline underline-offset-4">{t("Close")}</button>
         </div>
+        )}
         <div className="flex min-h-0 flex-1 flex-col">{children}</div>
       </aside>
     </div>

@@ -2,6 +2,7 @@ import { FranchiseLogo } from "@/components/FranchiseLogo";
 import Image from "next/image";
 import Link from "@/components/LocaleLink";
 import { HeaderTone } from "@/components/HeaderTone";
+import { CatalogueMenu } from "@/components/CatalogueMenu";
 import { AccountLink } from "@/components/AccountLink";
 import { CartLink } from "@/components/CartLink";
 import { MobileMenu } from "@/components/MobileMenu";
@@ -35,7 +36,6 @@ export async function Header() {
   const [franchises, categories, products, store, theme, { t }] = await Promise.all([getFranchises(), getCategories(), getAllProducts(), getStore(), getTheme(), getT()]);
   if (theme.header === "slim") {
     // 46px light bar: small text links on the left, centred logo, text links and tool icons on the right (matches the reference catalogue header).
-    const left = franchises.slice(0, 3).map((f) => ({ label: f.name, href: `/franchises/${f.slug}` }));
     const right = [...categories.slice(0, 4).map((c) => ({ label: c.name, href: `/categories/${c.slug}` })), { label: t("nav.new"), href: "/new" }].slice(0, 5);
     const lnk = "flex h-[46px] items-center px-3 text-xs hover:underline hover:underline-offset-4";
     return (
@@ -45,9 +45,16 @@ export async function Header() {
         <div className="relative flex h-[46px] items-center justify-between">
           <div className="flex items-center pl-1">
             <MobileMenu franchises={franchises.map(({ slug, name }) => ({ slug, name }))} categories={categories.map(({ slug, name }) => ({ slug, name }))} />
-            <nav aria-label="Brands" className="hidden items-center lg:flex">{left.map((l) => <Link key={l.href} href={l.href as never} className={lnk}>{l.label}</Link>)}</nav>
+            <CatalogueMenu name={store.name}
+              features={[{ label: t("nav.new"), href: "/new" }, { label: t("nav.allMerch"), href: "/shop" }, { label: t("nav.giftCards"), href: "/gift-cards" }]}
+              sections={[
+                { title: t("nav.shop"), items: categories.map((c) => ({ label: c.name, href: `/categories/${c.slug}` })) },
+                { title: t("nav.franchises"), items: franchises.map((f) => ({ label: f.name, href: `/franchises/${f.slug}` })) },
+                { title: t("footer.help"), items: [{ label: t("footer.help"), href: "/help" }, { label: t("footer.payment"), href: "/payment-options" }, { label: t("footer.balance"), href: "/gift-cards/balance" }] },
+              ]}
+              promo={(theme.split[0] ?? theme.lookbook[0]) ? { image: (theme.split[0] ?? theme.lookbook[0]).image, title: (theme.split[0] as { title?: string } | undefined)?.title ?? store.name, href: "/new" } : undefined} />
           </div>
-          <Link href="/" className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center" aria-label={t("nav.home", { name: store.name })}>
+          <Link href="/" data-header-logo className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center" aria-label={t("nav.home", { name: store.name })}>
             {store.logoUrl ? <Image src={store.logoUrl} alt={store.legalName} width={store.logoWidth} height={store.logoHeight} priority unoptimized className={`w-auto brightness-0 ${store.logoWidth / store.logoHeight < 2.2 ? "h-9" : "h-4"}`} /> : <span className="text-lg font-extrabold uppercase tracking-tight">{store.name}</span>}
           </Link>
           <div className="flex items-center">

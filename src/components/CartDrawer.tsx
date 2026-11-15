@@ -10,16 +10,39 @@ import { SlideOver } from "@/components/SlideOver";
 import type { QuickProduct } from "@/lib/card";
 import { DeliveringTo, useMoney } from "@/components/Currency";
 import { PaymentBadges } from "@/components/PaymentBadges";
+import { useCatalogue } from "@/components/CardStyle";
 
 export function CartDrawer({ suggestions = [] }: { suggestions?: QuickProduct[] }) {
   const money = useMoney();
+  const cat = useCatalogue();
   const { t } = useT();
   const { isOpen, closeCart, items, subtotalPence, setQty, remove } = useCart();
   const addOrChoose = useAddToBasket();
   const more = suggestions.filter((s) => s.inStock && !items.some((i) => i.slug === s.slug)).slice(0, 3);
   return (
-    <SlideOver open={isOpen} onClose={closeCart} title={t("Your basket")} width="w-[min(40rem,100vw)]">
-      {items.length === 0 ? (
+    <SlideOver open={isOpen} onClose={closeCart} title={cat && items.length === 0 ? t("Your basket is empty.") : t("Your basket")} width="w-[min(40rem,100vw)]">
+      {items.length === 0 && cat ? (
+        <div className="flex-1 overflow-y-auto" data-cart-empty>
+          <div className="flex h-[330px] items-center justify-center">
+            <Link href="/new" onClick={closeCart} className="inline-flex h-[30px] items-center bg-ink px-6 text-[10px] font-bold uppercase text-paper">{t("Shop new arrivals")}</Link>
+          </div>
+          {suggestions.filter((s) => s.inStock).length > 0 && (
+            <section className="px-[11px]" aria-labelledby="pop-h">
+              <h3 id="pop-h" className="text-xs uppercase">{t("You may also like")}</h3>
+              <ul className="mt-[13px] flex gap-[7px] overflow-x-auto pb-4">
+                {suggestions.filter((s) => s.inStock).slice(0, 6).map((s) => (
+                  <li key={s.slug} className="w-[190px] shrink-0">
+                    <Link href={`/products/${s.slug}`} onClick={closeCart} className="relative block aspect-[3/4] bg-[#f7f7f7]">
+                      <Image src={s.image} alt={s.name} fill sizes="190px" unoptimized className="object-contain p-[4%]" />
+                    </Link>
+                    <p className="mt-[5px] text-[10px] uppercase">{money(s.pricePence)}</p>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+        </div>
+      ) : items.length === 0 ? (
           <div className="flex-1 p-6">
             <p className="serif text-xl text-muted">{t("Your basket is empty.")}</p>
             <Link href="/new" onClick={closeCart} className="btn mt-6">{t("Shop new arrivals")}</Link>
@@ -31,13 +54,13 @@ export function CartDrawer({ suggestions = [] }: { suggestions?: QuickProduct[] 
             <ul className="divide-y divide-ink/20 px-5">
               {items.map((i) => (
                 <li key={i.slug} className="flex gap-4 py-4">
-                  <Image src={i.image} alt={i.name} width={80} height={80} unoptimized className={`h-20 w-20 border border-white/20 object-cover ${i.href ? "bg-black !object-contain p-2" : ""}`} />
+                  <Image src={i.image} alt={i.name} width={80} height={80} unoptimized className={`h-20 w-20 border object-cover ${cat ? "border-ink/10" : "border-white/20"} ${i.href ? (cat ? "bg-[#f7f7f7] !object-contain p-1" : "bg-black !object-contain p-2") : ""}`} />
                   <div className="flex-1">
                     <Link href={i.href ?? `/products/${i.slug}`} onClick={closeCart} className="font-bold leading-snug hover:underline hover:underline-offset-4">{i.name}</Link>
               {i.note ? <p className="text-sm text-muted">{i.note}</p> : null}
                     <p className="text-sm text-muted">{money(i.pricePence)}</p>
                     <div className="mt-2 flex items-center gap-3">
-                      <div className="flex items-center border border-white/20">
+                      <div className={`flex items-center border ${cat ? "border-ink/15" : "border-white/20"}`}>
                         <button aria-label={t("Decrease quantity of {name}", { name: i.name })} onClick={() => setQty(i.slug, i.qty - 1)} className="px-2.5 py-0.5 font-bold">−</button>
                         <span className="min-w-6 text-center text-sm font-bold" aria-live="polite">{i.qty}</span>
                         <button aria-label={t("Increase quantity of {name}", { name: i.name })} onClick={() => setQty(i.slug, i.qty + 1)} className="px-2.5 py-0.5 font-bold">+</button>
@@ -50,12 +73,12 @@ export function CartDrawer({ suggestions = [] }: { suggestions?: QuickProduct[] 
               ))}
             </ul>
             {more.length > 0 && (
-              <section className="border-t border-white/15 px-5 py-5" aria-labelledby="more-h">
+              <section className={`border-t ${cat ? "border-ink/15" : "border-white/15"} px-5 py-5`} aria-labelledby="more-h">
                 <h3 id="more-h" className="display text-2xl">{t("You may also like")}</h3>
                 <ul className="mt-3 space-y-3">
                   {more.map((s) => (
                     <li key={s.slug} className="flex items-center gap-3">
-                      <Image src={s.image} alt="" width={56} height={56} unoptimized className="h-14 w-14 shrink-0 border border-white/20 object-cover" />
+                      <Image src={s.image} alt="" width={56} height={56} unoptimized className={`h-14 w-14 shrink-0 border ${cat ? "border-ink/15" : "border-white/20"} object-cover`} />
                       <div className="min-w-0 flex-1">
                         <Link href={`/products/${s.slug}`} onClick={closeCart} className="block truncate font-bold hover:underline hover:underline-offset-4">{s.name}</Link>
                         <p className="text-sm text-muted">{money(s.pricePence)}</p>
@@ -67,13 +90,13 @@ export function CartDrawer({ suggestions = [] }: { suggestions?: QuickProduct[] 
               </section>
             )}
             </div>
-            <div className="border-t border-white/15 p-5">
+            <div className={`border-t ${cat ? "border-ink/15" : "border-white/15"} p-5`}>
               <p className="flex justify-between text-lg"><span>{t("Subtotal")}</span><span className="font-bold">{money(subtotalPence)}</span></p>
               <p className="mt-1 text-sm text-muted">{t("Shipping and taxes are calculated at checkout.")}</p>
               <p className="mt-1 text-sm text-muted">{t("Delivering to")} <DeliveringTo /></p>
               <div className="mt-4 grid gap-3">
-                <Link href="/cart" onClick={closeCart} className="btn">{t("Checkout")}</Link>
-                <Link href="/cart" onClick={closeCart} className="btn btn-ink">{t("View basket")}</Link>
+                <Link href="/cart" onClick={closeCart} className={cat ? "flex h-[52px] items-center justify-center bg-ink text-xs font-medium uppercase text-paper" : "btn"}>{t("Checkout")}</Link>
+                <Link href="/cart" onClick={closeCart} className={cat ? "flex h-[52px] items-center justify-center border border-ink text-xs font-medium uppercase" : "btn btn-ink"}>{t("View basket")}</Link>
               </div>
               <PaymentBadges className="mt-5 flex justify-center" />
             </div>
