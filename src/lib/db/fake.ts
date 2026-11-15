@@ -28,6 +28,7 @@ function store(): Store {
       stores: [
         { id: "sparkthunder", name: "Sparkthunder Shop", domains: ["localhost", "127.0.0.1", "sparkthunder.shop"], is_default: true, created_at: now },
         { id: "misspetty", name: "Miss Petty", domains: ["petty.localhost", "misspetty.com"], is_default: false, created_at: now },
+        { id: "osaka76", name: "Osaka76", domains: ["osaka76.localhost"], is_default: false, created_at: now },
       ],
     };
     // SPARKTHUNDER_DEMO_ORDER=1 adds one paid order (for trying shipping and refunds without a payment account).
@@ -44,6 +45,41 @@ function store(): Store {
     const S = "misspetty";
     g.__sparkFake.franchises.push({ store_id: S, slug: "face", name: "Face", tagline: "Skin that looks like skin", description: "Complexion makeup for every undertone.", accent: "#e58ba5", sort_order: 1, updated_at: now });
     g.__sparkFake.categories.push({ store_id: S, slug: "lips", name: "Lips", description: "Balms, tints and lipsticks.", sort_order: 1, updated_at: now }, { store_id: S, slug: "cheeks", name: "Cheeks", description: "Blush and bronzer.", sort_order: 2, updated_at: now });
+    // A third store: Osaka76, a premium streetwear brand (sizes, drops, banner slides and a members club), to prove the platform handles a fashion store.
+    {
+      const O = "osaka76";
+      const F = g.__sparkFake; const setting = (key: string, value: Row) => F.settings.push({ store_id: O, key, value });
+      setting("store", { name: "Osaka76", legalName: "Osaka76", tagline: "Premium streetwear", heroHeading: "Osaka76 premium streetwear", description: "Heavyweight, boxy, made to last. Premium streetwear drawn from Osaka nights.", logoUrl: "", logoLabel: "", accent: "#e4002b", dark: "#0a0a0a", light: "#ffffff", text: "#0a0a0a", font: "modern", radius: 0, uppercaseButtons: true,
+        announcements: [{ text: "Free delivery on orders over £150", href: "/shop" }, { text: "New drop: Winter 76 is live", href: "/new" }, { text: "Join the Members Club for early access", href: "/account" }] });
+      setting("theme", { header: "compact", card: "minimal", productPage: "split", footer: "full",
+        home: [{ id: "slides", on: true }, { id: "new", on: true }, { id: "categories", on: true }, { id: "loyalty", on: true }, { id: "featured", on: true }, { id: "story", on: true }, { id: "hero", on: false }, { id: "characters", on: false }, { id: "gift-cards", on: false }],
+        storyTitle: "Born in Osaka", storyText: "Osaka76 started with one heavyweight hoodie and a simple rule: if it is not worth wearing for ten years, we do not make it. Every piece is cut boxy, washed by hand and numbered by drop.",
+        slides: [
+          { image: "/osaka76/banner-1.svg", headline: "Winter 76 is here", text: "Heavyweight hoodies, boxy tees and the new Kansai puffer.", label1: "Shop new arrivals", href1: "/new", label2: "Shop outerwear", href2: "/categories/outerwear" },
+          { image: "/osaka76/banner-2.svg", headline: "The Members Club", text: "Early access to every drop, points on every order.", label1: "Join the club", href1: "/account", label2: "", href2: "" },
+        ],
+        loyalty: { title: "The Osaka76 Members Club", text: "Free to join. Made for people who never miss a drop.", bullets: ["Early access to every drop", "Points on every order", "Members-only restocks"], joinLabel: "Join", joinHref: "/account", image: "" } });
+      g.__sparkFake.franchises.push({ store_id: O, slug: "core", name: "Core", tagline: "The everyday range", description: "Year-round essentials.", accent: "#e4002b", sort_order: 1, updated_at: now }, { store_id: O, slug: "archive", name: "Archive", tagline: "Limited runs", description: "Numbered, limited and gone when sold out.", accent: "#0a0a0a", sort_order: 2, updated_at: now });
+      g.__sparkFake.categories.push(...(["hoodies", "tees", "trousers", "outerwear", "accessories"] as const).map((c, i) => ({ store_id: O, slug: c, name: c[0].toUpperCase() + c.slice(1), description: `Osaka76 ${c}.`, sort_order: i + 1, updated_at: now })));
+      const sizes = ["XS", "S", "M", "L", "XL"];
+      const clothes: [string, string, string, number, boolean, boolean][] = [
+        ["shibuya-heavyweight-hoodie", "Shibuya Heavyweight Hoodie", "hoodies", 9500, true, true], ["namba-zip-hoodie", "Namba Zip Hoodie", "hoodies", 10500, true, false], ["kita-washed-hoodie", "Kita Washed Hoodie", "hoodies", 9900, false, true],
+        ["dotonbori-boxy-tee", "Dotonbori Boxy Tee", "tees", 4500, true, true], ["76-logo-tee", "76 Logo Tee", "tees", 4000, false, true], ["umeda-pocket-tee", "Umeda Pocket Tee", "tees", 4200, false, false],
+        ["tsuruhashi-cargo-pant", "Tsuruhashi Cargo Pant", "trousers", 11000, true, false], ["sakai-track-pant", "Sakai Track Pant", "trousers", 8500, false, false],
+        ["midosuji-coach-jacket", "Midosuji Coach Jacket", "outerwear", 14000, false, true], ["kansai-puffer", "Kansai Puffer", "outerwear", 19500, true, true],
+      ];
+      const acc: [string, string, number][] = [["osaka76-beanie", "Osaka76 Beanie", 2800], ["castle-cap", "Castle Cap", 3200], ["everyday-tote", "Everyday Tote", 3000]];
+      const base = { store_id: O, compare_price_pence: null, details: [], images: [], in_stock: true, published: true, created_at: now, updated_at: now, track_stock: true, low_stock_threshold: 5, bundle_items: [], tags: [], image_alts: [] };
+      for (const [slug, name, cat, price, isNew, feat] of clothes) {
+        g.__sparkFake.products.push({ ...base, slug, sku: `O76-${slug.replace(/-/g, "").slice(0, 10)}`.toUpperCase(), name, franchise_slug: slug.includes("puffer") || slug.includes("coach") ? "archive" : "core", category_slug: cat, price_pence: price, short_description: `${name}. Boxy fit, heavyweight cotton.`, description: `${name} from Osaka76: heavyweight, boxy and garment-washed for a lived-in feel. Sizes XS to XL.`, is_new: isNew, is_featured: feat, stock_qty: 40,
+          option_names: ["Size"], option_swatches: {}, variants: sizes.map((z, k) => ({ name: z, sku: `O76-${slug.replace(/-/g, "").slice(0, 10)}-${z}`.toUpperCase(), stockQty: k === 0 ? 0 : 8 })) });
+      }
+      for (const [slug, name, price] of acc) g.__sparkFake.products.push({ ...base, slug, sku: `O76-${slug.replace(/-/g, "").slice(0, 10)}`.toUpperCase(), name, franchise_slug: "core", category_slug: "accessories", price_pence: price, short_description: `${name}, one size.`, description: `${name} from Osaka76. One size.`, is_new: false, is_featured: false, stock_qty: 60 });
+      g.__sparkFake.collections.push(
+        { store_id: O, slug: "new-arrivals", name: "New arrivals", description: "The latest drop.", image: "", launch_at: null, product_slugs: clothes.filter((c) => c[4]).map((c) => c[0]), sort_order: 1, published: true },
+        { store_id: O, slug: "bestsellers", name: "Bestsellers", description: "What everyone is wearing.", image: "", launch_at: null, product_slugs: clothes.filter((c) => c[5]).map((c) => c[0]), sort_order: 2, published: true },
+      );
+    }
     // Load testing: SPARKTHUNDER_DEMO_STORES=100 adds that many small stores (s1.localhost ... sN.localhost), each with its own products.
     const extra = Math.min(500, Number(process.env.SPARKTHUNDER_DEMO_STORES) || 0);
     for (let i = 1; i <= extra; i++) {

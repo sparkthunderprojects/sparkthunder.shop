@@ -4,6 +4,7 @@ import Link from "@/components/LocaleLink";
 import { CharacterCarousel } from "@/components/CharacterCarousel";
 import type { CharacterEntry } from "@/lib/character-config";
 import { homeList } from "@/lib/character-config";
+import { HeroSlider } from "@/components/HeroSlider";
 import { ProductCard } from "@/components/ProductCard";
 import { productImagePath, isPlaceholderArt } from "@/lib/card";
 import type { StoreSettings } from "@/lib/store-config";
@@ -47,6 +48,45 @@ export async function StoreHome({ store, products, categories, theme = DEFAULT_T
         </div>
       </section>
     ),
+    slides: () => theme.slides.length === 0 ? null : (
+      <div key="slides" data-home-section="slides" className="theme-dark [&>section]:mx-0">
+        <HeroSlider slides={theme.slides.map((b, i) => ({
+          id: `b${i}`, label: b.headline || store.name, background: "var(--store-dark)",
+          children: (
+            <div className="theme-dark relative -mx-(--gutter) flex min-h-[min(78vh,44rem)] items-end overflow-hidden px-(--gutter) pb-20 pt-24">
+              {b.image && <Image src={b.image} alt="" fill priority={i === 0} sizes="100vw" unoptimized={b.image.startsWith("https://") || b.image.endsWith(".svg")} className="object-cover" />}
+              <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
+              <div className="relative max-w-3xl text-white">
+                {i === 0 ? <h1 className="display text-[clamp(2.4rem,6vw,5.5rem)] uppercase leading-[0.95]">{b.headline}</h1> : <h2 className="display text-[clamp(2.4rem,6vw,5.5rem)] uppercase leading-[0.95]">{b.headline}</h2>}
+                {b.text && <p className="mt-4 max-w-xl text-lg text-white/85">{b.text}</p>}
+                <div className="mt-7 flex flex-wrap gap-3">
+                  {b.label1 && b.href1 && <Link href={b.href1 as never} className="btn">{b.label1}</Link>}
+                  {b.label2 && b.href2 && <Link href={b.href2 as never} className="btn btn-ink">{b.label2}</Link>}
+                </div>
+              </div>
+            </div>
+          ),
+        }))} />
+      </div>
+    ),
+    loyalty: () => !theme.loyalty.title ? null : wrap("loyalty", (
+      <section aria-labelledby="loy-h" className="theme-dark relative mt-16 overflow-hidden bg-(--store-dark)">
+        {theme.loyalty.image && <Image src={theme.loyalty.image} alt="" fill sizes="100vw" unoptimized={theme.loyalty.image.startsWith("https://") || theme.loyalty.image.endsWith(".svg")} className="object-cover opacity-40" />}
+        <div className="relative grid gap-8 p-8 sm:p-12 md:grid-cols-[1.2fr_1fr] md:items-center">
+          <div>
+            <h2 id="loy-h" className="display text-3xl uppercase sm:text-5xl">{theme.loyalty.title}</h2>
+            {theme.loyalty.text && <p className="mt-3 max-w-xl text-ink/80">{theme.loyalty.text}</p>}
+          </div>
+          <div>
+            {theme.loyalty.bullets.length > 0 && <ul className="space-y-2 text-ink/90">{theme.loyalty.bullets.map((b) => <li key={b} className="flex gap-3"><span aria-hidden className="mt-2 h-2 w-2 shrink-0 bg-bolt" />{b}</li>)}</ul>}
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link href={theme.loyalty.joinHref as never} className="btn">{theme.loyalty.joinLabel}</Link>
+              <Link href="/account" className="btn btn-ink">{t("Sign in")}</Link>
+            </div>
+          </div>
+        </div>
+      </section>
+    )),
     characters: () => {
       const list = homeList(characters);
       return list.length ? <div key="characters" className="px-(--gutter)" data-home-section="characters"><CharacterCarousel id="home-characters" title={t("Shop by character")} viewAllHref="/characters" items={list.map((c) => ({ slug: c.slug, name: c.name, image: c.image, franchise: franchiseNames[c.franchiseSlug] }))} /></div> : null;

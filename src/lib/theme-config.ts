@@ -8,7 +8,7 @@ export const HEADERS = ["classic", "compact"] as const;
 export const CARDS = ["bordered", "soft", "minimal"] as const;
 export const PRODUCT_PAGES = ["split", "stacked"] as const;
 export const FOOTERS = ["full", "compact"] as const;
-export const HOME_SECTION_IDS = ["hero", "categories", "characters", "featured", "new", "story", "gift-cards"] as const;
+export const HOME_SECTION_IDS = ["hero", "slides", "categories", "characters", "featured", "new", "story", "loyalty", "gift-cards"] as const;
 export type HeaderStyle = (typeof HEADERS)[number];
 export type CardStyle = (typeof CARDS)[number];
 export type ProductPageStyle = (typeof PRODUCT_PAGES)[number];
@@ -20,7 +20,12 @@ export type ThemeLayout = {
   /** Home page sections, in order. Used by every store except the original Sparkthunder shop, whose home page is hand-designed. */
   home: { id: HomeSectionId; on: boolean }[];
   storyTitle: string; storyText: string;
+  /** Full-width image banners for the "Banner slides" home section. */
+  slides: HeroBanner[];
+  /** The "Members club" banner: heading, up to three benefit lines and where Join goes. */
+  loyalty: { title: string; text: string; bullets: string[]; joinLabel: string; joinHref: string; image: string };
 };
+export type HeroBanner = { image: string; headline: string; text: string; label1: string; href1: string; label2: string; href2: string };
 
 export const LABELS = {
   header: { classic: "Classic: centred logo with a menu of franchises underneath", compact: "Compact: logo on the left, links in one row" },
@@ -29,14 +34,19 @@ export const LABELS = {
   footer: { full: "Full: logo, description and link columns", compact: "Compact: one tidy row" },
 } as const;
 export const SECTION_LABEL: Record<HomeSectionId, string> = {
-  hero: "Hero: heading, text and featured products", categories: "Shop by category", characters: "Shop by character", featured: "Featured products", new: "New arrivals", story: "Brand story", "gift-cards": "Gift cards banner",
+  hero: "Hero: heading, text and featured products", slides: "Banner slides: full-width image banners", loyalty: "Members club banner", categories: "Shop by category", characters: "Shop by character", featured: "Featured products", new: "New arrivals", story: "Brand story", "gift-cards": "Gift cards banner",
 };
 
 export const DEFAULT_THEME: ThemeLayout = {
   header: "classic", card: "bordered", productPage: "split", footer: "full",
-  home: [{ id: "hero", on: true }, { id: "categories", on: true }, { id: "characters", on: false }, { id: "new", on: true }, { id: "featured", on: false }, { id: "story", on: false }, { id: "gift-cards", on: false }],
+  home: [{ id: "hero", on: true }, { id: "slides", on: false }, { id: "categories", on: true }, { id: "characters", on: false }, { id: "new", on: true }, { id: "featured", on: false }, { id: "story", on: false }, { id: "loyalty", on: false }, { id: "gift-cards", on: false }],
   storyTitle: "Our story", storyText: "",
+  slides: [], loyalty: { title: "", text: "", bullets: [], joinLabel: "Join", joinHref: "/account", image: "" },
 };
+
+const txt = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "");
+const link = (v: unknown) => { const x = txt(v, 300); return /^(\/|#|https:\/\/)/.test(x) ? x : ""; };
+const img = (v: unknown) => { const x = txt(v, 500); return /^(\/|https:\/\/)/.test(x) ? x : ""; };
 
 const pick = <T extends string>(list: readonly T[], v: unknown, fallback: T): T => (typeof v === "string" && (list as readonly string[]).includes(v) ? (v as T) : fallback);
 
@@ -52,6 +62,8 @@ export function normaliseTheme(raw: Partial<ThemeLayout> | null | undefined): Th
   for (const s of d.home) if (!seen.has(s.id)) home.push({ ...s, on: Array.isArray(r.home) ? false : s.on });
   return {
     header: pick(HEADERS, r.header, d.header), card: pick(CARDS, r.card, d.card), productPage: pick(PRODUCT_PAGES, r.productPage, d.productPage), footer: pick(FOOTERS, r.footer, d.footer),
+    slides: (Array.isArray(r.slides) ? r.slides : []).map((b) => ({ image: img(b?.image), headline: txt(b?.headline, 90), text: txt(b?.text, 200), label1: txt(b?.label1, 30), href1: link(b?.href1), label2: txt(b?.label2, 30), href2: link(b?.href2) })).filter((b) => b.headline || b.image).slice(0, 5),
+    loyalty: { title: txt(r.loyalty?.title, 80), text: txt(r.loyalty?.text, 200), bullets: (Array.isArray(r.loyalty?.bullets) ? r.loyalty.bullets : []).map((x) => txt(x, 90)).filter(Boolean).slice(0, 3), joinLabel: txt(r.loyalty?.joinLabel, 30) || d.loyalty.joinLabel, joinHref: link(r.loyalty?.joinHref) || d.loyalty.joinHref, image: img(r.loyalty?.image) },
     home, storyTitle: typeof r.storyTitle === "string" ? r.storyTitle.trim().slice(0, 80) : d.storyTitle, storyText: typeof r.storyText === "string" ? r.storyText.trim().slice(0, 1500) : d.storyText,
   };
 }
@@ -65,6 +77,8 @@ export const PRESETS: Preset[] = [
     look: { accent: "#7cff4d", dark: "#07080c", light: "#101218", text: "#f2f3f5", font: "modern", radius: 0, uppercaseButtons: true }, layout: { header: "compact", card: "minimal", productPage: "split", footer: "compact" } },
   { id: "clean-light", name: "Clean and light", blurb: "White space, a soft accent and rounded corners. Soft pink accent on a plum header. Good for beauty, lifestyle and gift brands.",
     look: { accent: "#e0457b", dark: "#2b1a24", light: "#fbf8f6", text: "#222222", font: "soft", radius: 24, uppercaseButtons: false }, layout: { header: "compact", card: "soft", productPage: "stacked", footer: "full" } },
+  { id: "streetwear", name: "Streetwear", blurb: "Monochrome, sharp corners, big uppercase type and full-width banners. Good for streetwear and fashion drops.",
+    look: { accent: "#e4002b", dark: "#0a0a0a", light: "#ffffff", text: "#0a0a0a", font: "modern", radius: 0, uppercaseButtons: true }, layout: { header: "compact", card: "minimal", productPage: "split", footer: "full", home: [{ id: "slides", on: true }, { id: "new", on: true }, { id: "categories", on: true }, { id: "loyalty", on: true }, { id: "featured", on: true }, { id: "story", on: true }, { id: "hero", on: false }, { id: "characters", on: false }, { id: "gift-cards", on: false }] } },
   { id: "editorial", name: "Editorial", blurb: "Serif headlines, calm colours and a magazine feel. Good for books, art and collectables.",
     look: { accent: "#b08d57", dark: "#14110f", light: "#f6f1ea", text: "#1d1a17", font: "editorial", radius: 0, uppercaseButtons: false }, layout: { header: "classic", card: "minimal", productPage: "stacked", footer: "compact" } },
 ];
