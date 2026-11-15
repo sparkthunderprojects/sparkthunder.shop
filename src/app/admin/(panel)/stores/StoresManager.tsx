@@ -2,7 +2,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ROLES, ROLE_LABEL, type Role } from "@/lib/admin/roles";
-import { cloneStoreAction, saveStoreRecordAction, setStaffAction, switchStoreAction } from "../../stores-actions";
+import { STARTERS } from "@/lib/starters";
+import { cloneStoreAction, createStarterStoreAction, saveStoreRecordAction, setStaffAction, switchStoreAction } from "../../stores-actions";
 import type { StoreRow } from "@/lib/db/stores";
 
 function Row({ s, current, create }: { s?: StoreRow; current?: boolean; create?: boolean }) {
@@ -79,6 +80,35 @@ function Clone({ stores }: { stores: StoreRow[] }) {
   );
 }
 
+function Starters() {
+  const router = useRouter();
+  const [pick, setPick] = useState(STARTERS[0]?.id ?? "");
+  const st = STARTERS.find((x) => x.id === pick) ?? STARTERS[0];
+  const [id, setId] = useState(st?.id ?? ""), [name, setName] = useState(st?.name ?? ""), [domains, setDomains] = useState("");
+  const [msg, setMsg] = useState(""), [busy, setBusy] = useState(false);
+  if (!st) return null;
+  const go = async () => {
+    setBusy(true); setMsg("");
+    const r = await createStarterStoreAction({ starter: st.id, id, name, domains });
+    setBusy(false);
+    if (!r.ok) { setMsg(r.error); return; }
+    await switchStoreAction(id.trim().toLowerCase());
+    setMsg("Created. You are now editing it: add products and photos, and publish the collections."); router.refresh();
+  };
+  return (
+    <div className="adm-card" style={{ display: "grid", gap: 8, marginBottom: 12 }} data-starter-form>
+      <label>Template<select value={pick} onChange={(e) => { const n = STARTERS.find((x) => x.id === e.target.value); setPick(e.target.value); if (n) { setId(n.id); setName(n.name); } }}>{STARTERS.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select></label>
+      <small>{st.blurb} It adds the look and layout, product lines, categories and three unpublished collections. No products, orders or customers.</small>
+      <div style={{ display: "grid", gap: 8, gridTemplateColumns: "1fr 1fr" }}>
+        <label>New store ID<input value={id} onChange={(e) => setId(e.target.value)} /></label>
+        <label>Name<input value={name} onChange={(e) => setName(e.target.value)} /></label>
+      </div>
+      <label>Domains (optional now, add later; each domain belongs to one store)<input value={domains} onChange={(e) => setDomains(e.target.value)} placeholder="osaka76.com, www.osaka76.com" /></label>
+      <div><button type="button" className="adm-btn adm-pri" disabled={busy} onClick={go}>Create store from template</button> <span role="status">{msg}</span></div>
+    </div>
+  );
+}
+
 export function StoresManager({ stores, current }: { stores: StoreRow[]; current: string }) {
   return (
     <>
@@ -86,6 +116,8 @@ export function StoresManager({ stores, current }: { stores: StoreRow[]; current
       {stores.map((s) => <Row key={s.id} s={s} current={s.id === current} />)}
       <h2>Add a store</h2>
       <Row create />
+      <h2>Start from a ready-made template</h2>
+      <Starters />
       <h2>Or start from a copy of an existing store</h2>
       <Clone stores={stores} />
     </>

@@ -1,4 +1,5 @@
 // A tiny in-memory stand-in for the parts of the Supabase client the app uses (demo mode only).
+import { OSAKA76, starterSettings } from "@/lib/starters";
 import { seedCatalog } from "@/data/seed";
 import { categoryToRow, franchiseToRow, productToRow } from "@/lib/db/mappers";
 import { mkdir, writeFile } from "node:fs/promises";
@@ -49,22 +50,10 @@ function store(): Store {
     {
       const O = "osaka76";
       const F = g.__sparkFake; const setting = (key: string, value: Row) => F.settings.push({ store_id: O, key, value });
-      setting("store", { name: "Osaka76", legalName: "Osaka76", tagline: "Premium streetwear", heroHeading: "Osaka76 premium streetwear", description: "Heavyweight, boxy, made to last. Premium streetwear drawn from Osaka nights.", logoUrl: "/osaka76/logo-white.png", logoWidth: 604, logoHeight: 600, logoLabel: "", accent: "#e4002b", dark: "#0a0a0a", light: "#ffffff", text: "#0a0a0a", font: "modern", radius: 0, uppercaseButtons: true,
-        announcements: [] });
-      setting("theme", { header: "slim", card: "catalogue", productPage: "split", footer: "full",
-        lookbook: [
-          { image: "/osaka76/look-1.svg", title: "Core", caption: "Everyday essentials", href: "/franchises/core" }, { image: "/osaka76/look-2.svg", title: "Archive", caption: "Numbered, limited drops", href: "/franchises/archive" },
-          { image: "/osaka76/look-3.svg", title: "Winter 76", caption: "Heavyweight layers", href: "/categories/outerwear" }, { image: "/osaka76/look-4.svg", title: "Bestsellers", caption: "What everyone is wearing", href: "/collections/bestsellers" },
-          { image: "/osaka76/look-5.svg", title: "New arrivals", caption: "The latest drop", href: "/new" }],
-        home: [{ id: "slides", on: true }, { id: "new", on: true }, { id: "categories", on: true }, { id: "loyalty", on: true }, { id: "featured", on: true }, { id: "story", on: true }, { id: "hero", on: false }, { id: "characters", on: false }, { id: "gift-cards", on: false }],
-        storyTitle: "Born in Osaka", storyText: "Osaka76 started with one heavyweight hoodie and a simple rule: if it is not worth wearing for ten years, we do not make it. Every piece is cut boxy, washed by hand and numbered by drop.",
-        slides: [
-          { image: "/osaka76/banner-1.svg", headline: "Winter 76 is here", text: "Heavyweight hoodies, boxy tees and the new Kansai puffer.", label1: "Shop new arrivals", href1: "/new", label2: "Shop outerwear", href2: "/categories/outerwear" },
-          { image: "/osaka76/banner-2.svg", headline: "The Members Club", text: "Early access to every drop, points on every order.", label1: "Join the club", href1: "/account", label2: "", href2: "" },
-        ],
-        loyalty: { title: "The Osaka76 Members Club", text: "Free to join. Made for people who never miss a drop.", bullets: ["Early access to every drop", "Points on every order", "Members-only restocks"], joinLabel: "Join", joinHref: "/account", image: "" } });
-      g.__sparkFake.franchises.push({ store_id: O, slug: "core", name: "Core", tagline: "The everyday range", description: "Year-round essentials.", accent: "#e4002b", sort_order: 1, updated_at: now }, { store_id: O, slug: "archive", name: "Archive", tagline: "Limited runs", description: "Numbered, limited and gone when sold out.", accent: "#0a0a0a", sort_order: 2, updated_at: now });
-      g.__sparkFake.categories.push(...(["hoodies", "tees", "trousers", "outerwear", "hats", "accessories"] as const).map((c, i) => ({ store_id: O, slug: c, name: c[0].toUpperCase() + c.slice(1), description: `Osaka76 ${c}.`, sort_order: i + 1, updated_at: now })));
+      const sset = starterSettings(OSAKA76, "Osaka76");
+      setting("store", sset.store); setting("theme", sset.theme);
+      g.__sparkFake.franchises.push(...OSAKA76.franchises.map((f, i) => ({ store_id: O, ...f, sort_order: i + 1, updated_at: now })));
+      g.__sparkFake.categories.push(...OSAKA76.categories.map((c, i) => ({ store_id: O, ...c, sort_order: i + 1, updated_at: now })));
       const sizes = ["XS", "S", "M", "L", "XL"];
       const clothes: [string, string, string, number, boolean, boolean][] = [
         ["shibuya-heavyweight-hoodie", "Shibuya Heavyweight Hoodie", "hoodies", 9500, true, true], ["namba-zip-hoodie", "Namba Zip Hoodie", "hoodies", 10500, true, false], ["kita-washed-hoodie", "Kita Washed Hoodie", "hoodies", 9900, false, true],

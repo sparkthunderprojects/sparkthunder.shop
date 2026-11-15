@@ -9,6 +9,7 @@ import { requireAdminAction, requireOwnerAction } from "@/lib/admin/auth";
 import { ADMIN_STORE_COOKIE, listStores } from "@/lib/db/stores";
 import { serviceClient } from "@/lib/db/clients";
 import { isRole } from "@/lib/admin/roles";
+import { starterById, starterSettings } from "@/lib/starters";
 
 /** Pick which store the admin is editing. Stored in a cookie that only the admin area reads. */
 export async function switchStoreAction(id: string): Promise<void> {
@@ -82,6 +83,43 @@ export async function cloneStoreAction(input: { fromId: string; id: string; name
       }
     }
     await audit("store.clone", `Cloned store ${input.fromId} into ${input.id}`, { type: "store", id: input.id });
+    return { ok: true };
+  } catch (e) { return { ok: false, error: e instanceof Error ? e.message : "Something went wrong." }; }
+}
+
+/**
+ * Create a new store from a ready-made template: its brand and layout, product lines, categories and empty, unpublished collections.
+ * Never products, orders, customers or keys. The owner then adds products and photos.
+ */
+export async function createStarterStoreAction(input: { starter: string; id: string; name: string; domains: string }): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    await requireOwnerAction();
+    const st = starterById(input.starter);
+    if (!st) return { ok: false, error: "Unknown template." };
+    const id = (input.id.trim() || st.id).toLowerCase(), name = input.name.trim() || st.name;
+    if ((await listStores()).some((x) => x.id === id)) return { ok: false, error: `A store with the ID ${id} already exists. Pick another ID.` };
+    const made = await saveStoreRecordAction({ id, name, domains: input.domains, create: true });
+    if (!made.ok) return made;
+    const dest = serviceClient(id);
+    if (!dest) return { ok: false, error: dbSetupProblem() };
+    const { store, theme } = starterSettings(st, name);
+    for (const [key, value] of [["store", store], ["theme", theme]] as const) {
+      const { error } = await dest.from("settings").upsert({ key, value }, { onConflict: "key" });
+      if (error) return { ok: false, error: `The store was created but its ${key} settings did not save: ${error.message}` };
+    }
+    const rows: [string, Record<string, unknown>[]][] = [
+      ["franchises", st.franchises.map((f, i) => ({ ...f, sort_order: i + 1 }))],
+      ["categories", st.categories.map((c, i) => ({ ...c, sort_order: i + 1 }))],
+      ["collections", st.collections.map((c, i) => ({ ...c, image: "", launch_at: null, product_slugs: [], sort_order: i + 1, published: false }))],
+    ];
+    for (const [table, list] of rows) {
+      if (!list.length) continue;
+      const { error } = await dest.from(table).insert(list);
+      if (error) return { ok: false, error: `The store was created but its ${table} did not save: ${error.message}` };
+    }
+    updateTag("stores");
+    revalidatePath("/admin", "layout");
+    await audit("store.starter", `Created store ${id} from the ${st.name} template`, { type: "store", id });
     return { ok: true };
   } catch (e) { return { ok: false, error: e instanceof Error ? e.message : "Something went wrong." }; }
 }
