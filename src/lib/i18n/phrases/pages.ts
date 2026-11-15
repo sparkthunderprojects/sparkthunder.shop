@@ -248,4 +248,7 @@ export const pages6: Phrase[] = [
   ["Browse franchises", "Parcourir les franchises", "Franchises ansehen", "Explorar franquicias"],
   ["That page has moved or never existed. Pick a franchise to keep browsing.", "Cette page a été déplacée ou n’a jamais existé. Choisissez une franchise pour continuer à parcourir.", "Diese Seite wurde verschoben oder hat nie existiert. Wählen Sie eine Franchise, um weiterzustöbern.", "Esa página se ha movido o nunca existió. Elige una franquicia para seguir explorando."],
   ["You can compare up to {n} products. Remove one first.", "Vous pouvez comparer jusqu’à {n} produits. Retirez-en un d’abord.", "Sie können bis zu {n} Produkte vergleichen. Entfernen Sie zuerst eines.", "Puedes comparar hasta {n} productos. Quita uno primero."],
+  ["View All", "Tout voir", "Alle ansehen", "Ver todo"],
+  ["Filter by category", "Filtrer par catégorie", "Nach Kategorie filtern", "Filtrar por categoría"],
+  ["Filter & Sort", "Filtrer et trier", "Filtern & Sortieren", "Filtrar y ordenar"],
 ];

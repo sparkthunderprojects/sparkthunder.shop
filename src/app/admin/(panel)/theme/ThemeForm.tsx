@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { applyPresetAction, saveThemeAction } from "../../theme-actions";
 import { Field, useAction } from "../../ui";
-import { CARDS, FOOTERS, HEADERS, LABELS, PRESETS, PRODUCT_PAGES, SECTION_LABEL, type HeroBanner, type ThemeLayout } from "@/lib/theme-config";
+import { CARDS, FOOTERS, HEADERS, LABELS, PRESETS, PRODUCT_PAGES, SECTION_LABEL, type HeroBanner, type LookbookTile, type ThemeLayout } from "@/lib/theme-config";
 
 function Pick<T extends string>({ label, value, list, labels, onChange }: { label: string; value: T; list: readonly T[]; labels: Record<T, string>; onChange: (v: T) => void }) {
   return <Field label={label}><select className="adm-in" value={value} onChange={(e) => onChange(e.target.value as T)}>{list.map((k) => <option key={k} value={k}>{labels[k]}</option>)}</select></Field>;
@@ -89,6 +89,25 @@ export function ThemeForm({ initial, original }: { initial: ThemeLayout; origina
           );
         })}
         {t.slides.length < 5 && <button className="adm-btn" style={{ marginTop: 10 }} onClick={() => setT((x) => ({ ...x, slides: [...x.slides, { image: "", headline: "", text: "", label1: "Shop now", href1: "/shop", label2: "", href2: "" }] }))}>Add a slide</button>}
+      </section>
+
+      <section className="adm-card"><h2>Collection page tiles</h2>
+        <p className="adm-hint">Image tiles shown above the products on collection and category pages when product cards are set to &quot;Catalogue&quot; (up to 6, 300 x 350 on desktop). Use a tall image from your media library.</p>
+        {t.lookbook.map((b, i) => {
+          const upd = (k: keyof LookbookTile, v: string) => setT((x) => ({ ...x, lookbook: x.lookbook.map((y, j) => (j === i ? { ...y, [k]: v } : y)) }));
+          return (
+            <div key={i} style={{ border: "1px solid #d5d9de", borderRadius: 8, padding: 12, marginTop: 10 }}>
+              <div className="adm-grid adm-g2">
+                <Field label={`Tile ${i + 1}: title`}><input className="adm-in" value={b.title} maxLength={40} onChange={(e) => upd("title", e.target.value)} /></Field>
+                <Field label="Short line"><input className="adm-in" value={b.caption} maxLength={60} onChange={(e) => upd("caption", e.target.value)} /></Field>
+                <Field label="Image address"><input className="adm-in" value={b.image} maxLength={500} onChange={(e) => upd("image", e.target.value)} /></Field>
+                <Field label="Goes to"><input className="adm-in" value={b.href} placeholder="/collections/new-arrivals" onChange={(e) => upd("href", e.target.value)} /></Field>
+              </div>
+              <button className="adm-btn" style={{ marginTop: 8 }} onClick={() => setT((x) => ({ ...x, lookbook: x.lookbook.filter((_, j) => j !== i) }))}>Remove tile {i + 1}</button>
+            </div>
+          );
+        })}
+        {t.lookbook.length < 6 && <button className="adm-btn" style={{ marginTop: 10 }} onClick={() => setT((x) => ({ ...x, lookbook: [...x.lookbook, { image: "", title: "", caption: "", href: "/shop" }] }))}>Add a tile</button>}
       </section>
 
       <section className="adm-card"><h2>Members club banner</h2>

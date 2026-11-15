@@ -227,3 +227,8 @@ html[data-card="soft"] .pcard-flush > a > div { border-radius: 0; }
 @keyframes gc-drift { from { transform: translateX(-2%); } to { transform: translateX(2%) translateY(-4px); } }
 @keyframes gc-shine { 0%, 55% { left: -50%; } 100% { left: 130%; } }
 @media (prefers-reduced-motion: reduce) { .gc-float, .gc-float-b, .gc-toast, .gc-twinkle, .gc-drift, .gc-shine { animation: none; } .gc-toast { opacity: 1; } }
+
+/* Catalogue style: 24px page gutter, 12px copy, as on the reference catalogue pages. */
+html[data-card="catalogue"] { --gutter: 24px; }
+html[data-card="catalogue"] body { letter-spacing: 0.133333px; font-size: 12px; line-height: 17px; }
+@media (max-width: 767px) { html[data-card="catalogue"] { --gutter: 12px; } }

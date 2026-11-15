@@ -6,6 +6,8 @@ import type { Metadata } from "next";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { JsonLd } from "@/components/JsonLd";
 import { Listing } from "@/components/Listing";
+import { CatalogueHead } from "@/components/CatalogueHead";
+import { getTheme } from "@/lib/theme.server";
 import { getCategory, getFranchises, getProducts } from "@/lib/catalog";
 import { breadcrumbLd, itemListLd } from "@/lib/seo";
 import { buildMetadata } from "@/lib/seo-metadata";
@@ -29,7 +31,7 @@ export default async function CategoryPage(props: PageProps<"/categories/[slug]"
   const { t } = await getT();
   const category = await getCategory(slug);
   if (!category) notFound();
-  const [franchises, products] = await Promise.all([getFranchises(), getProducts({ category: slug, franchise: franchiseFilter })]);
+  const [franchises, products, theme] = await Promise.all([getFranchises(), getProducts({ category: slug, franchise: franchiseFilter }), getTheme()]);
   const nameBySlug = Object.fromEntries(franchises.map((f) => [f.slug, f.name]));
   const path = `/categories/${slug}`;
 
@@ -39,6 +41,12 @@ export default async function CategoryPage(props: PageProps<"/categories/[slug]"
         breadcrumbLd([{ name: "Home", path: "/" }, { name: category.name, path }]),
         itemListLd(category.name, path, products),
       ]} />
+      {theme.card === "catalogue" ? (
+        <>
+          <CatalogueHead title={category.name} count={products.length} description={category.description} links={[{ label: t("View All"), href: path, active: !franchiseFilter }, ...franchises.map((f) => ({ label: f.name, href: `${path}?franchise=${f.slug}`, active: franchiseFilter === f.slug }))]} />
+          {products.length === 0 ? <p className="mt-10 text-xs text-[#737373]">{t("Nothing here yet. New merchandise is added regularly.")}</p> : <Listing products={products} franchiseNames={nameBySlug} flush />}
+        </>
+      ) : (<>
       <div className="pt-8"><Breadcrumbs items={[{ name: "Home", href: "/" }, { name: category.name }]} /></div>
       <h1 className="display mt-6 text-[clamp(2rem,4.2vw,3.25rem)]">{category.name}</h1>
       <p className="prose-lore mt-6 text-muted">{category.description}</p>
@@ -57,6 +65,7 @@ export default async function CategoryPage(props: PageProps<"/categories/[slug]"
       ) : (
         <div className="mt-10"><Listing products={products} franchiseNames={nameBySlug} flush /></div>
       )}
+      </>)}
     </>
   );
 }

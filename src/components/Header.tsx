@@ -32,6 +32,30 @@ function MiniProduct({ p }: { p: Product }) {
 
 export async function Header() {
   const [franchises, categories, products, store, theme, { t }] = await Promise.all([getFranchises(), getCategories(), getAllProducts(), getStore(), getTheme(), getT()]);
+  if (theme.header === "slim") {
+    // 46px light bar: small text links on the left, centred logo, text links and tool icons on the right (matches the reference catalogue header).
+    const left = franchises.slice(0, 3).map((f) => ({ label: f.name, href: `/franchises/${f.slug}` }));
+    const right = [...categories.slice(0, 4).map((c) => ({ label: c.name, href: `/categories/${c.slug}` })), { label: t("nav.new"), href: "/new" }].slice(0, 5);
+    const lnk = "flex h-[46px] items-center px-3 text-xs hover:underline hover:underline-offset-4";
+    return (
+      <header className="sticky top-0 z-40 bg-paper text-ink" data-header="slim">
+        <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:bg-bolt focus:px-3 focus:py-2">{t("skip")}</a>
+        <div className="relative flex h-[46px] items-center justify-between">
+          <div className="flex items-center pl-1">
+            <MobileMenu franchises={franchises.map(({ slug, name }) => ({ slug, name }))} categories={categories.map(({ slug, name }) => ({ slug, name }))} />
+            <nav aria-label="Brands" className="hidden items-center lg:flex">{left.map((l) => <Link key={l.href} href={l.href as never} className={lnk}>{l.label}</Link>)}</nav>
+          </div>
+          <Link href="/" className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center" aria-label={t("nav.home", { name: store.name })}>
+            {store.logoUrl ? <Image src={store.logoUrl} alt={store.legalName} width={store.logoWidth} height={store.logoHeight} priority unoptimized className={`w-auto brightness-0 ${store.logoWidth / store.logoHeight < 2.2 ? "h-9" : "h-4"}`} /> : <span className="text-lg font-extrabold uppercase tracking-tight">{store.name}</span>}
+          </Link>
+          <div className="flex items-center">
+            <nav aria-label="Primary" className="mr-1 hidden items-center lg:flex">{right.map((l) => <Link key={l.href} href={l.href as never} className={lnk}>{l.label}</Link>)}</nav>
+            <div className="flex items-center pr-2 text-xs [&>*]:!gap-0"><div className="hidden items-center md:flex"><RegionFlag /><RecentButton /><SearchTrigger icon /></div><AccountLink /><WishlistLink /><CartLink /></div>
+          </div>
+        </div>
+      </header>
+    );
+  }
   if (theme.header === "compact") {
     // One row: logo on the left, plain links in the middle, tools on the right. No mega menu.
     const links = [...franchises.map((f) => ({ label: f.name, href: `/franchises/${f.slug}` })), ...categories.slice(0, franchises.length ? 3 : 6).map((c) => ({ label: c.name, href: `/categories/${c.slug}` })), { label: t("nav.new"), href: "/new" }].slice(0, 7);

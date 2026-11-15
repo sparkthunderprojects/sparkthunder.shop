@@ -25,6 +25,24 @@ try {
     check((await page.getByText("Members Club").count()) > 0, `${name}: members club banner shown`);
     check(errs.length === 0, `${name}: no page errors ${errs[0] ?? ""}`);
   }
+  // Catalogue collection page: measured against the reference at 1920 wide.
+  {
+    const wide = await (await browser.newContext({ viewport: { width: 1920, height: 1080 } })).newPage();
+    await wide.goto(`${base}/collections/streetwear-hats`, { waitUntil: "load" });
+    await wide.getByRole("button", { name: "Reject all" }).click({ timeout: 2500 }).catch(() => {});
+    const m = await wide.evaluate(() => {
+      const r = (e) => { const b = e.getBoundingClientRect(); return [Math.round(b.x), Math.round(b.y + scrollY), Math.round(b.width), Math.round(b.height)].join(","); };
+      const arts = [...document.querySelectorAll("article.pcard-cat")]; const g = arts[0]?.parentElement;
+      const tiles = [...document.querySelectorAll("[data-catalogue-head] ul")].pop();
+      return { header: r(document.querySelector("header")), h1: r(document.querySelector("h1")), cols: g && getComputedStyle(g).gridTemplateColumns, gap: g && getComputedStyle(g).gap, card: arts[0] && r(arts[0]), img: arts[0] && r(arts[0].querySelector("div.relative")), tile: tiles && r(tiles.querySelector("a")), n: arts.length, docW: document.documentElement.scrollWidth };
+    });
+    check(m.header === "0,0,1920,46", `catalogue: header is 46px tall (${m.header})`);
+    check(m.h1.startsWith("24,62,"), `catalogue: title sits at 24,62 (${m.h1})`);
+    check(m.cols === "479.25px 479.25px 479.25px 479.25px" && m.gap === "35px 1px", `catalogue: 4 columns, 35px row gap, 1px column gap (${m.cols} / ${m.gap})`);
+    check(m.card?.endsWith(",479,711") && m.img?.endsWith(",479,639"), `catalogue: tile is 479 x 711 with a 3:4 image (${m.card} / ${m.img})`);
+    check(m.tile === "24,214,300,350", `catalogue: lookbook tile is 300 x 350 at 24,214 (${m.tile})`);
+    check(m.n === 12 && m.docW <= 1920, `catalogue: 12 products, no sideways scroll`);
+  }
   const page = await (await browser.newContext({ viewport: { width: 1280, height: 900 } })).newPage();
   await page.goto(`${base}/products/shibuya-heavyweight-hoodie`, { waitUntil: "load" });
   await page.getByRole("button", { name: "Reject all" }).click({ timeout: 2500 }).catch(() => {});
@@ -35,7 +53,7 @@ try {
   check(!body.includes("Osaka76") && !body.includes("Winter 76"), "the original store shows nothing from Osaka76");
   // fetch() will not let us set the Host header, so use http directly.
   const sm = await new Promise((res, rej) => http.get({ host: "127.0.0.1", port, path: "/sitemap.xml", headers: { Host: `osaka76.localhost:${port}` } }, (r) => { let d = ""; r.on("data", (c) => (d += c)); r.on("end", () => res(d)); }).on("error", rej));
-  check(sm.includes("osaka76-beanie") && !sm.includes("velvet-tint"), "Osaka76 sitemap is its own");
+  check(sm.includes("osaka76-castle-cap") && !sm.includes("velvet-tint"), "Osaka76 sitemap is its own");
 } finally { await browser.close(); }
 console.log(failed ? `\n${failed} check(s) failed` : "\nAll Osaka76 checks passed");
 process.exit(failed ? 1 : 0);

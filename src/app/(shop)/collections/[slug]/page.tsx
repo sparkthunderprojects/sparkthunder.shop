@@ -5,6 +5,8 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { Countdown } from "@/components/Countdown";
 import { JsonLd } from "@/components/JsonLd";
 import { Listing } from "@/components/Listing";
+import { CatalogueHead } from "@/components/CatalogueHead";
+import { getTheme } from "@/lib/theme.server";
 import { getAllProducts, getCategories, getCollection, getCollections, getFranchises } from "@/lib/catalog";
 import { isUpcoming } from "@/lib/launch";
 import { breadcrumbLd, clip, itemListLd } from "@/lib/seo";
@@ -30,10 +32,21 @@ export default async function CollectionPage(props: PageProps<"/collections/[slu
   const { t } = await getT();
   const c = await getCollection(slug);
   if (!c) notFound();
-  const [all, franchises, categories] = await Promise.all([getAllProducts(), getFranchises(), getCategories()]);
+  const [all, franchises, categories, theme] = await Promise.all([getAllProducts(), getFranchises(), getCategories(), getTheme()]);
   const products = c.productSlugs.map((s) => all.find((p) => p.slug === s)).filter((p): p is NonNullable<typeof p> => Boolean(p));
   const path = `/collections/${c.slug}`;
   const upcoming = isUpcoming(c.launchAt);
+  if (theme.card === "catalogue") {
+    const counts = categories.map((x) => ({ x, n: products.filter((p) => p.categorySlug === x.slug).length })).filter((y) => y.n > 0);
+    return (
+      <div>
+        <JsonLd data={[breadcrumbLd([{ name: "Home", path: "/" }, { name: "Collections", path: "/collections" }, { name: c.name, path }]), itemListLd(`${c.name} collection`, path, products)]} />
+        <CatalogueHead title={c.name} count={products.length} description={c.description} links={[{ label: t("View All"), href: path, active: true }, ...counts.map(({ x, n }) => ({ label: x.name, href: `/categories/${x.slug}`, count: n }))]} />
+        {upcoming ? <Countdown to={c.launchAt!} label={t("This collection drops in")} className="mt-8" /> : null}
+        {products.length === 0 ? <p className="mt-10 text-xs text-[#737373]">{t("Products are being added to this collection.")}</p> : <Listing products={products} franchiseNames={Object.fromEntries(franchises.map((f) => [f.slug, f.name]))} categoryNames={Object.fromEntries(categories.map((x) => [x.slug, x.name]))} flush />}
+      </div>
+    );
+  }
   return (
     <div>
       <JsonLd data={[breadcrumbLd([{ name: "Home", path: "/" }, { name: "Collections", path: "/collections" }, { name: c.name, path }]), itemListLd(`${c.name} collection`, path, products)]} />

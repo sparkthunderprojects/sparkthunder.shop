@@ -24,6 +24,8 @@ import { toQuick } from "@/lib/card";
 import { organizationLd, websiteLd } from "@/lib/seo";
 import { SITE } from "@/lib/site";
 import { getStore } from "@/lib/store";
+import { getTheme } from "@/lib/theme.server";
+import { CatalogueProvider } from "@/components/CardStyle";
 import { LocaleProvider } from "@/components/LocaleProvider";
 import { getLanguages, getT } from "@/lib/i18n/server";
 import { currentStoreId, DEFAULT_STORE_ID } from "@/lib/db/stores";
@@ -33,6 +35,7 @@ export async function ShopShell({ children }: { children: React.ReactNode }) {
   const [products, franchises, categories, settings, store, commerce] = await Promise.all([getAllProducts(), getFranchises(), getCategories(), getSiteSettings(), getStore(), getCommerce()]);
   const [{ locale, t }, enabled] = await Promise.all([getT(), getLanguages()]);
   const original = (await currentStoreId()) === DEFAULT_STORE_ID;
+  const theme = await getTheme();
   // The original shop talks about its universes; any other store speaks for itself.
   const nlBlurb = original ? t("New merchandise from Knightverge, Occult Inc and the rest of the universe, straight to your inbox.") : t("New arrivals and offers from {name}, straight to your inbox.", { name: store.name });
   const popupBlurb = original ? t("Join the list for first access to new official merchandise from every Sparkthunder universe.") : t("Join the list for first access to new arrivals and offers from {name}.", { name: store.name });
@@ -47,6 +50,7 @@ export async function ShopShell({ children }: { children: React.ReactNode }) {
     <>
       <JsonLd data={[organizationLd([...SITE.sameAs, ...settings.sameAs], { name: store.legalName, logo: store.logoUrl }), websiteLd({ name: store.name, description: store.description })]} />
       <LocaleProvider locale={locale} enabled={enabled}>
+      <CatalogueProvider on={theme.card === "catalogue"}>
       <CommerceProvider value={{ freeShippingPence: commerce.freeShippingPence, giftWrapPence: commerce.giftWrapPence, codePrefix: commerce.codePrefix, shippingZones: commerce.shippingZones, shippingFlatPence: commerce.shippingFlatPence, shippingCountries: commerce.shippingCountries }}>
       <CurrencyProvider base={SITE.currency} options={commerce.currencies} countries={commerce.shippingCountries}>
       <CartProvider>
@@ -73,6 +77,7 @@ export async function ShopShell({ children }: { children: React.ReactNode }) {
       </CartProvider>
       </CurrencyProvider>
       </CommerceProvider>
+      </CatalogueProvider>
       </LocaleProvider>
     </>
   );

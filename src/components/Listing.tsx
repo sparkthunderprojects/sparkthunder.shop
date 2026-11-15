@@ -4,6 +4,7 @@ import { useT } from "@/components/LocaleProvider";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ProductCard } from "@/components/ProductCard";
 import { useMoney } from "@/components/Currency";
+import { useCatalogue } from "@/components/CardStyle";
 import type { Product } from "@/lib/types";
 
 type Sort = "featured" | "newest" | "price-asc" | "price-desc" | "name";
@@ -27,6 +28,11 @@ const FLUSH_CLASS: Record<View, string> = {
   large: "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-4",
   default: "grid-cols-2 md:grid-cols-3 xl:grid-cols-5",
   dense: "grid-cols-2 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8",
+};
+const CAT_CLASS: Record<View, string> = {
+  large: "grid-cols-1 md:grid-cols-2",
+  default: "grid-cols-2 xl:grid-cols-4",
+  dense: "grid-cols-3 xl:grid-cols-6",
 };
 const VIEW_KEY = "sparkthunder-grid-v1";
 
@@ -54,6 +60,7 @@ export function Listing({ products, franchiseNames, categoryNames = {}, priority
   flush?: boolean;
 }) {
   const money = useMoney();
+  const cat = useCatalogue();
   const { t } = useT();
   const [sort, setSort] = useState<Sort>("featured");
   const [franchise, setFranchise] = useState("all");
@@ -156,7 +163,20 @@ export function Listing({ products, franchiseNames, categoryNames = {}, priority
 
   return (
     <section aria-label={t("Products")}>
-      <div className="sticky top-[5.05rem] lg:top-[8.05rem] z-20 -mx-(--gutter) flex flex-wrap items-center gap-x-4 gap-y-3 border-y border-ink/15 bg-paper px-(--gutter) py-3">
+      {cat && (
+        <div className="sticky top-[46px] z-20 -mx-(--gutter) mb-4 flex h-[50px] items-center justify-between bg-paper px-(--gutter) text-xs">
+          <p className="sr-only" role="status" aria-live="polite">{shown.length === 1 ? t("1 product") : t("{n} products", { n: shown.length })}</p>
+          <div className="flex items-center gap-3" role="group" aria-label={t("Grid size")}>
+            {([["large", 1, "Larger"], ["default", 2, "Default"], ["dense", 3, "Smaller"]] as const).map(([v, n, label]) => (
+              <button key={v} type="button" onClick={() => pickView(v)} aria-pressed={view === v} aria-label={t("{label} products", { label: t(label) })} title={t(label)} className={`grid h-5 w-5 place-items-center ${view === v ? "text-ink" : "text-ink/35 hover:text-ink"}`}>
+                <span aria-hidden className="grid gap-px" style={{ gridTemplateColumns: `repeat(${n}, 1fr)`, width: 11, height: 11 }}>{Array.from({ length: n * n }, (_, i) => <span key={i} className="bg-current" />)}</span>
+              </button>
+            ))}
+          </div>
+          <button type="button" onClick={() => setFiltersOpen(true)} aria-haspopup="dialog" className="h-[50px] pl-4">{t("Filter & Sort")}{activeCount > 0 ? ` (${activeCount})` : ""}</button>
+        </div>
+      )}
+      {!cat && <div className="sticky top-[5.05rem] lg:top-[8.05rem] z-20 -mx-(--gutter) flex flex-wrap items-center gap-x-4 gap-y-3 border-y border-ink/15 bg-paper px-(--gutter) py-3">
         <button type="button" onClick={() => setFiltersOpen(true)} aria-haspopup="dialog" className="btn btn-ink btn-sm">
           <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="square" aria-hidden="true"><path d="M3 6h18M6 12h12M10 18h4" /></svg>
           {t("Filters")}{activeCount > 0 && <span className="bg-bolt px-1.5 py-0.5 text-xs font-extrabold text-(--color-on-accent)">{activeCount}</span>}
@@ -180,7 +200,7 @@ export function Listing({ products, franchiseNames, categoryNames = {}, priority
             ))}
           </div>
         </div>
-      </div>
+      </div>}
 
       {chips.length > 0 && (
         <ul className="mt-4 flex flex-wrap items-center gap-2" aria-label={t("Active filters")}>
@@ -198,8 +218,8 @@ export function Listing({ products, franchiseNames, categoryNames = {}, priority
       {shown.length === 0 ? (
         <p className="serif mt-8 text-xl text-muted">{t("Nothing matches those filters.")} <button onClick={reset} className="font-bold text-ink underline underline-offset-4">{t("Clear them")}</button> {t("to see everything.")}</p>
       ) : (
-        <div className={`mt-6 grid transition-opacity duration-150 ${busy ? "opacity-40" : "opacity-100"} ${flush ? `pgrid -mx-(--gutter) border-l border-t border-ink/15 ${FLUSH_CLASS[view]}` : VIEW_CLASS[view]}`}>
-          {shown.map((p, i) => <ProductCard key={p.slug} product={p} variant={flush ? "flush" : "default"} franchiseName={franchiseNames[p.franchiseSlug]} priority={i < priorityCount} />)}
+        <div className={`${cat ? "mt-0 -mx-(--gutter) grid gap-x-px gap-y-[35px] " + CAT_CLASS[view] : "mt-6 grid"} transition-opacity duration-150 ${busy ? "opacity-40" : "opacity-100"} ${cat ? "" : flush ? `pgrid -mx-(--gutter) border-l border-t border-ink/15 ${FLUSH_CLASS[view]}` : VIEW_CLASS[view]}`}>
+          {shown.map((p, i) => <ProductCard key={p.slug} product={p} variant={cat ? "catalogue" : flush ? "flush" : "default"} franchiseName={franchiseNames[p.franchiseSlug]} priority={i < priorityCount} />)}
         </div>
       )}
 
@@ -208,11 +228,17 @@ export function Listing({ products, franchiseNames, categoryNames = {}, priority
           <button aria-label={t("Close filters")} tabIndex={-1} onClick={() => setFiltersOpen(false)} className="absolute inset-0 bg-ink/60" />
           <aside className="filter-panel absolute left-0 top-0 flex h-full w-[min(24rem,100vw)] flex-col border-r border-ink/15 bg-paper">
             <div className="flex items-center justify-between border-b border-ink/15 px-5 py-4">
-              <h2 className="display text-3xl">{t("Filters")}</h2>
+              <h2 className="display text-3xl">{cat ? t("Filter & Sort") : t("Filters")}</h2>
               <button ref={closeRef} onClick={() => setFiltersOpen(false)} className="px-2 py-1 font-bold underline underline-offset-4">{t("Close")}</button>
             </div>
 
             <div className="flex-1 space-y-7 overflow-y-auto px-5 py-5">
+              {cat && (
+                <fieldset>
+                  <legend className="display mb-2 text-2xl">{t("Sort by")}</legend>
+                  <ul>{SORTS.map((o) => facet("sort", o.value, sort, (v) => setSort(v as Sort), t(o.label)))}</ul>
+                </fieldset>
+              )}
               {franchiseOptions.length > 1 && (
                 <fieldset>
                   <legend className="display mb-2 text-2xl">{t("Franchise")}</legend>

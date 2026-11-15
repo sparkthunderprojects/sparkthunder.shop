@@ -47,7 +47,8 @@ export function useMoney() {
 export const useCurrency = () => useContext(C);
 
 /** For server components: renders an amount that follows the shopper's chosen currency. */
-export function Price({ pence }: { pence: number }) { return <>{useMoney()(pence)}</>; }
+/** `whole` drops a trailing .00 (the catalogue style shows £75, not £75.00). */
+export function Price({ pence, whole = false }: { pence: number; whole?: boolean }) { const v = useMoney()(pence); return <>{whole ? v.replace(/([.,])00(?!\d)/, "") : v}</>; }
 
 export function CurrencySwitcher() {
   const { t } = useT();

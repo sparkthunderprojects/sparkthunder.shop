@@ -50,8 +50,12 @@ function store(): Store {
       const O = "osaka76";
       const F = g.__sparkFake; const setting = (key: string, value: Row) => F.settings.push({ store_id: O, key, value });
       setting("store", { name: "Osaka76", legalName: "Osaka76", tagline: "Premium streetwear", heroHeading: "Osaka76 premium streetwear", description: "Heavyweight, boxy, made to last. Premium streetwear drawn from Osaka nights.", logoUrl: "/osaka76/logo-white.png", logoWidth: 604, logoHeight: 600, logoLabel: "", accent: "#e4002b", dark: "#0a0a0a", light: "#ffffff", text: "#0a0a0a", font: "modern", radius: 0, uppercaseButtons: true,
-        announcements: [{ text: "Free delivery on orders over £150", href: "/shop" }, { text: "New drop: Winter 76 is live", href: "/new" }, { text: "Join the Members Club for early access", href: "/account" }] });
-      setting("theme", { header: "compact", card: "minimal", productPage: "split", footer: "full",
+        announcements: [] });
+      setting("theme", { header: "slim", card: "catalogue", productPage: "split", footer: "full",
+        lookbook: [
+          { image: "/osaka76/look-1.svg", title: "Core", caption: "Everyday essentials", href: "/franchises/core" }, { image: "/osaka76/look-2.svg", title: "Archive", caption: "Numbered, limited drops", href: "/franchises/archive" },
+          { image: "/osaka76/look-3.svg", title: "Winter 76", caption: "Heavyweight layers", href: "/categories/outerwear" }, { image: "/osaka76/look-4.svg", title: "Bestsellers", caption: "What everyone is wearing", href: "/collections/bestsellers" },
+          { image: "/osaka76/look-5.svg", title: "New arrivals", caption: "The latest drop", href: "/new" }],
         home: [{ id: "slides", on: true }, { id: "new", on: true }, { id: "categories", on: true }, { id: "loyalty", on: true }, { id: "featured", on: true }, { id: "story", on: true }, { id: "hero", on: false }, { id: "characters", on: false }, { id: "gift-cards", on: false }],
         storyTitle: "Born in Osaka", storyText: "Osaka76 started with one heavyweight hoodie and a simple rule: if it is not worth wearing for ten years, we do not make it. Every piece is cut boxy, washed by hand and numbered by drop.",
         slides: [
@@ -60,7 +64,7 @@ function store(): Store {
         ],
         loyalty: { title: "The Osaka76 Members Club", text: "Free to join. Made for people who never miss a drop.", bullets: ["Early access to every drop", "Points on every order", "Members-only restocks"], joinLabel: "Join", joinHref: "/account", image: "" } });
       g.__sparkFake.franchises.push({ store_id: O, slug: "core", name: "Core", tagline: "The everyday range", description: "Year-round essentials.", accent: "#e4002b", sort_order: 1, updated_at: now }, { store_id: O, slug: "archive", name: "Archive", tagline: "Limited runs", description: "Numbered, limited and gone when sold out.", accent: "#0a0a0a", sort_order: 2, updated_at: now });
-      g.__sparkFake.categories.push(...(["hoodies", "tees", "trousers", "outerwear", "accessories"] as const).map((c, i) => ({ store_id: O, slug: c, name: c[0].toUpperCase() + c.slice(1), description: `Osaka76 ${c}.`, sort_order: i + 1, updated_at: now })));
+      g.__sparkFake.categories.push(...(["hoodies", "tees", "trousers", "outerwear", "hats", "accessories"] as const).map((c, i) => ({ store_id: O, slug: c, name: c[0].toUpperCase() + c.slice(1), description: `Osaka76 ${c}.`, sort_order: i + 1, updated_at: now })));
       const sizes = ["XS", "S", "M", "L", "XL"];
       const clothes: [string, string, string, number, boolean, boolean][] = [
         ["shibuya-heavyweight-hoodie", "Shibuya Heavyweight Hoodie", "hoodies", 9500, true, true], ["namba-zip-hoodie", "Namba Zip Hoodie", "hoodies", 10500, true, false], ["kita-washed-hoodie", "Kita Washed Hoodie", "hoodies", 9900, false, true],
@@ -68,15 +72,25 @@ function store(): Store {
         ["tsuruhashi-cargo-pant", "Tsuruhashi Cargo Pant", "trousers", 11000, true, false], ["sakai-track-pant", "Sakai Track Pant", "trousers", 8500, false, false],
         ["midosuji-coach-jacket", "Midosuji Coach Jacket", "outerwear", 14000, false, true], ["kansai-puffer", "Kansai Puffer", "outerwear", 19500, true, true],
       ];
-      const acc: [string, string, number][] = [["osaka76-beanie", "Osaka76 Beanie", 2800], ["castle-cap", "Castle Cap", 3200], ["everyday-tote", "Everyday Tote", 3000]];
+      const acc: [string, string, number][] = [["everyday-tote", "Everyday Tote", 3000]];
+      const COL: Record<string, string> = { Black: "#111111", Ecru: "#e8e0d0", Red: "#b01e28", Navy: "#1f2a44", Brown: "#6b4a3a", Slate: "#4f5b6b" };
+      const hats: [string, string, number, string[], boolean][] = [
+        ["osaka76-castle-cap", "Osaka76 Castle Cap", 4500, ["Black", "Brown", "Red", "Slate"], true], ["dotonbori-trucker", "Dotonbori Trucker Cap", 4200, ["Black", "Navy", "Red", "Ecru"], false], ["kita-bucket-hat", "Kita Washed Bucket Hat", 4800, ["Ecru", "Black", "Slate"], true],
+        ["shibuya-five-panel", "Shibuya 5-Panel Cap", 4500, ["Navy", "Black", "Brown", "Red"], false], ["namba-beanie", "Namba Ribbed Beanie", 3200, ["Black", "Ecru", "Red"], true], ["sakai-dad-cap", "Sakai Distressed Dad Cap", 4600, ["Brown", "Black", "Slate", "Navy"], false],
+        ["midosuji-snapback", "Midosuji Snapback", 4400, ["Black", "Red"], false], ["umeda-ball-cap", "Umeda Ball Cap", 4000, ["Black", "Ecru", "Navy", "Red"], false], ["tsuruhashi-visor", "Tsuruhashi Visor", 3800, ["Black", "Ecru"], false],
+        ["kansai-beanie", "Kansai Cuffed Beanie", 3400, ["Slate", "Black", "Brown", "Red"], true], ["script-76-cap", "76 Script Cap", 4700, ["Black", "Brown", "Navy", "Ecru"], true], ["night-market-cap", "Night Market Cap", 4900, ["Black", "Slate", "Red"], false],
+      ];
       const base = { store_id: O, compare_price_pence: null, details: [], images: [], in_stock: true, published: true, created_at: now, updated_at: now, track_stock: true, low_stock_threshold: 5, bundle_items: [], tags: [], image_alts: [] };
       for (const [slug, name, cat, price, isNew, feat] of clothes) {
         g.__sparkFake.products.push({ ...base, slug, sku: `O76-${slug.replace(/-/g, "").slice(0, 10)}`.toUpperCase(), name, franchise_slug: slug.includes("puffer") || slug.includes("coach") ? "archive" : "core", category_slug: cat, price_pence: price, short_description: `${name}. Boxy fit, heavyweight cotton.`, description: `${name} from Osaka76: heavyweight, boxy and garment-washed for a lived-in feel. Sizes XS to XL.`, is_new: isNew, is_featured: feat, stock_qty: 40,
           option_names: ["Size"], option_swatches: {}, variants: sizes.map((z, k) => ({ name: z, sku: `O76-${slug.replace(/-/g, "").slice(0, 10)}-${z}`.toUpperCase(), stockQty: k === 0 ? 0 : 8 })) });
       }
+      for (const [slug, name, price, cols, isNew] of hats) g.__sparkFake.products.push({ ...base, slug, sku: `O76-${slug.replace(/-/g, "").slice(0, 10)}`.toUpperCase(), name, franchise_slug: "core", category_slug: "hats", images: [`/osaka76/hats/${slug}.svg`], price_pence: price, short_description: `${name}. One size, adjustable.`, description: `${name} from Osaka76: structured crown, embroidered 76 mark, adjustable strap. One size.`, is_new: isNew, is_featured: isNew, stock_qty: 80,
+        option_names: ["Colour", "Size"], option_swatches: Object.fromEntries(cols.map((c) => [c, COL[c]])), variants: cols.map((c) => ({ name: `${c} / One size`, sku: `O76-${slug.replace(/-/g, "").slice(0, 8)}-${c.slice(0, 3)}`.toUpperCase(), stockQty: 12 })) });
       for (const [slug, name, price] of acc) g.__sparkFake.products.push({ ...base, slug, sku: `O76-${slug.replace(/-/g, "").slice(0, 10)}`.toUpperCase(), name, franchise_slug: "core", category_slug: "accessories", price_pence: price, short_description: `${name}, one size.`, description: `${name} from Osaka76. One size.`, is_new: false, is_featured: false, stock_qty: 60 });
       g.__sparkFake.collections.push(
         { store_id: O, slug: "new-arrivals", name: "New arrivals", description: "The latest drop.", image: "", launch_at: null, product_slugs: clothes.filter((c) => c[4]).map((c) => c[0]), sort_order: 1, published: true },
+        { store_id: O, slug: "streetwear-hats", name: "Caps & Hats", description: "Shop caps and hats from Osaka76. From structured baseball caps and truckers to washed bucket hats and ribbed beanies, every piece is cut from premium materials with refined detailing. Whether you want a Castle Cap classic or something new from the Winter 76 drop, find headwear that finishes the fit.", image: "", launch_at: null, product_slugs: hats.map((h) => h[0]), sort_order: 3, published: true },
         { store_id: O, slug: "bestsellers", name: "Bestsellers", description: "What everyone is wearing.", image: "", launch_at: null, product_slugs: clothes.filter((c) => c[5]).map((c) => c[0]), sort_order: 2, published: true },
       );
     }
