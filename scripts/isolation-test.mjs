@@ -7,8 +7,8 @@ const require = createRequire(import.meta.url); let chromium;
 try { ({ chromium } = require("playwright")); } catch { ({ chromium } = require(require("node:path").join(execSync("npm root -g").toString().trim(), "playwright"))); }
 const port = process.argv[2] ?? "3694", write = process.argv.includes("--write"), file = new URL("./isolation-baseline.json", import.meta.url);
 const PAGES = [
-  ["127.0.0.1", "/"], ["127.0.0.1", "/shop"], ["127.0.0.1", "/cart"], ["127.0.0.1", "/new"], ["127.0.0.1", "/help"],
-  ["petty.localhost", "/"], ["petty.localhost", "/shop"],
+  ["127.0.0.1", "/"], ["127.0.0.1", "/shop"], ["127.0.0.1", "/cart"], ["127.0.0.1", "/new"], ["127.0.0.1", "/help"], ["127.0.0.1", "/products/knightverge-crest-tee"], ["127.0.0.1", "/products/knightverge-power-set-poster"],
+  ["petty.localhost", "/"], ["petty.localhost", "/shop"], ["petty.localhost", "/products/velvet-tint"],
 ];
 const WIDTHS = [1440, 390];
 const b = await chromium.launch(); const got = {};

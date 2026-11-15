@@ -60,6 +60,25 @@ try {
     check(m.legalY === 355 && m.fs === "12px", `legal row at 355, 12px (${m.legalY}, ${m.fs})`);
     check(m.bg === "rgb(255, 255, 255)" && m.news === 1, "white footer with exactly one sign-up (#newsletter)");
   }
+  // Product page: the reference layout at 1920 x 945 (gallery 960 x 945 on the left, details column 472 wide at x1204, title at y95, 52px black add button).
+  {
+    const wide = await (await browser.newContext({ viewport: { width: 1920, height: 945 } })).newPage();
+    await wide.goto(`${base}/products/osaka76-castle-cap`, { waitUntil: "load" });
+    await wide.getByRole("button", { name: "Reject all" }).click({ timeout: 2500 }).catch(() => {});
+    await wide.waitForTimeout(400);
+    const m = await wide.evaluate(() => {
+      const r = (e) => { const b = e.getBoundingClientRect(); return [Math.round(b.x), Math.round(b.y + scrollY), Math.round(b.width), Math.round(b.height)]; };
+      const g = document.querySelector("[data-pdp-gallery]"), h1 = document.querySelector("h1"), add = [...document.querySelectorAll("button")].find((b) => /^add to basket$/i.test(b.textContent.trim()));
+      const s = getComputedStyle(add), hs = getComputedStyle(h1);
+      return { g: r(g), h1: r(h1), add: r(add), addBg: s.backgroundColor, addFs: s.fontSize, addFw: s.fontWeight, tt: s.textTransform, h1fs: hs.fontSize, h1fw: hs.fontWeight, crumbs: document.querySelectorAll("nav[aria-label='Breadcrumb'], nav[aria-label='Breadcrumbs']").length, gbg: getComputedStyle(g).backgroundColor };
+    });
+    check(m.g.join() === "0,0,960,945", `gallery is 960 x 945 at the top left (${m.g.join(",")})`);
+    check(m.gbg === "rgb(247, 247, 247)", "gallery background is #f7f7f7");
+    check(m.h1[0] === 1204 && m.h1[2] <= 472 && Math.abs(m.h1[1] - 95) <= 2, `title at x1204, y95 (${m.h1.join(",")})`);
+    check(m.h1fs === "12px" && m.h1fw === "500", `title is 12px / 500 (${m.h1fs} / ${m.h1fw})`);
+    check(m.add[0] === 1204 && m.add[2] === 472 && m.add[3] === 52 && m.addBg === "rgb(10, 10, 10)" && m.addFs === "12px" && m.addFw === "500" && m.tt === "uppercase", `add button 472 x 52, black, 12px/500 uppercase (${m.add.join(",")} ${m.addBg})`);
+    check(m.crumbs === 0, "no breadcrumb bar above the gallery");
+  }
   // Catalogue collection page: measured against the reference at 1920 wide.
   {
     const wide = await (await browser.newContext({ viewport: { width: 1920, height: 1080 } })).newPage();

@@ -7,7 +7,7 @@ import type { ReviewSummary } from "@/lib/reviews";
 export async function ReviewsSection({ slug, summary }: { slug: string; summary: ReviewSummary }) {
   const { t, locale } = await getT();
   return (
-    <section className="mt-24" aria-labelledby="reviews-h">
+    <section id="reviews" className="mt-24" aria-labelledby="reviews-h">
       <h2 id="reviews-h" className="display text-2xl sm:text-3xl">{t("Reviews")}</h2>
       {summary.count > 0 ? (
         <p className="mt-3 flex items-center gap-3"><Stars value={summary.average} size={22} /><b>{summary.average.toFixed(1)}</b><span className="text-muted">{summary.count === 1 ? t("from 1 verified buyer") : t("from {n} verified buyers", { n: summary.count })}</span></p>

@@ -64,6 +64,7 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
   ]);
   const theme = await getTheme();
   const stacked = theme.productPage === "stacked";
+  const cat = theme.card === "catalogue"; // the reference layout: full-height gallery left, narrow details column right
   const stats = await getSalesStats();
   const partners = (stats.together[product.slug] ?? [])
     .map((s) => allProducts.find((x) => x.slug === s))
@@ -95,38 +96,55 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
           { name: product.name, path },
         ]),
       ]} />
-      <div className="pt-8">
+      {cat ? null : <div className="pt-8">
         <Breadcrumbs items={[
           { name: "Home", href: "/" },
           ...(franchise ? [{ name: franchise.name, href: `/franchises/${franchise.slug}` }] : []),
           ...(category ? [{ name: category.name, href: `/categories/${category.slug}` }] : []),
           { name: product.name },
         ]} />
-      </div>
+      </div>}
 
-      <div className={stacked ? "mx-auto mt-8 grid max-w-3xl gap-10" : "mt-8 grid gap-12 lg:grid-cols-[1.1fr_1fr]"} data-pdp={theme.productPage}>
-        <ProductGallery images={gallery} alts={product.imageAlts} name={product.name} sizes={stacked ? "(min-width:768px) 48rem, 100vw" : "(min-width:1024px) 55vw, 100vw"} />
+      <div className={cat ? "-mx-(--gutter) -mt-[46px] grid lg:grid-cols-2" : stacked ? "mx-auto mt-8 grid max-w-3xl gap-10" : "mt-8 grid gap-12 lg:grid-cols-[1.1fr_1fr]"} data-pdp={cat ? "catalogue" : theme.productPage}>
+        {cat ? (
+          <div className="relative h-[125vw] max-h-[100svh] lg:sticky lg:top-0 lg:h-[100svh] lg:max-h-none">
+            <ProductGallery images={gallery} alts={product.imageAlts} name={product.name} sizes="(min-width:1024px) 50vw, 100vw" />
+          </div>
+        ) : <ProductGallery images={gallery} alts={product.imageAlts} name={product.name} sizes={stacked ? "(min-width:768px) 48rem, 100vw" : "(min-width:1024px) 55vw, 100vw"} />}
 
-        <div className={stacked ? "" : "lg:pt-2"}>
-          {franchise && (
+        <div className={cat ? "px-(--gutter) pb-16 pt-8 lg:mx-auto lg:w-[472px] lg:max-w-full lg:px-0 lg:pt-[95px]" : stacked ? "" : "lg:pt-2"}>
+          {!cat && franchise && (
             <Link href={`/franchises/${franchise.slug}`} className="inline-flex items-center gap-2 font-bold hover:underline hover:underline-offset-4">
               <span className="inline-block h-3 w-3" style={{ background: "var(--color-world)" }} aria-hidden />
               {franchise.name}
             </Link>
           )}
+          {cat ? (
+            <>
+              <div className="flex items-baseline justify-between gap-6 text-xs">
+                <h1 className="font-medium">{nb(product.name)}</h1>
+                <p className="flex items-baseline gap-2"><span><Price pence={product.pricePence} whole /></span>{product.comparePricePence && <s className="text-muted"><Price pence={product.comparePricePence} whole /></s>}</p>
+              </div>
+              {reviews.count > 0 && <p className="mt-3 text-[10px] text-muted"><a href="#reviews" className="inline-flex items-center gap-1.5"><span aria-hidden className="text-xs tracking-[0.1em] text-ink">{"★".repeat(Math.round(reviews.average))}</span>{reviews.count} {t("Reviews").toLowerCase()}</a></p>}
+              {franchise && <p className="mt-3 text-xs text-muted"><Link href={`/franchises/${franchise.slug}`} className="hover:underline">{franchise.name}</Link></p>}
+            </>
+          ) : (
+            <>
           <h1 className="display mt-3 text-[clamp(2rem,3.4vw,2.75rem)]">{nb(product.name)}</h1>
           <p className="mt-6 flex items-baseline gap-3">
             <span className="display text-3xl"><Price pence={product.pricePence} /></span>
             {product.comparePricePence && <s className="text-lg text-muted"><Price pence={product.comparePricePence} /></s>}
           </p>
-          <p className="mt-1 text-sm text-muted">
+            </>
+          )}
+          <p className={cat ? "mt-1 text-xs text-muted" : "mt-1 text-sm text-muted"}>
             {product.bestSeller ? <b className="mr-2 bg-bolt px-2 py-0.5 text-(--color-on-accent)">{t("Best seller")}</b> : null}{!product.inStock ? t("Currently sold out") : lowCount !== null ? <b className="text-amber-600">{t("Only {n} left", { n: lowCount })}</b> : t("In stock")} · {t("SKU {sku}", { sku: product.sku })}
           </p>
           {characterSlugs(product).length > 0 && (
             <p className="mt-2 text-sm">{t("Featuring")} {characterSlugs(product).map((c, i) => <span key={c}>{i > 0 ? ", " : ""}<Link href={`/characters/${c}`} className="font-bold underline underline-offset-4">{characterName(c)}</Link></span>)}</p>
           )}
 
-          <div id="buy-box" className="mt-8"><BuyBox product={toQuick(product, franchise?.name)} /></div>
+          <div id="buy-box" className={cat ? "mt-6 text-xs" : "mt-8"}><BuyBox product={toQuick(product, franchise?.name)} /></div>
           <p className="mt-4"><ShareButton title={product.name} path={path} /></p>
 
           {bundleParts.length > 0 && (
@@ -148,13 +166,13 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
             </section>
           )}
 
-          <p className="prose-lore mt-10">{autoLink(product.description, [...allProducts.map((x) => ({ name: x.name, href: `/products/${x.slug}` })), ...franchises.map((f) => ({ name: f.name, href: `/franchises/${f.slug}` }))], { selfHref: `/products/${product.slug}` }).map((piece, i) => piece.href ? <Link key={i} href={piece.href as never} className="underline underline-offset-4">{piece.text}</Link> : <span key={i}>{piece.text}</span>)}</p>
+          <p className={cat ? "mt-10 text-xs leading-[17px]" : "prose-lore mt-10"}>{autoLink(product.description, [...allProducts.map((x) => ({ name: x.name, href: `/products/${x.slug}` })), ...franchises.map((f) => ({ name: f.name, href: `/franchises/${f.slug}` }))], { selfHref: `/products/${product.slug}` }).map((piece, i) => piece.href ? <Link key={i} href={piece.href as never} className="underline underline-offset-4">{piece.text}</Link> : <span key={i}>{piece.text}</span>)}</p>
 
           {product.details.length > 0 && (
             <section className="mt-10" aria-labelledby="details-h">
-              <h2 id="details-h" className="display text-3xl">{t("Product details")}</h2>
+              <h2 id="details-h" className={cat ? "text-xs font-bold" : "display text-3xl"}>{t("Product details")}</h2>
               <ul className="mt-4 border-b border-ink/25">
-                {product.details.map((d) => <li key={d} className="border-t border-ink/25 py-2.5">{d}</li>)}
+                {product.details.map((d) => <li key={d} className={cat ? "border-t border-ink/25 py-2 text-xs" : "border-t border-ink/25 py-2.5"}>{d}</li>)}
               </ul>
             </section>
           )}

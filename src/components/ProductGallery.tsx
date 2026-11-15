@@ -4,9 +4,11 @@ import { useT } from "@/components/LocaleProvider";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { isPlaceholderArt } from "@/lib/card";
+import { useCatalogue } from "@/components/CardStyle";
 
 /** Main image with hover zoom, thumbnails when there are several photos, and a full-screen lightbox. */
 export function ProductGallery({ images, name, sizes, alts = [] }: { images: string[]; name: string; sizes: string; alts?: string[] }) {
+  const cat = useCatalogue();
   const [idx, setIdx] = useState(0);
   const { t } = useT();
   const [zoom, setZoom] = useState<{ x: number; y: number } | null>(null);
@@ -50,7 +52,21 @@ export function ProductGallery({ images, name, sizes, alts = [] }: { images: str
   }
 
   return (
-    <div className="self-start">
+    <div className={cat ? "h-full" : "self-start"}>
+      {cat ? (
+        <div className="relative h-full min-h-[60svh] bg-[#f7f7f7]" data-pdp-gallery>
+          <button type="button" onClick={() => setLight(true)} aria-label={t("Open {name} image full screen", { name })} className="absolute inset-0 block cursor-zoom-in">
+            <Image src={shown} alt={extra ? t("{name} - selected option", { name }) : alt(idx)} fill sizes={sizes} priority={idx === 0} unoptimized={isPlaceholderArt(shown)} className="object-contain p-[6%]" />
+          </button>
+          {many && <button type="button" onClick={() => { setExtra(null); step(-1); }} aria-label={t("Previous photo")} className="absolute left-7 top-1/2 flex h-[29px] w-[23px] -translate-y-1/2 items-center justify-center text-base">‹</button>}
+          {many && <button type="button" onClick={() => { setExtra(null); step(1); }} aria-label={t("Next photo")} className="absolute right-7 top-1/2 flex h-[29px] w-[23px] -translate-y-1/2 items-center justify-center text-base">›</button>}
+          <span className="pointer-events-none absolute bottom-6 left-8 text-xs" aria-live="polite">{idx + 1} / {images.length}</span>
+          <button type="button" onClick={() => setLight(true)} aria-label={t("Open {name} image full screen", { name })} className="absolute bottom-5 right-7 flex h-8 w-8 items-center justify-center">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1" aria-hidden><path d="M1 5V1h4M9 1h4v4M13 9v4H9M5 13H1V9" /></svg>
+          </button>
+        </div>
+      ) : (
+        <>
       <button
         type="button"
         onClick={() => setLight(true)}
@@ -77,6 +93,9 @@ export function ProductGallery({ images, name, sizes, alts = [] }: { images: str
             </li>
           ))}
         </ul>
+      )}
+
+        </>
       )}
 
       {light && (
