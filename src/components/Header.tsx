@@ -41,7 +41,7 @@ export async function Header() {
         <div className="flex h-16 items-center gap-6 px-(--gutter)">
           <MobileMenu franchises={franchises.map(({ slug, name }) => ({ slug, name }))} categories={categories.map(({ slug, name }) => ({ slug, name }))} />
           <Link href="/" className="flex shrink-0 items-center" aria-label={t("nav.home", { name: store.name })}>
-            {store.logoUrl ? <Image src={store.logoUrl} alt={store.legalName} width={store.logoWidth} height={store.logoHeight} priority unoptimized className="h-6 w-auto sm:h-7" /> : <span className="display text-2xl">{store.name}</span>}
+            {store.logoUrl ? <Image src={store.logoUrl} alt={store.legalName} width={store.logoWidth} height={store.logoHeight} priority unoptimized className={store.logoWidth / store.logoHeight < 2.2 ? "h-11 w-auto sm:h-12" : "h-6 w-auto sm:h-7"} /> : <span className="display text-2xl">{store.name}</span>}
           </Link>
           <nav aria-label="Primary" className="hidden flex-1 items-center gap-7 whitespace-nowrap font-bold lg:flex">
             {links.map((l) => <Link key={l.href} href={l.href as never} className="border-b-2 border-transparent py-1 hover:border-bolt focus-visible:border-bolt">{l.label}</Link>)}
@@ -62,7 +62,7 @@ export async function Header() {
           <div className="hidden md:block"><SearchTrigger /></div>
         </div>
         <Link href="/" className="mx-auto flex flex-col items-center gap-1.5" aria-label={t("nav.home", { name: store.name })}>
-          {store.logoUrl ? <Image src={store.logoUrl} alt={store.legalName} width={store.logoWidth} height={store.logoHeight} priority unoptimized className="h-6 w-auto sm:h-8" /> : <span className="display text-2xl sm:text-3xl">{store.name}</span>}
+          {store.logoUrl ? <Image src={store.logoUrl} alt={store.legalName} width={store.logoWidth} height={store.logoHeight} priority unoptimized className={store.logoWidth / store.logoHeight < 2.2 ? "h-11 w-auto sm:h-12" : "h-6 w-auto sm:h-8"} /> : <span className="display text-2xl sm:text-3xl">{store.name}</span>}
           {store.logoLabel ? (
             <span aria-hidden className="flex w-full items-center gap-2.5 text-bolt">
               <span className="h-px flex-1 bg-bolt/50" />

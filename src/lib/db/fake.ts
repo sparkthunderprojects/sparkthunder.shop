@@ -49,7 +49,7 @@ function store(): Store {
     {
       const O = "osaka76";
       const F = g.__sparkFake; const setting = (key: string, value: Row) => F.settings.push({ store_id: O, key, value });
-      setting("store", { name: "Osaka76", legalName: "Osaka76", tagline: "Premium streetwear", heroHeading: "Osaka76 premium streetwear", description: "Heavyweight, boxy, made to last. Premium streetwear drawn from Osaka nights.", logoUrl: "", logoLabel: "", accent: "#e4002b", dark: "#0a0a0a", light: "#ffffff", text: "#0a0a0a", font: "modern", radius: 0, uppercaseButtons: true,
+      setting("store", { name: "Osaka76", legalName: "Osaka76", tagline: "Premium streetwear", heroHeading: "Osaka76 premium streetwear", description: "Heavyweight, boxy, made to last. Premium streetwear drawn from Osaka nights.", logoUrl: "/osaka76/logo-white.png", logoWidth: 604, logoHeight: 600, logoLabel: "", accent: "#e4002b", dark: "#0a0a0a", light: "#ffffff", text: "#0a0a0a", font: "modern", radius: 0, uppercaseButtons: true,
         announcements: [{ text: "Free delivery on orders over £150", href: "/shop" }, { text: "New drop: Winter 76 is live", href: "/new" }, { text: "Join the Members Club for early access", href: "/account" }] });
       setting("theme", { header: "compact", card: "minimal", productPage: "split", footer: "full",
         home: [{ id: "slides", on: true }, { id: "new", on: true }, { id: "categories", on: true }, { id: "loyalty", on: true }, { id: "featured", on: true }, { id: "story", on: true }, { id: "hero", on: false }, { id: "characters", on: false }, { id: "gift-cards", on: false }],

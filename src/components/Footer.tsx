@@ -44,7 +44,7 @@ export async function Footer() {
     <footer className="theme-dark border-t border-ink/15">
       <div className="px-(--gutter) pb-10 pt-14">
         <div className="flex w-[min(34rem,100%)] flex-col items-center gap-3">
-          {store.logoUrl ? <Image src={store.logoUrl} alt={store.legalName} width={store.logoWidth} height={store.logoHeight} unoptimized className="h-auto w-full" /> : <span className="display text-4xl">{store.name}</span>}
+          {store.logoUrl ? <Image src={store.logoUrl} alt={store.legalName} width={store.logoWidth} height={store.logoHeight} unoptimized className={store.logoWidth / store.logoHeight < 2.2 ? "h-auto w-32" : "h-auto w-full"} /> : <span className="display text-4xl">{store.name}</span>}
           {store.logoLabel ? (
             <span className="flex w-full items-center gap-4 text-bolt">
               <span className="h-px flex-1 bg-bolt/50" />
