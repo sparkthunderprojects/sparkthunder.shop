@@ -72,15 +72,8 @@ export function Sidebar({ email, demo, stores, current, owner, perms }: { email:
         {owner ? item({ href: "/admin/stores", label: "Stores" }) : null}
         {owner ? item({ href: "/admin/domains", label: "Domains" }) : null}
         <div className="adm-sep">Site</div>
-        {(() => {
-          // A storefront is chosen by the address it is opened on, so "/" on the admin address always shows the
-          // default store. Open the store being edited on its own domain instead.
-          const s = stores.find((x) => x.id === current);
-          const d = s?.domains[0];
-          if (d) return <a href={`${/^(localhost|127\.|\[::1\])|\.localhost$|\.test$/.test(d) ? "http" : "https"}://${d}/`} target="_blank" rel="noreferrer">View storefront ({s?.name})</a>;
-          if (s && !s.is_default) return <Link href="/admin/domains" title="This store has no domain yet. Add one to open it.">Add a domain to view {s.name}</Link>;
-          return <a href="/" target="_blank" rel="noreferrer">View storefront</a>;
-        })()}
+        {/* Opens the store being edited, on its own domain if it has one, otherwise as a private preview. */}
+        <a href="/admin/preview" target="_blank" rel="noreferrer">View storefront{stores.find((x) => x.id === current) ? ` (${stores.find((x) => x.id === current)?.name})` : ""}</a>
       </nav>
       <div className="adm-side-foot">
         {demo ? <div style={{ color: "#ffd400", fontWeight: 700, marginBottom: 6 }}>Demo mode: changes are not saved to a database</div> : null}

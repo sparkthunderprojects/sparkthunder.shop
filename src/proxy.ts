@@ -54,7 +54,13 @@ export async function proxy(req: NextRequest) {
   }
   const open = new Headers(req.headers);
   open.delete("x-spark-admin"); // never trust this from outside
-  return pass(open);
+  const res = pass(open);
+  // An admin previewing a store: keep it out of search engines and shared caches.
+  if (req.cookies.get("spark-preview-store")) {
+    res.headers.set("X-Robots-Tag", "noindex, nofollow");
+    res.headers.set("Cache-Control", "private, no-store");
+  }
+  return res;
 }
 
 export const config = {

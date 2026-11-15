@@ -28,7 +28,7 @@ import { getTheme } from "@/lib/theme.server";
 import { CatalogueProvider } from "@/components/CardStyle";
 import { LocaleProvider } from "@/components/LocaleProvider";
 import { getLanguages, getT } from "@/lib/i18n/server";
-import { currentStoreId, DEFAULT_STORE_ID } from "@/lib/db/stores";
+import { currentStoreId, DEFAULT_STORE_ID, previewStoreId } from "@/lib/db/stores";
 
 /** Storefront chrome: providers, header, footer and the slide-over panels. Used by the (shop) layout and the global 404. */
 export async function ShopShell({ children }: { children: React.ReactNode }) {
@@ -36,6 +36,7 @@ export async function ShopShell({ children }: { children: React.ReactNode }) {
   const [{ locale, t }, enabled] = await Promise.all([getT(), getLanguages()]);
   const original = (await currentStoreId()) === DEFAULT_STORE_ID;
   const theme = await getTheme();
+  const previewing = await previewStoreId();
   // The original shop talks about its universes; any other store speaks for itself.
   const nlBlurb = original ? t("New merchandise from Knightverge, Occult Inc and the rest of the universe, straight to your inbox.") : t("New arrivals and offers from {name}, straight to your inbox.", { name: store.name });
   const popupBlurb = original ? t("Join the list for first access to new official merchandise from every Sparkthunder universe.") : t("Join the list for first access to new arrivals and offers from {name}.", { name: store.name });
@@ -56,6 +57,7 @@ export async function ShopShell({ children }: { children: React.ReactNode }) {
       <CartProvider>
         <WishlistProvider>
           <ShopUiProvider>
+            {previewing ? <div role="status" style={{ background: "#ffd400", color: "#000", fontSize: 12, padding: "6px 12px", textAlign: "center" }}>Private preview of {store.name}. Only you can see this. <a href="/admin/preview?off=1" style={{ textDecoration: "underline", fontWeight: 700 }}>Exit preview</a></div> : null}
             <AnnouncementBar items={store.announcements} />
             <Header />
             <main id="main" className="w-full flex-1 px-(--gutter) pb-24">{children}</main>
