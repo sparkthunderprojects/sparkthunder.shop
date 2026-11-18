@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Db } from "@/lib/db/clients";
 
 const sent: { to: string; subject: string }[] = [];
@@ -212,5 +212,38 @@ describe("stock holds at checkout", () => {
   it("saves the VAT worked out at checkout on the order", async () => {
     const r = await fulfilOrder(db, await checkout("cs_vat", [line("tee", 1)], { vat: { ratePercent: 20, pence: 233, number: "GB123" } }));
     expect(r.order).toMatchObject({ vat_pence: 233, vat_rate: 20, vat_number: "GB123" });
+  });
+});
+
+describe("fulfilOrder with Elixir Points", () => {
+  const fetchMock = vi.fn();
+  beforeEach(() => { fetchMock.mockReset(); vi.stubGlobal("fetch", fetchMock); vi.stubEnv("ELIXIR_BRAND_KEY", "elx_test"); });
+  afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
+
+  it("adds points once for the order number, and not again on a repeat", async () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ duplicate: false, points: 20 }), { status: 200 }));
+    const s = await checkout("cs_e1", [line("tee", 2)]);
+    const r = await fulfilOrder(db, s);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toMatchObject({ source_ref: r.order.number, spend_gbp: 20, email: "buyer@example.com" });
+    expect(r.order.fulfilment?.elixir).toBe(20);
+    await fulfilOrder(db, s);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("still finishes the order and emails the customer when Elixir refuses, and tells the owner", async () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ error: "invalid_api_key" }), { status: 401 }));
+    const r = await fulfilOrder(db, await checkout("cs_e2", [line("tee", 1)]));
+    expect(r.order.status).toBe("paid");
+    expect(r.order.fulfilled_at).toBeTruthy();
+    expect(sent).toHaveLength(1);
+    expect(r.order.fulfilment?.problems?.some((p) => p.startsWith("Elixir Points could not be added"))).toBe(true);
+    expect(r.order.fulfilment?.elixir).toBeUndefined();
+  });
+
+  it("does not call Elixir at all without the brand key", async () => {
+    vi.stubEnv("ELIXIR_BRAND_KEY", "");
+    await fulfilOrder(db, await checkout("cs_e3", [line("tee", 1)]));
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

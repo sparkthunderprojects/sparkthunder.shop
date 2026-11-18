@@ -98,3 +98,12 @@ Pages that look the same to every visitor (home, shop, product, category, franch
 - The cache must key on the full web address including the domain (CDNs do this by default). Do not configure a cache that ignores the host: stores would see each other's pages.
 - `scripts/cache-check.mjs` (run in CI) proves public pages are identical for every visitor, set no cookies, and that private pages are never cacheable. If you add a page that reads a cookie or depends on the visitor, do not add it to `src/lib/cache-policy.ts`.
 - To turn caching off for everything, empty `CACHEABLE_SOURCES` in `src/lib/cache-policy.ts`.
+
+## Elixir Points (cross-brand rewards)
+
+The basket shows how many Elixir Points an order would earn, and paid orders add points to the buyer's Elixir balance (matched by email). Refunds take them back in proportion.
+
+- Switch it on by adding a secret named `ELIXIR_BRAND_KEY` on the host. The value is the Sparkthunder Shop key (starts `elx_`), created in the Elixir dashboard under Brands & Keys. Publish again after adding it. Without the key nothing is sent.
+- Optional: `ELIXIR_SUPABASE_URL` and `ELIXIR_SUPABASE_ANON_KEY` point at a different Elixir project (the defaults are the My Sparkthunder project).
+- A failure at Elixir never stops an order. The order finishes, the customer is emailed, and the order carries a note starting "Elixir Points could not be added" so the points can be added from the Elixir dashboard.
+- Points are whole pounds of products after discount; gift cards and delivery earn nothing. Each order number is counted once, so repeats cannot double count.

@@ -2,6 +2,7 @@ import { getCommerce } from "@/lib/commerce";
 import { notifyOwner } from "@/lib/alerts";
 import { log } from "@/lib/log";
 import { awardPoints, pointsForOrder } from "@/lib/rewards";
+import { eligibleGbp, elixirEarn, elixirEnabled } from "@/lib/elixir";
 import type { Db } from "@/lib/db/clients";
 import { giftCardEmail, orderEmail } from "@/lib/email/templates";
 import { sendEmail } from "@/lib/email/send";
@@ -16,7 +17,7 @@ import { emitEvent, publicOrder } from "@/lib/webhooks/outbound";
 import { PrintifyProblem, sendToPrintify, type PrintifyState } from "@/lib/printify/order";
 
 /** Which fulfilment steps have been completed for an order. Saved after every step so a crash can be picked up where it stopped. */
-export type FulfilState = { discount?: boolean; giftCardCharged?: boolean; issued?: string[]; stock?: string[]; points?: boolean; emailed?: boolean; printify?: PrintifyState; problems?: string[] };
+export type FulfilState = { discount?: boolean; giftCardCharged?: boolean; issued?: string[]; stock?: string[]; points?: boolean; elixir?: number; emailed?: boolean; printify?: PrintifyState; problems?: string[] };
 
 export type OrderRow = {
   id: string; number: string; stripe_session_id: string | null; stripe_payment_intent: string; status: "paid" | "shipped" | "cancelled" | "attention";
@@ -196,6 +197,16 @@ export async function fulfilOrder(db: Db, s: PaidSession): Promise<{ order: Orde
         if (await attempt("Adding Spark points", async () => { await awardPoints(db, { email: s.email, points: pointsForOrder(payload), reason: "order", ref: number, note: `Order ${number}` }); })) { state.points = true; await save(); }
       }
 
+      // 4b. Elixir Points (the cross-brand programme). Never blocks the order: if Elixir cannot be reached the owner is told on the order.
+      if (s.email && state.elixir === undefined && elixirEnabled()) {
+        const spendGbp = eligibleGbp(payload.lines, moneyOff(payload));
+        if (spendGbp > 0) {
+          const r = await elixirEarn({ orderRef: number, email: s.email, spendGbp });
+          if (r.ok) { state.elixir = r.points; await save(); }
+          else problems.add(`Elixir Points could not be added (${r.error}). Add them from the Elixir dashboard.`);
+        }
+      }
+
       // 5. Confirmation email.
       if (!state.emailed) {
         const mail = orderEmail({ number, name: s.name, lines: payload.lines, subtotalPence: payload.subtotalPence, shippingPence: payload.shippingPence, discountPence: moneyOff(payload), discountCode: payload.discount?.code ?? payload.promotion?.name ?? "", giftWrapPence: payload.giftOptions?.wrapPence ?? 0, giftMessage: payload.giftOptions?.message ?? "", giftCardPence: payload.giftCard?.appliedPence ?? 0, totalPence: payload.totalPence, address: s.address, giftCardsIssued: issued.size, vat: payload.vat ?? null });
@@ -206,14 +217,14 @@ export async function fulfilOrder(db: Db, s: PaidSession): Promise<{ order: Orde
     }
 
     const list = [...problems];
-    const status = list.some((p) => !p.startsWith("Order confirmation email")) ? "attention" : "paid";
+    const status = list.some((p) => !p.startsWith("Order confirmation email") && !p.startsWith("Elixir Points")) ? "attention" : "paid";
     const done = { fulfilled_at: new Date().toISOString(), fulfilment_lock_until: null, fulfilment: { ...state, problems: list }, ...(list.length ? { attention_reason: list.join("\n"), status } : {}) };
     const fin = await db.from("orders").update(done).eq("id", orderId);
     if (fin.error) throw new Error(`Could not finish the order: ${fin.error.message}`);
     if (status === "attention") {
       await log.warn("order.attention", `Order ${number} needs attention`, { order: number, problems: list }, { storeId });
       await notifyOwner(`Order ${number} needs your attention`, `${list.join("\n")}`, `order:${orderId}`);
-    } else if (list.length) await log.warn("order.email_failed", `Order ${number}: ${list.join(" ")}`, { order: number }, { storeId });
+    } else if (list.length) await log.warn(list.some((p) => p.startsWith("Elixir Points")) ? "order.elixir_failed" : "order.email_failed", `Order ${number}: ${list.join(" ")}`, { order: number }, { storeId });
     const finished = { ...order, ...done, fulfilment: done.fulfilment } as OrderRow;
     await emitEvent(db, "order.created", publicOrder(finished)); // once: an order that is already finished returns earlier
     return { order: finished, created };

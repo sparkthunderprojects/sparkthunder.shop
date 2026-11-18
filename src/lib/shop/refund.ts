@@ -4,6 +4,7 @@ import { refundEmail } from "@/lib/email/templates";
 import { sendEmail } from "@/lib/email/send";
 import { changeBalance, getCardByCode } from "@/lib/giftcards/ledger";
 import { awardPoints } from "@/lib/rewards";
+import { eligibleGbp, elixirEnabled, elixirRefund } from "@/lib/elixir";
 import type { OrderRow } from "./fulfil";
 import { stockItems } from "./stock";
 import { getStoreSecrets } from "@/lib/secrets";
@@ -25,7 +26,7 @@ export type RefundInput = {
   by: string;
 };
 
-export type RefundSteps = { stripe?: boolean; gift?: boolean; stock?: string[]; points?: number | null; emailed?: boolean; problems?: string[] };
+export type RefundSteps = { stripe?: boolean; gift?: boolean; stock?: string[]; points?: number | null; elixir?: number; emailed?: boolean; problems?: string[] };
 export type RefundRow = {
   id: string; order_id: string; key: string; card_pence: number; gift_pence: number; reason: string; restock: { slug: string; variant: string; qty: number }[];
   take_points: boolean; source: string; status: "pending" | "done" | "failed"; steps: RefundSteps; stripe_refund_id: string | null; error: string; created_by: string; created_at: string;
@@ -147,6 +148,21 @@ export async function processRefund(db: Db, stripe: RefundStripe | null, storeId
         if (!seen) await awardPoints(db, { email: o.email, points: -pts, reason: "adjust", ref, note: `Refund of order ${o.number}` });
       }
       steps.points = pts;
+    });
+    if (!ok) allDone = false; else await save();
+  }
+
+  // 4b. Take back Elixir Points in proportion to the refund (Elixir never takes back more than was earned).
+  if (r.take_points && steps.elixir === undefined && elixirEnabled()) {
+    const ok = await run("Taking back Elixir Points", async () => {
+      const spend = eligibleGbp(o.items, o.discount_pence ?? 0);
+      const ratio = (r.card_pence + r.gift_pence) / Math.max(1, o.total_pence + o.gift_card_pence);
+      const refundGbp = Math.round(spend * Math.min(1, ratio) * 100) / 100;
+      if (refundGbp > 0) {
+        const res = await elixirRefund({ orderRef: o.number, refundRef: `refund-${refundId}`, refundGbp });
+        if (!res.ok) throw new Business(`Elixir Points could not be taken back (${res.error}). Adjust them in the Elixir dashboard.`);
+        steps.elixir = Math.abs(res.points);
+      } else steps.elixir = 0;
     });
     if (!ok) allDone = false; else await save();
   }
