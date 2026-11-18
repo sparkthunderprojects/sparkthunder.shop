@@ -57,4 +57,6 @@ export const region: Phrase[] = [
   ["Sets where we deliver and the currency you see prices in. You are always charged in {base}.", "Définit le pays de livraison et la devise d’affichage des prix. Vous êtes toujours débité en {base}.", "Legt fest, wohin wir liefern und in welcher Währung Preise angezeigt werden. Abgebucht wird immer in {base}.", "Define adónde enviamos y la moneda en que ves los precios. Siempre se te cobra en {base}."],
   ["Delivering to {name}", "Livraison : {name}", "Lieferung nach {name}", "Envío a {name}"],
   ["Delivering to {name}. Change region", "Livraison : {name}. Changer de région", "Lieferung nach {name}. Region ändern", "Envío a {name}. Cambiar de región"],
+  ["Earn {points} Elixir Points with this order", "Gagnez {points} points Elixir avec cette commande", "Sammeln Sie {points} Elixir-Punkte mit dieser Bestellung", "Gana {points} puntos Elixir con este pedido"],
+  ["Worth {value} towards future rewards across every Sparkthunder brand.", "Soit {value} pour de futures récompenses dans toutes les marques Sparkthunder.", "Das sind {value} für künftige Prämien bei allen Sparkthunder-Marken.", "Equivale a {value} para futuras recompensas en todas las marcas de Sparkthunder."],
 ];

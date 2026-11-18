@@ -17,10 +17,11 @@ import { useCurrency, useMoney } from "@/components/Currency";
 import { formatMoney } from "@/lib/currency";
 import { useCommerce } from "@/components/CommerceProvider";
 import { quoteShipping } from "@/lib/commerce-config";
+import { ELIXIR_FALLBACK, elixirPointsFor, elixirPointsValuePence, type ElixirRate } from "@/lib/elixir-points";
 
 const countryName = (code: string, loc = "en") => { try { return new Intl.DisplayNames([loc], { type: "region" }).of(code) ?? code; } catch { return code; } };
 
-export function CartView() {
+export function CartView({ elixir = ELIXIR_FALLBACK }: { elixir?: ElixirRate }) {
   const { t, locale } = useT();
   const money = useMoney();
   const cur = useCurrency();
@@ -51,6 +52,8 @@ export function CartView() {
   const discount = mix.codePence;
   const promoOff = mix.promoPence;
   const applied = card ? Math.min(card.balancePence, payable - discount - promoOff) : 0;
+
+  const elixirPoints = elixirPointsFor(payable - discount - promoOff, elixir);
 
   if (items.length === 0) {
     return (
@@ -91,6 +94,15 @@ export function CartView() {
         {applied > 0 ? <p className="mt-3 flex justify-between"><span>{t("Gift card")}</span><span className="font-bold">-{money(applied)}</span></p> : null}
         {wrapPence > 0 ? <p className="mt-3 flex justify-between"><span>{t("Gift wrap")}</span><span className="font-bold">{money(wrapPence)}</span></p> : null}
         {discount > 0 || promoOff > 0 || applied > 0 || wrapPence > 0 ? <p className="mt-1 flex justify-between text-lg"><span>{t("To pay")}</span><span className="font-bold">{money(subtotalPence + wrapPence - discount - promoOff - applied)}</span></p> : null}
+        {elixirPoints > 0 ? (
+          <div className="mt-5 flex items-start gap-3 border border-ink/20 bg-paper p-4" data-testid="elixir-points">
+            <svg viewBox="0 0 24 32" aria-hidden="true" className="mt-0.5 h-7 w-5 shrink-0 text-[#bd3141]"><path fill="currentColor" d="M12 0C12 0 0 14 0 21a12 12 0 0 0 24 0C24 14 12 0 12 0Z" /></svg>
+            <p className="text-sm">
+              <span className="block text-lg font-bold">{t("Earn {points} Elixir Points with this order", { points: elixirPoints.toLocaleString(locale) })}</span>
+              {t("Worth {value} towards future rewards across every Sparkthunder brand.", { value: money(elixirPointsValuePence(elixirPoints, elixir)) })}
+            </p>
+          </div>
+        ) : null}
         {physical ? (
           <div className="mt-5 border-t border-ink/15 pt-4">
             <label className="flex items-center gap-2 font-bold"><input type="checkbox" checked={gift} onChange={(e) => setGift(e.target.checked)} /> {t("This order is a gift")}</label>
