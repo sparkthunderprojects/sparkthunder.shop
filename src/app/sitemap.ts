@@ -38,6 +38,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...help.map((a) => ({ url: absoluteUrl(helpPath(a)), lastModified: LEGAL_UPDATED, changeFrequency: "monthly" as const, priority: 0.5 })),
     { url: absoluteUrl("/help/contact"), lastModified: LEGAL_UPDATED, changeFrequency: "yearly", priority: 0.4 },
     { url: absoluteUrl("/gift-cards"), lastModified: latest, changeFrequency: "monthly", priority: 0.7 },
+    { url: absoluteUrl("/elixir-points"), lastModified: latest, changeFrequency: "monthly", priority: 0.6 },
     ...(payPages.length ? [{ url: absoluteUrl("/payment-options"), lastModified: latest, changeFrequency: "monthly" as const, priority: 0.5 }, ...payPages.map((m) => ({ url: absoluteUrl(`/payment-options/${m}`), lastModified: latest, changeFrequency: "monthly" as const, priority: 0.5 }))] : []),
     { url: absoluteUrl("/gift-cards/send"), lastModified: latest, changeFrequency: "monthly", priority: 0.6 },
     { url: absoluteUrl("/gifts"), lastModified: latest, changeFrequency: "weekly", priority: 0.7 },

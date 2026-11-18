@@ -46,7 +46,7 @@ export async function Header() {
           <div className="flex items-center pl-1">
             <MobileMenu franchises={franchises.map(({ slug, name }) => ({ slug, name }))} categories={categories.map(({ slug, name }) => ({ slug, name }))} />
             <CatalogueMenu name={store.name}
-              features={[{ label: t("nav.new"), href: "/new" }, { label: t("nav.allMerch"), href: "/shop" }, { label: t("nav.giftCards"), href: "/gift-cards" }]}
+              features={[{ label: t("nav.new"), href: "/new" }, { label: t("nav.allMerch"), href: "/shop" }, { label: t("nav.giftCards"), href: "/gift-cards" }, { label: "Elixir Points", href: "/elixir-points" }]}
               sections={[
                 { title: t("nav.shop"), items: categories.map((c) => ({ label: c.name, href: `/categories/${c.slug}` })) },
                 { title: t("nav.franchises"), items: franchises.map((f) => ({ label: f.name, href: `/franchises/${f.slug}` })) },
@@ -185,6 +185,8 @@ export async function Header() {
           </div>
 
           <Link href="/gift-cards" className="group flex h-full items-center border-b-4 border-transparent px-1 font-bold hover:border-bolt focus-visible:border-bolt">{t("nav.giftCards")}</Link>
+
+          <Link href="/elixir-points" className="group flex h-full items-center border-b-4 border-transparent px-1 font-bold hover:border-bolt focus-visible:border-bolt">Elixir Points</Link>
 
           <Link href="/new" className="flex h-full items-center border-b-4 border-bolt px-1 font-bold">{t("nav.new")}</Link>
         </nav>

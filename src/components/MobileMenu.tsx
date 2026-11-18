@@ -40,6 +40,7 @@ export function MobileMenu({ franchises, categories }: { franchises: Item[]; cat
           <Link href="/new" className={row}>{t("nav.new")}</Link>
           <Link href="/gifts" className={row}>{t("nav.gifts")}</Link>
           <Link href="/gift-cards" className={row}>{t("nav.giftCards")}</Link>
+          <Link href="/elixir-points" className={row}>Elixir Points</Link>
           <Link href="/shop" className={row}>{t("nav.allMerch")}</Link>
           <Link href="/wishlist" className={row}>{t("nav.favourites")}</Link>
           <Link href="/account" className={row}>{t("nav.account")}</Link>

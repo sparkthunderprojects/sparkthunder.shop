@@ -41,6 +41,7 @@ export async function Footer({ blurb = "" }: { blurb?: string }) {
               <li><Link className={a} href="/help">{t("footer.help")}</Link></li>
               <li><Link className={a} href="/payment-options">{t("footer.payment")}</Link></li>
               <li><Link className={a} href="/gift-cards">{t("nav.giftCards")}</Link></li>
+              <li><Link className={a} href="/elixir-points">Elixir Points</Link></li>
               <li><Link className={a} href="/gift-cards/balance">{t("footer.balance")}</Link></li>
             </ul>
           </div>
@@ -122,6 +123,7 @@ export async function Footer({ blurb = "" }: { blurb?: string }) {
               <li><Link className={lnk} href="/new">{t("nav.new")}</Link></li>
               <li><Link className={lnk} href="/gifts">{t("nav.gifts")}</Link></li>
               <li><Link className={lnk} href="/gift-cards">{t("nav.giftCards")}</Link></li>
+              <li><Link className={lnk} href="/elixir-points">Elixir Points</Link></li>
               <li><Link className={lnk} href="/gift-cards/balance">{t("footer.balance")}</Link></li>
               <li><Link className={lnk} href="/help">{t("footer.help")}</Link></li>
               <li><Link className={lnk} href="/payment-options">{t("footer.payment")}</Link></li>
