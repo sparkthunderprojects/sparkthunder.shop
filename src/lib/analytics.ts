@@ -82,3 +82,45 @@ export function buildAnalytics(all: OrderRow[], opts: { since?: number; until?: 
     newVsReturning: nv, topCustomers: by(cust, (c) => c.value).slice(0, 10), codes: by(codes, (c) => c.orders), cohorts,
   };
 }
+
+export type DayPoint = { day: string; value: number; orders: number };
+export type Overview = {
+  now: { value: number; orders: number; aov: number; customers: number; newCustomers: number; units: number; discountPence: number; refundedPence: number };
+  before: { value: number; orders: number; aov: number; customers: number; newCustomers: number; units: number; discountPence: number; refundedPence: number } | null;
+  days: DayPoint[];
+  products: { slug: string; name: string; units: number; value: number; beforeValue: number }[];
+};
+
+/** Headline numbers, a daily series and top products for [since, until), compared with the period of equal length just before it. Cancelled orders are ignored; UTC days. */
+export function buildOverview(all: OrderRow[], opts: { since: number; until: number; compare: boolean }): Overview {
+  const live = all.filter((o) => o.status !== "cancelled");
+  const firstAt = new Map<string, number>();
+  for (const o of live) { const k = key(o.email), t = Date.parse(o.created_at); if (!firstAt.has(k) || t < firstAt.get(k)!) firstAt.set(k, t); }
+  const span = opts.until - opts.since, bSince = opts.since - span;
+  const inR = (o: OrderRow, a: number, b: number) => { const t = Date.parse(o.created_at); return t >= a && t < b; };
+  const totals = (a: number, b: number) => {
+    const list = live.filter((o) => inR(o, a, b)), who = new Set<string>(); let value = 0, units = 0, discountPence = 0, refundedPence = 0, fresh = 0;
+    for (const o of list) {
+      value += netValue(o); discountPence += o.discount_pence ?? 0; refundedPence += (o.refunded_card_pence ?? 0) + (o.refunded_gift_pence ?? 0);
+      for (const l of o.items) if (l.type === "product") units += l.qty;
+      const k = key(o.email); if (!who.has(k)) { who.add(k); if (firstAt.get(k)! >= a) fresh++; }
+    }
+    return { value, orders: list.length, aov: list.length ? Math.round(value / list.length) : 0, customers: who.size, newCustomers: fresh, units, discountPence, refundedPence };
+  };
+  const day = (t: number) => new Date(t).toISOString().slice(0, 10);
+  const map = new Map<string, DayPoint>();
+  for (let t = Math.floor(opts.since / 86400000) * 86400000; t < opts.until; t += 86400000) map.set(day(t), { day: day(t), value: 0, orders: 0 });
+  for (const o of live) if (inR(o, opts.since, opts.until)) { const p = map.get(day(Date.parse(o.created_at))); if (p) { p.value += netValue(o); p.orders++; } }
+  const prod = new Map<string, { slug: string; name: string; units: number; value: number; beforeValue: number }>();
+  for (const o of live) {
+    const now = inR(o, opts.since, opts.until), prev = opts.compare && inR(o, bSince, opts.since);
+    if (!now && !prev) continue;
+    for (const l of o.items) {
+      if (l.type !== "product") continue;
+      const r = prod.get(l.slug) ?? { slug: l.slug, name: l.name, units: 0, value: 0, beforeValue: 0 };
+      if (now) { r.units += l.qty; r.value += l.qty * l.unitPence; } else r.beforeValue += l.qty * l.unitPence;
+      prod.set(l.slug, r);
+    }
+  }
+  return { now: totals(opts.since, opts.until), before: opts.compare ? totals(bSince, opts.since) : null, days: [...map.values()], products: [...prod.values()].filter((p) => p.units > 0).sort((a, b) => b.value - a.value).slice(0, 10) };
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildAnalytics, netValue } from "@/lib/analytics";
+import { buildAnalytics, buildOverview, netValue } from "@/lib/analytics";
 import type { OrderRow } from "@/lib/shop/fulfil";
 
 let n = 0;
@@ -35,3 +35,18 @@ describe("analytics", () => {
   });
   it("handles no orders", () => { const e = buildAnalytics([], { nowMs: now }); expect(e.orders).toBe(0); expect(e.cohorts).toEqual([]); });
 });
+
+describe("overview", () => {
+  const list = [
+    order({ email: "a@x.com", at: "2026-10-20T10:00:00Z" }),
+    order({ email: "a@x.com", at: "2026-11-05T10:00:00Z" }),
+    order({ email: "b@x.com", at: "2026-11-06T10:00:00Z", status: "cancelled" }),
+  ];
+  const ov = buildOverview(list, { since: Date.parse("2026-11-01T00:00:00Z"), until: Date.parse("2026-11-12T00:00:00Z"), compare: true });
+  it("totals this period and the one before it", () => {
+    expect(ov.now.orders).toBe(1); expect(ov.now.value).toBe(1000); expect(ov.before?.orders).toBe(0);
+    expect(ov.now.newCustomers).toBe(0); expect(ov.days).toHaveLength(11); expect(ov.days.find((d) => d.day === "2026-11-05")?.orders).toBe(1);
+    expect(ov.products[0].units).toBe(1);
+  });
+});
+
