@@ -50,3 +50,11 @@ describe("overview", () => {
   });
 });
 
+
+import { buildHeatmap } from "@/lib/analytics";
+describe("heatmap", () => {
+  it("counts orders by weekday (Monday first) and hour", () => {
+    const g = buildHeatmap([order({ email: "a@x.com", at: "2026-11-09T14:30:00Z" }), order({ email: "b@x.com", at: "2026-11-15T00:10:00Z" })], 0, Infinity);
+    expect(g[0][14]).toBe(1); expect(g[6][0]).toBe(1);
+  });
+});

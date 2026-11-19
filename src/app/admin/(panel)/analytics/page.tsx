@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/admin/auth";
 import { buildAnalytics, buildOverview, type Slice } from "@/lib/analytics";
-import { SalesChart, StatCard, Delta } from "./Charts";
+import { SalesChart, StatCard, Delta, Heatmap } from "./Charts";
+import { currentStoreId, listStores } from "@/lib/db/stores";
+import { buildHeatmap } from "@/lib/analytics";
 import { countryName } from "@/lib/regions";
 import type { OrderRow } from "@/lib/shop/fulfil";
 import { formatPrice } from "@/lib/site";
@@ -30,15 +32,30 @@ export default async function AnalyticsPage({ searchParams }: PageProps<"/admin/
   const names = new Map(((f ?? []) as { slug: string; name: string }[]).map((x) => [x.slug, x.name]));
   const franchiseOf = new Map(((p ?? []) as { slug: string; franchise_slug: string }[]).map((x) => [x.slug, names.get(x.franchise_slug) ?? x.franchise_slug]));
   const now = nowMs();
-  const a = buildAnalytics((o ?? []) as OrderRow[], { since: r === "all" ? 0 : now - Number(r) * 86400000, franchiseOf, nowMs: now });
-  const since = r === "all" ? Math.min(now, ...((o ?? []) as OrderRow[]).map((x) => Date.parse(x.created_at)).filter(Number.isFinite), now) : now - Number(r) * 86400000;
-  const ov = buildOverview((o ?? []) as OrderRow[], { since: r === "all" ? Math.max(since, now - 365 * 86400000) : since, until: now + 1, compare: r !== "all" });
+  const day = (v: unknown) => (typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) && Number.isFinite(Date.parse(v)) ? Date.parse(v) : null);
+  const from = day(sp.from), to = day(sp.to);
+  const custom = from !== null && to !== null && to >= from;
+  const orders = (o ?? []) as OrderRow[];
+  const earliest = Math.min(now, ...orders.map((x) => Date.parse(x.created_at)).filter(Number.isFinite));
+  const since = custom ? from : r === "all" ? Math.max(earliest, now - 365 * 86400000) : now - Number(r) * 86400000;
+  const until = custom ? to + 86400000 : now + 1;
+  const a = buildAnalytics(orders, { since: custom ? from : r === "all" ? 0 : since, until, franchiseOf, nowMs: now });
+  const compare = custom || r !== "all";
+  const ov = buildOverview(orders, { since, until, compare });
+  const grid = buildHeatmap(orders, since, until);
+  const sid = await currentStoreId(), storeName = (await listStores()).find((x) => x.id === sid)?.name ?? sid;
   const weekdays = [...a.byWeekday.slice(1), a.byWeekday[0]];
 
   return (
     <>
-      <div className="adm-h"><div><h1>Analytics</h1><p>Deeper views of your sales. Cancelled orders are left out; times are UTC.</p></div>
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>{RANGES.map(([k, l]) => <Link key={k} className={`adm-btn ${k === r ? "adm-pri" : ""}`} style={k === r ? { color: "#fff" } : undefined} href={`/admin/analytics?range=${k}`}>{l}</Link>)}</div></div>
+      <div className="adm-h"><div><h1>Analytics: {storeName}</h1><p>Sales for this store only. Switch store in the sidebar to see another. Cancelled orders are left out; times are UTC.</p></div>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>{RANGES.map(([k, l]) => <Link key={k} className={`adm-btn ${!custom && k === r ? "adm-pri" : ""}`} style={!custom && k === r ? { color: "#fff" } : undefined} href={`/admin/analytics?range=${k}`}>{l}</Link>)}</div></div>
+      <form method="get" action="/admin/analytics" style={{ display: "flex", gap: 8, alignItems: "end", flexWrap: "wrap", marginBottom: 12 }}>
+        <label style={{ fontSize: 12 }}>From<br /><input type="date" name="from" defaultValue={custom ? sp.from as string : ""} required /></label>
+        <label style={{ fontSize: 12 }}>To<br /><input type="date" name="to" defaultValue={custom ? sp.to as string : ""} required /></label>
+        <button className="adm-btn" type="submit">Compare with the period before</button>
+        <a className="adm-btn" href={`/admin/export/analytics?since=${new Date(since).toISOString().slice(0, 10)}&until=${new Date(until - 1).toISOString().slice(0, 10)}`}>Download daily CSV</a>
+      </form>
       <div className="adm-grid adm-g4" style={{ marginBottom: 12 }}>
         <StatCard label="Sales value" value={formatPrice(ov.now.value)} now={ov.now.value} before={ov.before?.value} />
         <StatCard label="Orders" value={String(ov.now.orders)} now={ov.now.orders} before={ov.before?.orders} />
@@ -47,14 +64,18 @@ export default async function AnalyticsPage({ searchParams }: PageProps<"/admin/
         <StatCard label="Customers" value={String(ov.now.customers)} now={ov.now.customers} before={ov.before?.customers} />
         <StatCard label="New customers" value={String(ov.now.newCustomers)} now={ov.now.newCustomers} before={ov.before?.newCustomers} />
         <StatCard label="Discounts given" value={formatPrice(ov.now.discountPence)} now={ov.now.discountPence} before={ov.before?.discountPence} invert />
+        <StatCard label="Repeat customers" value={ov.now.customers ? `${Math.round(((ov.now.customers - ov.now.newCustomers) / ov.now.customers) * 100)}%` : "-"} now={ov.now.customers ? (ov.now.customers - ov.now.newCustomers) / ov.now.customers : 0} before={ov.before ? (ov.before.customers ? (ov.before.customers - ov.before.newCustomers) / ov.before.customers : 0) : null} />
+        <StatCard label="Shipping collected" value={formatPrice(ov.now.shippingPence)} now={ov.now.shippingPence} before={ov.before?.shippingPence} />
+        <StatCard label="Refund rate" value={ov.now.value + ov.now.refundedPence ? `${((ov.now.refundedPence / (ov.now.value + ov.now.refundedPence)) * 100).toFixed(1)}%` : "-"} now={ov.now.refundedPence} before={ov.before?.refundedPence} invert />
         <StatCard label="Refunded" value={formatPrice(ov.now.refundedPence)} now={ov.now.refundedPence} before={ov.before?.refundedPence} invert />
       </div>
       <section className="adm-card"><h2>Sales and orders over time</h2>
         <p className="adm-hint">Line is sales value, bars are orders per day. Hover a point for the day.</p>
         <SalesChart days={ov.days} ariaLabel="Sales and orders per day" /></section>
+      <section className="adm-card"><h2>When customers buy</h2><Heatmap grid={grid} /></section>
       <section className="adm-card"><h2>Top products</h2>
-        {ov.products.length === 0 ? <p className="adm-hint">No sales in this period yet.</p> : <table className="adm-table"><thead><tr><th>Product</th><th>Units</th><th>Sales</th>{r !== "all" ? <th>Change</th> : null}</tr></thead><tbody>
-          {ov.products.map((p) => <tr key={p.slug}><td>{p.name}</td><td>{p.units}</td><td><b>{formatPrice(p.value)}</b></td>{r !== "all" ? <td><Delta now={p.value} before={p.beforeValue} /></td> : null}</tr>)}</tbody></table>}</section>
+        {ov.products.length === 0 ? <p className="adm-hint">No sales in this period yet.</p> : <table className="adm-table"><thead><tr><th>Product</th><th>Units</th><th>Sales</th>{compare ? <th>Change</th> : null}</tr></thead><tbody>
+          {ov.products.map((p) => <tr key={p.slug}><td>{p.name}</td><td>{p.units}</td><td><b>{formatPrice(p.value)}</b></td>{compare ? <td><Delta now={p.value} before={p.beforeValue} /></td> : null}</tr>)}</tbody></table>}</section>
       <p className="adm-hint" style={{ margin: "0 0 14px" }}>Sales value counts card and gift card payments after refunds, so it can be higher than the revenue on the Sales page, which counts card money only.</p>
       <div className="adm-grid adm-g2">
         <section className="adm-card"><h2>Sales by country</h2><Bars rows={a.byCountry} label={(s) => (s.label === "Unknown" ? "Unknown" : countryName(s.label) || s.label)} /></section>

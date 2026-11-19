@@ -5,12 +5,13 @@ import { toCsv } from "@/lib/csv";
 import { loadCustomers } from "@/lib/admin/customers-data";
 import { currentStoreId } from "@/lib/db/stores";
 import type { OrderRow } from "@/lib/shop/fulfil";
+import { buildOverview } from "@/lib/analytics";
 
 export const dynamic = "force-dynamic";
 const pounds = (p: number | null | undefined) => ((p ?? 0) / 100).toFixed(2);
 
 /** Download this store's data as CSV: orders (for accounting), products, newsletter subscribers. */
-export async function GET(_req: Request, { params }: { params: Promise<{ kind: string }> }) {
+export async function GET(req: Request, { params }: { params: Promise<{ kind: string }> }) {
   const admin = await getAdmin();
   if (!admin) return new Response("Not signed in", { status: 401 });
   const { kind } = await params;
@@ -33,6 +34,13 @@ export async function GET(_req: Request, { params }: { params: Promise<{ kind: s
     const list = await loadCustomers(db);
     const rows = list.sort((a, b) => b.spendPence - a.spendPence).map((c) => [c.email, c.name, c.phone, c.orders, pounds(c.spendPence), pounds(c.aovPence), c.firstOrderAt ?? "", c.lastOrderAt ?? "", c.subscribed ? "yes" : "no", c.points, c.tags.join("; "), c.address?.country ?? ""]);
     name = "customers"; body = toCsv(["Email", "Name", "Phone", "Orders", "Lifetime spend", "Average order", "First order", "Last order", "Newsletter", "Spark points", "Tags", "Country"], rows);
+  } else if (kind === "analytics") {
+    const q = new URL(req.url).searchParams, ok = (v: string | null) => (v && /^\d{4}-\d{2}-\d{2}$/.test(v) && Number.isFinite(Date.parse(v)) ? Date.parse(v) : null);
+    const since = ok(q.get("since")), until = ok(q.get("until"));
+    if (since === null || until === null || until < since) return new Response("Give since and until as YYYY-MM-DD", { status: 400 });
+    const { data } = await db.from("orders").select("*");
+    const ov = buildOverview((data ?? []) as OrderRow[], { since, until: until + 86400000, compare: false });
+    name = "daily-sales"; body = toCsv(["Day", "Orders", "Sales"], ov.days.map((d) => [d.day, d.orders, pounds(d.value)]));
   } else return new Response("Unknown export", { status: 404 });
   await logActivity("export", `Downloaded ${name} as CSV`, { type: "export", id: name });
   return new Response(body, { headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename="${await currentStoreId()}-${name}-${new Date().toISOString().slice(0, 10)}.csv"`, "Cache-Control": "private, no-store" } });

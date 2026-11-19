@@ -44,3 +44,24 @@ export function SalesChart({ days, ariaLabel }: { days: DayPoint[]; ariaLabel: s
     </svg>
   );
 }
+
+const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+/** When do people buy: darker squares mean more orders. */
+export function Heatmap({ grid }: { grid: number[][] }) {
+  const max = Math.max(1, ...grid.flat());
+  return (
+    <div style={{ overflowX: "auto" }}>
+      <table style={{ borderCollapse: "separate", borderSpacing: 2, fontSize: 11 }} aria-label="Orders by weekday and hour">
+        <thead><tr><th />{Array.from({ length: 24 }, (_, h) => <th key={h} style={{ fontWeight: 400, color: "#666", minWidth: 22 }}>{h % 3 === 0 ? String(h).padStart(2, "0") : ""}</th>)}</tr></thead>
+        <tbody>{grid.map((row, d) => <tr key={d}><td style={{ color: "#666", paddingRight: 6 }}>{DAYS[d]}</td>{row.map((n, h) => <td key={h} title={`${DAYS[d]} ${String(h).padStart(2, "0")}:00, ${n} order${n === 1 ? "" : "s"}`} style={{ height: 20, borderRadius: 3, background: n ? `rgba(107,92,255,${0.15 + (n / max) * 0.85})` : "#f0f0f6" }} />)}</tr>)}</tbody>
+      </table>
+    </div>
+  );
+}
+
+/** Tiny trend line for tables. `points` are any non-negative numbers, oldest first. */
+export function Spark({ points }: { points: number[] }) {
+  const W = 120, H = 28, max = Math.max(1, ...points);
+  const d = points.map((v, i) => `${i ? "L" : "M"}${(points.length < 2 ? W / 2 : (i / (points.length - 1)) * W).toFixed(1)},${(H - 2 - (v / max) * (H - 4)).toFixed(1)}`).join(" ");
+  return <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} aria-hidden><path d={d} fill="none" stroke="#6b5cff" strokeWidth="2" strokeLinejoin="round" /></svg>;
+}
