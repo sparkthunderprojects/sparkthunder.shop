@@ -21,7 +21,7 @@ const PATHS: [string, Permission][] = [
   ["/admin/products", "catalogue"], ["/admin/franchises", "catalogue"], ["/admin/characters", "catalogue"], ["/admin/categories", "catalogue"], ["/admin/collections", "catalogue"], ["/admin/media", "catalogue"],
   ["/admin/stock-alerts", "catalogue"], ["/admin/schedule", "catalogue"], ["/admin/redirects", "catalogue"], ["/admin/seo", "catalogue"], ["/admin/universe-sites", "catalogue"],
   ["/admin/reviews", "content"], ["/admin/questions", "content"],
-  ["/admin/discounts", "marketing"], ["/admin/promotions", "marketing"], ["/admin/gift-cards", "marketing"], ["/admin/rewards", "marketing"],
+  ["/admin/discounts", "marketing"], ["/admin/promotions", "marketing"], ["/admin/gift-cards", "marketing"], ["/admin/rewards", "marketing"], ["/admin/social", "marketing"],
   ["/admin/commerce", "settings"], ["/admin/languages", "settings"], ["/admin/theme", "settings"], ["/admin/store", "settings"], ["/admin/settings", "settings"], ["/admin/printify", "settings"], ["/admin/developers", "settings"], ["/admin/health", "settings"], ["/admin/activity", "settings"],
   ["/admin/sales", "reports"], ["/admin/analytics", "reports"], ["/admin/overview", "reports"],
 ];
