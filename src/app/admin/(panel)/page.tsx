@@ -6,11 +6,18 @@ import { effectiveStatus } from "@/lib/giftcards/format";
 import { listCards } from "@/lib/giftcards/ledger";
 import { formatPrice } from "@/lib/site";
 import { ScoreBadge } from "../SeoWidgets";
+import { buildOverview } from "@/lib/analytics";
+import { can } from "@/lib/admin/roles";
+import { permsHere } from "@/lib/admin/auth";
+import { nowMs } from "@/lib/time";
+import type { OrderRow } from "@/lib/shop/fulfil";
+import { StatCard, SalesChart } from "./analytics/Charts";
 
-export const metadata = { title: "Dashboard" };
+export const metadata = { title: "Home" };
 
 export default async function Dashboard({ searchParams }: { searchParams: Promise<{ denied?: string }> }) {
-  const { db } = await requireAdmin();
+  const admin = await requireAdmin(), { db } = admin;
+  const showSales = can(await permsHere(admin), "reports");
   const denied = (await searchParams).denied;
   const [audit, c, cards] = await Promise.all([runAudit(db), counts(db), listCards(db).catch(() => [])]);
   const giftOwed = cards.filter((g) => effectiveStatus(g) === "active").reduce((n, g) => n + g.balance_pence, 0);
@@ -20,11 +27,25 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
   const worst = [...audit.rows].filter((r) => !r.noindex).sort((a, b) => a.score - b.score).slice(0, 6);
   const stats: [string, number][] = [["Products", audit.products.length], ["Drafts", drafts], ["Franchises", audit.franchises.length], ["Categories", audit.categories.length], ["Images", c.media], ["Redirects", c.redirects]];
   const giftStat = formatPrice(giftOwed);
+  const now = nowMs();
+  const ov = showSales ? buildOverview(((await db.from("orders").select("*")).data ?? []) as OrderRow[], { since: now - 30 * 86400000, until: now + 1, compare: true }) : null;
   return (
     <>
       {denied ? <p role="alert" className="adm-card" style={{ borderColor: "#c0392b" }}>Your role does not include that part of the admin. Ask a store manager or owner if you need it.</p> : null}
-      <div className="adm-h"><div><h1>Dashboard</h1><p>Your catalogue and search health at a glance.</p></div>
+      <div className="adm-h"><div><h1>Home</h1><p>How your store is doing, and what needs a look.</p></div>
         <Link className="adm-btn adm-bolt" href="/admin/products/new">Add product</Link></div>
+      {ov ? (
+        <section className="adm-card" style={{ padding: 0 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px 0" }}><h2 style={{ margin: 0 }}>Last 30 days</h2><Link className="adm-btn" href="/admin/analytics">View analytics</Link></div>
+          <div className="adm-grid adm-g4" style={{ padding: 20 }}>
+            <StatCard label="Sales" value={formatPrice(ov.now.value)} now={ov.now.value} before={ov.before?.value} />
+            <StatCard label="Orders" value={String(ov.now.orders)} now={ov.now.orders} before={ov.before?.orders} />
+            <StatCard label="Average order" value={formatPrice(ov.now.aov)} now={ov.now.aov} before={ov.before?.aov} />
+            <StatCard label="New customers" value={String(ov.now.newCustomers)} now={ov.now.newCustomers} before={ov.before?.newCustomers} />
+          </div>
+          <div style={{ padding: "0 20px 16px" }}><SalesChart days={ov.days} ariaLabel="Sales and orders in the last 30 days" /></div>
+        </section>
+      ) : null}
       <div className="adm-grid adm-g3" style={{ marginBottom: 18 }}>
         {stats.map(([l, n]) => <div key={l} className="adm-card" style={{ margin: 0 }}><div className="adm-stat">{n}</div><div className="adm-stat-l">{l}</div></div>)}
         <Link href="/admin/gift-cards" className="adm-card" style={{ margin: 0, textDecoration: "none" }}><div className="adm-stat">{giftStat}</div><div className="adm-stat-l">Gift card balance outstanding</div></Link>
