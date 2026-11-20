@@ -11,10 +11,12 @@ export function LoginForm() {
   const { pending, run, toast } = useAction();
   return (
     <form onSubmit={(e) => { e.preventDefault(); run(() => loginAction(email, password), "Signed in", () => { router.push("/admin"); router.refresh(); }); }}>
-      <div className="adm-brand" style={{ padding: 0, color: "#14151a" }}><i /> Sparkthunder admin</div>
-      <Field label="Email"><input className="adm-in" type="email" autoComplete="username" required value={email} onChange={(e) => setEmail(e.target.value)} /></Field>
+      <div className="adm-login-logo"><i aria-hidden>⚡</i> Spark Merchant</div>
+      <div><h1>Log in</h1></div>
+      <p className="adm-login-sub">Continue to your stores</p>
+      <Field label="Email"><input className="adm-in" type="email" autoComplete="username" autoFocus placeholder="you@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} /></Field>
       <Field label="Password"><input className="adm-in" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} /></Field>
-      <button className="adm-btn adm-pri" disabled={pending} style={{ justifyContent: "center" }}>{pending ? "Signing in..." : "Sign in"}</button>
+      <button className="adm-btn adm-pri" disabled={pending} style={{ justifyContent: "center" }}>{pending ? "Logging in..." : "Log in"}</button>
       {toast}
     </form>
   );
